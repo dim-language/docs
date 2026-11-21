@@ -1,0 +1,34 @@
+// Model lengkap toko online, dipecah ke beberapa file (dim v0.3).
+// Jalankan: dim check examples/shop/main.dim
+
+import "shop.dim";
+import "payment.dim";
+
+person customer "Customer" {
+  description "Belanja online";
+}
+
+checkout_click: customer -> shop.web.checkout.button "Klik bayar";
+charge_gateway: shop.api.payments.client.charge -> payment.gateway "POST /charges" {
+  op call;
+  tech "HTTPS";
+  data push "ChargeRequest";
+  data pull "ChargeResult";
+}
+
+// Tim ops menambah keterangan tanpa mengubah shop.dim.
+extend shop.db {
+  description "Satu instance primer dengan satu replika baca.";
+  tags "ops";
+}
+
+flow checkout "Checkout" {
+  description "Dari pembeli menekan bayar sampai order tersimpan.";
+  step checkout_click;
+  step checkout_post;
+  step run_checkout;
+  step charge "Tagih dulu";
+  step charge_gateway;
+  step save_order "Simpan setelah tertagih";
+  step insert_order;
+}

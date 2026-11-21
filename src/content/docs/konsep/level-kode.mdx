@@ -1,0 +1,105 @@
+---
+title: Level kode
+description: Menulis class, function, method, dan field dengan parameter, nilai kembali, dan keterangan, supaya level paling dalam peta bisa dibaca sebagai class diagram dan call graph.
+---
+
+import ZoomMap from '../../../components/zoom-map/ZoomMap.astro';
+import shop from '../../../data/shop.json';
+
+Di level paling dalam, elemen `code` bisa menjelaskan dirinya selengkap class diagram: bentuknya apa, butuh parameter apa, mengembalikan apa, error apa yang bisa terjadi, dan **untuk apa dia ada**.
+
+Tujuannya dua. Editor bisa menggambar class diagram dan call graph dari model yang sama. Dan siapa pun yang mengerjakan kodenya, manusia atau AI, bisa membaca kontrak setiap unit tanpa harus menebak dari nama.
+
+<ZoomMap
+  model={shop}
+  focus="shop.api.orders.repo"
+  uid="kode"
+  caption="Detail kode dari examples/shop/. Kartu class, interface, dan struct menampilkan field di atas garis tebal dan method di bawahnya. Garis putus-putus menunjukkan relasi struktural."
+/>
+
+Di peta, `code` dengan form tipe (`class`, `interface`, `struct`, `enum`, `trait`) yang terbuka digambar sebagai kartu class diagram. Notasinya mengikuti UML: `+` public, `−` private, `#` protected, `~` internal; nama yang abstract ditulis miring, member static bergaris bawah. Relasi ke method tertentu menempel ke baris method itu, bukan ke kartunya. Arahkan kursor ke baris untuk membaca keterangannya.
+
+## Bentuk: `form`
+
+`form` memberi tahu apa sebenarnya sebuah elemen `code`:
+
+| `form` | Dipakai untuk |
+|---|---|
+| `module` | file atau namespace |
+| `class`, `struct`, `enum` | tipe yang punya data dan perilaku |
+| `interface`, `trait` | kontrak tanpa implementasi |
+| `function` | fungsi lepas |
+| `method` | fungsi milik sebuah tipe |
+| `field` | data milik sebuah tipe atau module |
+
+Editor memakai `form` untuk memilih cara menggambar: tipe digambar dengan bagian field dan method, fungsi lepas sebagai simpul call graph.
+
+## Kontrak: parameter, nilai kembali, error
+
+```dim
+code handler "handle_checkout()" {
+  form function;
+  description "Memvalidasi keranjang, menyimpan order, lalu menagih pembayaran.";
+  param req "CheckoutRequest" "Isi keranjang dan alamat pengiriman";
+  returns "Result<OrderId>" "Id order yang baru dibuat";
+  throws "PaymentError" "Penagihan ditolak gateway";
+  async;
+}
+```
+
+- `param <nama> "<tipe>" ["<keterangan>"]` boleh ditulis berkali-kali. Di `class` atau `struct`, `param` berarti parameter konstruktor.
+- `returns "<tipe>" ["<keterangan>"]` paling banyak satu kali.
+- `throws "<tipe>" ["<keterangan>"]` boleh berkali-kali, satu per jenis error.
+- Field memakai `type "<tipe>"`.
+- `visibility` (`public`, `private`, `protected`, `internal`) dan flag `static`, `abstract`, `async` melengkapi bentuknya.
+
+Tipe ditulis sebagai string apa adanya (`"Option<Order>"`, `"&str"`, `"Promise<void>"`). dim tidak terikat ke satu bahasa pemrograman, jadi tidak mencoba memahami sintaks tipe.
+
+Atribut yang tidak cocok dengan `form` ditolak: `returns` di sebuah `field`, atau `type` di sebuah `function`, adalah error `E031`. Kalau `form` tidak ditulis, semua atribut diterima.
+
+## Keterangan itu wajib
+
+Setiap `class`, `interface`, `struct`, `enum`, `trait`, `function`, dan `method` tanpa `description` mendapat warning `W020`.
+
+Alasannya praktis: nama seperti `process()` atau `Manager` tidak memberi tahu apa-apa. Satu kalimat tentang tugas sebuah unit adalah perbedaan antara orang (atau AI) yang memakai unit itu dengan benar dan yang menebak. Tulis apa yang dia kerjakan dan kapan dipakai, bukan mengulang namanya.
+
+```dim
+// Kurang membantu
+description "Repository untuk order.";
+
+// Lebih membantu
+description "Implementasi OrderStore di atas Postgres. Semua penulisan memakai satu transaksi per order.";
+```
+
+`field` dan `module` tidak wajib punya keterangan, karena tipe dan isinya biasanya sudah cukup menjelaskan.
+
+## Relasi antar kode
+
+Relasi interaksi bekerja seperti di level lain. "Method ini dipanggil oleh function `x`" ditulis sebagai `x -> method { op call }`; daftar pemanggil cukup dihitung dari panah yang masuk.
+
+Untuk bentuk kode, ada empat relasi **struktural**:
+
+| `op` | Arti | Arah |
+|---|---|---|
+| `extends` | pewarisan | turunan → induk |
+| `implements` | memenuhi kontrak | implementasi → interface/trait |
+| `owns` | komposisi | pemilik → yang dimiliki |
+| `refers` | asosiasi | yang menyimpan → yang dirujuk |
+
+```dim
+shop.api.orders.repo -> shop.api.orders.store { op implements }
+```
+
+Relasi struktural hanya boleh antara dua elemen `code` dan tidak punya aliran data. Saat di-zoom out, relasi ini tetap naik: kalau class di komponen A `extends` class di komponen B, panah `A → B` muncul di level komponen sebagai dependency.
+
+## Rekursi
+
+Rekursi langsung adalah satu-satunya relasi ke diri sendiri yang diizinkan:
+
+```dim
+walk -> walk "telusuri anak berikutnya" { op call }
+```
+
+Di peta, rekursi digambar sebagai loop di kotaknya. Begitu kotak itu tertutup di dalam elemen induknya, loop-nya ikut hilang seperti relasi internal lain. Rekursi tidak langsung (`a → b → a`) ditulis sebagai dua relasi biasa; editor bisa mendeteksinya sebagai siklus.
+
+Aturan lengkapnya ada di [spesifikasi §6.4](/referensi/spesifikasi/model/#64-detail-kode).

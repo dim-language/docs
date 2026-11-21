@@ -1,0 +1,6 @@
+// Payment gateway pihak ketiga. Di-import oleh main.dim.
+
+system payment "Payment Gateway" {
+  external;
+  container gateway "Gateway API";
+}

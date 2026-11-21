@@ -1,0 +1,4 @@
+person pembeli "Pembeli";
+system toko "Toko Online";
+
+pembeli -> toko "Belanja";

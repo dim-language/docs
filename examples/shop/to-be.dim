@@ -1,0 +1,27 @@
+// Rencana arsitektur: laporan lama diganti analytics, dan setiap checkout dicatat.
+// File ini turunan dari main.dim; main.dim tetap bisa dipakai sendiri.
+
+amends "main.dim";
+
+remove shop.reports;
+
+extend shop {
+  container analytics "Analytics" {
+    tech "ClickHouse";
+    shape database;
+    description "Menggantikan laporan harian; data masuk lewat event, bukan query ke Postgres.";
+  }
+}
+
+extend shop.api {
+  tech "Rust/axum 0.8";
+  component audit "Audit Log" {
+    description "Mencatat setiap checkout untuk rekonsiliasi dengan payment gateway.";
+  }
+}
+
+audit_checkout: shop.api.checkout.service.run -> shop.api.audit "Catat checkout" {
+  op write;
+  data "CheckoutEvent";
+}
+shop.api.audit -> shop.analytics "Kirim event" { op publish; data "CheckoutEvent" }

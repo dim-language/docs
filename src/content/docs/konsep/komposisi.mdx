@@ -1,0 +1,94 @@
+---
+title: Komposisi file
+description: Memecah satu model ke beberapa file dengan import dan extend, lalu membuat model turunan dengan amends dan remove.
+---
+
+import ModelDiff from '../../../components/model-diff/ModelDiff.astro';
+import shop from '../../../data/shop.json';
+import toBe from '../../../data/shop-to-be.json';
+
+Model arsitektur tumbuh. Begitu satu file mulai susah dibaca, atau beberapa tim menulis bagian yang berbeda, model itu bisa dipecah ke beberapa file. Hasilnya tetap **satu model**: path, lifting di peta, dan id relasi bekerja seolah semuanya ditulis di satu file.
+
+Contoh di repo ini sudah dipecah begitu:
+
+| File | Isi |
+|---|---|
+| `examples/shop/shop.dim` | sistem toko: container, komponen, kode, dan relasi di dalamnya |
+| `examples/shop/payment.dim` | payment gateway pihak ketiga |
+| `examples/shop/main.dim` | pembeli, relasi antar sistem, dan flow checkout |
+| `examples/shop/to-be.dim` | rencana arsitektur berikutnya, turunan dari `main.dim` |
+
+## `import`
+
+```dim
+// main.dim
+import "shop.dim";
+import "payment.dim";
+
+person customer "Customer";
+checkout_click: customer -> shop.web.checkout.button "Klik bayar";
+```
+
+Path di `import` relatif terhadap file yang menulisnya. File yang di-import dari beberapa tempat hanya dimuat sekali, dan import melingkar ditolak.
+
+Dua file yang sama-sama mendeklarasikan `system shop` adalah error, persis seperti dua elemen bersaudara dengan id yang sama. Pesan errornya menyarankan `extend`.
+
+## `extend`
+
+`extend` membuka kembali elemen yang sudah dideklarasikan di file lain untuk **menambah** isinya:
+
+```dim
+// Tim ops menambah keterangan tanpa mengubah shop.dim.
+extend shop.db {
+  description "Satu instance primer dengan satu replika baca.";
+  tags "ops";
+}
+```
+
+Isi bloknya diperlakukan seperti isi deklarasi asli: atribut, elemen anak, relasi, bahkan `extend` lain. Satu batasannya: `extend` tidak boleh mengisi ulang atribut yang sudah ada. Kalau `shop.db` sudah punya `description`, menulisnya lagi lewat `extend` adalah error `E044`. Memecah file tidak boleh diam-diam mengubah isi; untuk mengubah, pakai `amends`.
+
+## `amends`: model turunan
+
+Kadang yang dibutuhkan bukan menambah, tapi membuat **versi lain** dari arsitektur yang sama: kondisi sekarang dan rencana berikutnya, atau varian per environment. Untuk itu, satu file bisa diawali `amends`:
+
+```dim
+// to-be.dim
+amends "main.dim";
+
+remove shop.reports;
+
+extend shop {
+  container analytics "Analytics" {
+    tech "ClickHouse";
+    shape database;
+  }
+}
+
+extend shop.api {
+  tech "Rust/axum 0.8";
+  component audit "Audit Log";
+}
+
+audit_checkout: shop.api.checkout.service.run -> shop.api.audit "Catat checkout" {
+  op write;
+  data "CheckoutEvent";
+}
+shop.api.audit -> shop.analytics "Kirim event" { op publish; data "CheckoutEvent" }
+```
+
+Di file `amends`, dua hal yang biasanya dilarang menjadi boleh:
+
+- `extend` boleh **menimpa** atribut, seperti `tech` di atas.
+- `remove` menghapus elemen beserta seluruh isinya dan semua relasi yang menyentuhnya, atau menghapus satu relasi atau flow lewat id-nya.
+
+`main.dim` tidak berubah dan tetap bisa dipakai sendiri. Gunakan `compileProject` dengan `to-be.dim` sebagai file utama untuk memvalidasi model turunannya.
+
+## Diff antar model
+
+Karena id elemen adalah path dan id relasi stabil, dua model bisa dibandingkan satu per satu. Tabel ini dihitung saat build dari output parser untuk `main.dim` dan `to-be.dim`:
+
+<ModelDiff base={shop} derived={toBe} />
+
+Relasi `shop.reports → shop.db` ikut hilang karena ujungnya dihapus. Relasi lain yang id-nya berupa id default (`a->b#0`) tetap punya id yang sama di kedua model, karena relasi yang dihapus tetap dihitung saat memberi nomor.
+
+Aturan lengkapnya, termasuk urutan penerapan file, ada di [spesifikasi §11](/referensi/spesifikasi/komposisi-dan-flow/#11-komposisi-file).

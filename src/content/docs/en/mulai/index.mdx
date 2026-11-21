@@ -1,0 +1,86 @@
+---
+title: Your first model
+description: Model an online shop, check each step with the SDK, then explore the result in a zoomable map.
+---
+
+import ZoomMap from '../../../../components/zoom-map/ZoomMap.astro';
+import toko from '../../../../data/toko-tutorial.json';
+
+Build a model of an online shop in one file called `toko.dim`. Start with the customer and system, then work down to the function that saves an order. [Install the SDK and save the `check.mjs` script](/en/referensi/cli/#check-one-file) and run the commands from the folder where you save the file.
+
+The example uses Indonesian names such as `toko` (shop) and `pesanan` (order), and the script prints its messages in Indonesian. Keep those names when copying the model so the paths match.
+
+## 1. A person and a system
+
+Create `toko.dim` with this model.
+
+```dim contoh-tutorial="sistem.dim"
+```
+
+Each element has a kind (`person` or `system`), an ID used in code, and a name displayed on the map. The arrow `pembeli -> toko` shows that the customer starts the interaction. A declaration without a block ends with `;`.
+
+```bash
+node check.mjs toko.dim
+```
+
+```text contoh-tutorial="sistem"
+```
+
+Two elements and a relation show who uses the shop.
+
+## 2. Inside the system
+
+Replace `toko.dim` with this model. The three containers belong to `toko`. Refer to them by paths such as `toko.web`.
+
+```dim contoh-tutorial="container.dim"
+```
+
+- `ui` marks Web as the interface the customer uses. `shape database` gives Postgres the database shape on the map.
+- Web sends `Pesanan` to the API with `data push` and receives `IdPesanan` with `data pull`. The direction defaults to `push` for `op write`.
+- When `toko` is closed on the map, the relation `pembeli -> toko.web` appears as `pembeli → toko`.
+
+```bash
+node check.mjs toko.dim
+```
+
+```text contoh-tutorial="container"
+```
+
+## 3. Down to the code
+
+Replace the file again. This time `api` contains the `pesanan` component and its `simpan_pesanan()` function. The function's path is the source of the `INSERT pesanan` relation.
+
+```dim contoh-tutorial="kode.dim" ins={10-12} ins="toko.api.pesanan.simpan"
+```
+
+```bash
+node check.mjs toko.dim
+```
+
+```text contoh-tutorial="kode"
+```
+
+The model still has three relations. The `INSERT pesanan` relation now starts at the function. Zoom in to follow the `API → Postgres` arrow until its source appears as `simpan_pesanan() → Postgres`.
+
+<ZoomMap model={toko} uid="model-pertama" />
+
+## 4. Fix a validation error
+
+In the `POST /pesanan` relation, change `data push "Pesanan"` to `data "Pesanan"` and run the check again.
+
+```bash
+node check.mjs toko.dim
+```
+
+Look for this line in the output.
+
+```text contoh-tutorial="tanpaArah"
+```
+
+An `op call` can send a request and receive a response, so specify a direction for each `data` attribute. Restore `push` and run `node check.mjs toko.dim` again to get the `ok` summary from step three.
+
+## Next steps
+
+- [Elements and attributes](/en/menulis/elemen/) and [Relations and paths](/en/menulis/relasi/) explain the syntax.
+- [Interactions and data flow](/en/konsep/aliran-data/) covers `op` and data direction.
+- [The zoomable map](/en/konsep/peta-zoom/) shows how dim moves relations between levels.

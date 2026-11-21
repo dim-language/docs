@@ -1,0 +1,31 @@
+{
+  "name": "dim-docs",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "bun scripts/example-json.mjs && bun --bun astro dev",
+    "build": "bun scripts/example-json.mjs && bun --bun astro build",
+    "preview": "astro preview",
+    "check": "bun scripts/example-json.mjs && bun --bun astro check",
+    "astro": "astro",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.42.10",
+    "@dim/zoom-map": "https://github.com/dim-language/dim-sdk/releases/download/v0.1.0/dim-zoom-map-0.1.0.tgz",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@fontsource/source-sans-3": "^5.3.1",
+    "@fontsource/source-serif-4": "^5.3.1",
+    "astro": "^7.3.6",
+    "sharp": "^0.35.3"
+  },
+  "private": true,
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "typescript": "^6"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dim-language/docs.git"
+  }
+}

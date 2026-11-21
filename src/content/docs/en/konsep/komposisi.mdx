@@ -1,0 +1,91 @@
+---
+title: File composition
+description: Split a model across files with import and extend, then derive another model with amends and remove.
+---
+
+import ModelDiff from '../../../../components/model-diff/ModelDiff.astro';
+import shop from '../../../../data/shop.json';
+import toBe from '../../../../data/shop-to-be.json';
+
+As an architecture model grows, split it across files so each part is easier to read or own. dim still resolves paths, lifts arrows, and assigns relation IDs as if you had written **one model** in a single file.
+
+The shop example uses four files.
+
+| File | Contents |
+|---|---|
+| `examples/shop/shop.dim` | The shop system, its containers, components, code, and internal relations |
+| `examples/shop/payment.dim` | A third-party payment gateway |
+| `examples/shop/main.dim` | The customer, relations between systems, and the checkout flow |
+| `examples/shop/to-be.dim` | A proposed architecture derived from `main.dim` |
+
+## `import`
+
+```dim
+// main.dim
+import "shop.dim";
+import "payment.dim";
+
+person customer "Customer";
+checkout_click: customer -> shop.web.checkout.button "Klik bayar";
+```
+
+An `import` path is relative to the file that declares it. dim loads an imported file once and rejects circular imports.
+
+If two files declare `system shop`, the duplicate is an error, just as it would be for two sibling elements with the same ID. The diagnostic points to `extend`.
+
+## `extend`
+
+Use `extend` to reopen an element declared elsewhere and **add** to it.
+
+```dim
+// Tim ops menambah keterangan tanpa mengubah shop.dim.
+extend shop.db {
+  description "Satu instance primer dengan satu replika baca.";
+  tags "ops";
+}
+```
+
+dim treats the block as part of the original declaration. It can contain attributes, child elements, relations, and nested `extend` statements. If `shop.db` already has a `description`, setting it again with a regular `extend` raises `E044`. Use `amends` when you want to change an existing attribute.
+
+## `amends` for derived models
+
+Start a file with `amends` to describe a proposed architecture or a variant for another environment.
+
+```dim
+// to-be.dim
+amends "main.dim";
+
+remove shop.reports;
+
+extend shop {
+  container analytics "Analytics" {
+    tech "ClickHouse";
+    shape database;
+  }
+}
+
+extend shop.api {
+  tech "Rust/axum 0.8";
+  component audit "Audit Log";
+}
+
+audit_checkout: shop.api.checkout.service.run -> shop.api.audit "Catat checkout" {
+  op write;
+  data "CheckoutEvent";
+}
+shop.api.audit -> shop.analytics "Kirim event" { op publish; data "CheckoutEvent" }
+```
+
+Inside an amendment file, you can override existing attributes with `extend`, as shown for `tech` above. You can also use `remove` to delete an element, its descendants, and every relation that touches them, or to delete one relation or flow by ID.
+
+You can still use `main.dim` on its own. Use `compileProject` with `to-be.dim` as the entry file to validate the derived model.
+
+## Comparing models
+
+Element IDs are paths, and relation IDs are stable. dim can use them to compare individual elements and relations. This table comes from the parser outputs for `main.dim` and `to-be.dim` at build time.
+
+<ModelDiff base={shop} derived={toBe} />
+
+The relation `shop.reports → shop.db` disappears when its endpoint is removed. Other relations keep the same default IDs, such as `a->b#0`, in both models because dim still counts removed relations when assigning numbers.
+
+See [specification §11](/en/referensi/spesifikasi/komposisi-dan-flow/#11-file-composition) for the full rules, including the order in which files take effect.

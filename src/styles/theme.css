@@ -1,0 +1,197 @@
+/*
+ * Tema "peta cetak" untuk docs dim. Arah dan alasan tiap keputusan: apps/docs/DESIGN.md.
+ * Starlight memakai mode gelap di :root dan mode terang di [data-theme='light'].
+ * Catatan nama token Starlight: "white" = teks paling kuat, "black" = latar.
+ */
+
+:root {
+	--sl-font: 'Source Sans 3', var(--sl-font-system);
+	--sl-font-mono: 'IBM Plex Mono', var(--sl-font-system-mono);
+	--dim-font-display: 'Source Serif 4', Georgia, serif;
+
+	/* Peta malam */
+	--sl-color-white: #f7f3e8;
+	--sl-color-gray-1: #e6e1d2;
+	--sl-color-gray-2: #cfcbbe;
+	--sl-color-gray-3: #8e9893;
+	--sl-color-gray-4: #85908f;
+	--sl-color-gray-5: #26333b;
+	--sl-color-gray-6: #18232a;
+	--sl-color-black: #10181d;
+
+	--sl-color-accent-low: #3a1a10;
+	--sl-color-accent: #d9572f;
+	--sl-color-accent-high: #f0997a;
+
+	/* Warna khusus peta zoom. */
+	--dim-place-bg: #18232a;
+	--dim-place-border: #8e9893;
+	--dim-region-border: #5e6b70;
+	--dim-edge: #8e9893;
+	--dim-route: var(--sl-color-accent-high);
+
+	--sl-content-width: 46rem;
+	--sl-line-height: 1.7;
+}
+
+:root[data-theme='light'] {
+	/* Kertas peta */
+	--sl-color-white: #15232b;
+	--sl-color-gray-1: #1e2c33;
+	--sl-color-gray-2: #2c3a41;
+	--sl-color-gray-3: #4f5a5e;
+	--sl-color-gray-4: #61675f;
+	--sl-color-gray-5: #cfc6b0;
+	--sl-color-gray-6: #ece5d3;
+	--sl-color-gray-7: #faf7ef;
+	--sl-color-black: #f5f1e6;
+
+	--sl-color-accent-low: #f6d9cb;
+	--sl-color-accent: #b23a16;
+	--sl-color-accent-high: #7a2710;
+
+	--dim-place-bg: #faf7ef;
+	--dim-place-border: #4f5a5e;
+	--dim-region-border: #8a8f86;
+	--dim-edge: #6c736c;
+	--dim-route: var(--sl-color-accent);
+}
+
+/* Heading memakai serif judul peta; teks tetap sans untuk bacaan panjang. */
+.sl-markdown-content :is(h1, h2, h3, h4),
+h1#_top,
+.dim-landing :is(h1, h2) {
+	font-family: var(--dim-font-display);
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+.sl-markdown-content :is(h5, h6) {
+	font-family: var(--sl-font);
+}
+
+.site-title {
+	gap: 0.55rem;
+	color: var(--sl-color-white);
+	font-family: var(--dim-font-display);
+	font-weight: 600;
+	font-size: var(--sl-text-2xl);
+	letter-spacing: -0.01em;
+}
+
+.site-title img {
+	height: 1.75rem;
+}
+
+starlight-lang-select select {
+	width: 11.5rem;
+}
+
+/* Tabel referensi (kode diagnostik, atribut) dibaca lebih rapat. */
+.sl-markdown-content table {
+	font-size: var(--sl-text-sm);
+}
+
+.sl-markdown-content :is(table) code {
+	white-space: nowrap;
+}
+
+/* Kontrol interaktif selalu menunjukkan bisa diklik (R-39). */
+:is(a[href], button, summary, select, label[for], [role='button'], [role='tab']):not(:disabled) {
+	cursor: pointer;
+}
+
+:is(button, select):disabled {
+	cursor: not-allowed;
+}
+
+/* ---------------------------------------------------------------------------
+ * Beranda: kode pembuka bertemu peta lebar, diikuti contoh dan panduan.
+ * ------------------------------------------------------------------------- */
+
+.hero {
+	grid-template-columns: minmax(0, 1fr);
+	padding-top: clamp(2.5rem, 5vw, 4rem);
+	padding-bottom: 1rem;
+}
+
+.hero h1 {
+	font-family: var(--dim-font-display);
+	font-weight: 600;
+	letter-spacing: -0.015em;
+	max-width: 29ch;
+	text-wrap: balance;
+}
+
+.hero .tagline {
+	max-width: 44rem;
+	color: var(--sl-color-gray-2);
+}
+
+.dim-landing > section {
+	margin-top: 4.5rem;
+}
+
+.dim-landing > .dim-demo {
+	margin-top: 2rem;
+}
+
+.dim-demo > p {
+	margin-top: 1.5rem;
+	margin-bottom: 0.75rem;
+}
+
+.dim-landing > section h2 {
+	margin-top: 0;
+}
+
+.dim-split {
+	display: grid;
+	gap: 1.5rem 3rem;
+	align-items: start;
+}
+
+@media (min-width: 64rem) {
+	.dim-split {
+		grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+	}
+}
+
+.dim-split > div > :first-child {
+	margin-top: 0;
+}
+
+.dim-features > p {
+	max-width: 40rem;
+}
+
+.dim-features {
+	padding-top: 2rem;
+	border-top: 1px solid var(--sl-color-gray-5);
+}
+
+.dim-features-grid {
+	display: grid;
+	gap: 0 3rem;
+}
+
+@media (min-width: 50rem) {
+	.dim-features-grid {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
+/* Tombol aksi memakai radius kecil yang sama dengan kotak peta, bukan pil. */
+.sl-link-button {
+	border-radius: 3px;
+}
+
+/* Label "Otomatis" lebih panjang dari lebar bawaan pemilih tema. */
+starlight-theme-select select {
+	width: calc(7.25em + var(--sl-inline-padding, 0.5rem) * 2);
+}
+
+/* Kolom di grid beranda sejajar di atas; margin antar-sibling Starlight tidak berlaku di sini. */
+:is(.dim-split, .dim-features-grid) > * {
+	margin-top: 0;
+}

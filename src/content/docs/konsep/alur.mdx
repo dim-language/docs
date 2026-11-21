@@ -1,0 +1,49 @@
+---
+title: Alur (flow)
+description: Menandai urutan relasi sebagai satu user journey yang bisa disorot di setiap level zoom.
+---
+
+import ZoomMap from '../../../components/zoom-map/ZoomMap.astro';
+import shop from '../../../data/shop.json';
+
+Panah di peta menjawab "siapa bicara dengan siapa". Pertanyaan berikutnya biasanya "apa yang terjadi saat pembeli menekan bayar?". Jawabannya adalah **urutan** beberapa relasi, dan `flow` menyimpan urutan itu di model.
+
+```dim
+flow checkout "Checkout" {
+  description "Dari pembeli menekan bayar sampai order tersimpan.";
+  step checkout_click;
+  step checkout_post;
+  step run_checkout;
+  step charge "Tagih dulu";
+  step charge_gateway;
+  step save_order "Simpan setelah tertagih";
+  step insert_order;
+}
+```
+
+Setiap `step` merujuk relasi lewat id eksplisitnya, mis. `charge: a -> b`. Relasi tanpa id eksplisit tidak bisa dipakai di flow, karena id default (`a->b#0`) berubah kalau ujung relasinya berubah. Keterangan di `step` opsional; kalau tidak ditulis, label relasinya yang dipakai.
+
+## Flow di setiap level zoom
+
+Flow ditulis di level paling detail, sama seperti relasi. Saat di-zoom out, setiap step ikut di-lift:
+
+1. Step yang relasinya menjadi internal (kedua ujungnya di dalam satu elemen tertutup) disembunyikan.
+2. Step berurutan yang jatuh ke panah yang sama digabung.
+3. Langkah yang tersisa dinomori ulang untuk level itu.
+
+<ZoomMap
+  model={shop}
+  uid="alur"
+  flow="checkout"
+  caption="Perbesar peta untuk mengikuti alur Checkout. Langkah di dalam kotak muncul saat isi kotaknya cukup besar untuk dibaca."
+/>
+
+Saat komponen `Checkout` dan `Payments` terlihat sebagai kotak, `charge` (method `checkout()` memanggil `PaymentClient.charge()`) tampil sebagai panah `Checkout → Payments`. Peta menyembunyikan `run_checkout` karena kedua ujungnya ada di komponen `Checkout`.
+
+## Kapan memakai flow
+
+- Untuk journey yang sering ditanyakan orang baru: checkout, login, refund.
+- Untuk menandai jalur kritis yang harus dijaga saat refactor.
+- Bukan untuk menggambar semua kemungkinan cabang. Flow adalah satu urutan; cabang lain ditulis sebagai flow lain.
+
+Aturan lengkapnya ada di [spesifikasi §12](/referensi/spesifikasi/komposisi-dan-flow/#12-flow).

@@ -1,0 +1,316 @@
+---
+// Peta zoom interaktif. Data berasal dari output `compileProject`, bukan ditulis tangan.
+// Isi peta (model, layout, render, controller, CSS) ada di @dim/zoom-map; file ini hanya
+// markup docs, pemetaan token Starlight, dan tata letak figure.
+import { createMap, initDim, render, type DimModel } from '@dim/zoom-map';
+import '@dim/zoom-map/map.css';
+
+interface Props {
+	model: DimModel;
+	/** Elemen yang ditampilkan dekat pada contoh level kode. */
+	focus?: string;
+	/** Id unik kalau ada lebih dari satu peta di halaman. */
+	uid?: string;
+	/** Id flow yang langsung disorot. */
+	flow?: string;
+	caption?: string;
+}
+
+const { model, focus, uid = 'zm', flow = null, caption } = Astro.props;
+const language = Astro.locals.starlightRoute.lang === 'en' ? 'en' : 'id';
+const text = language === 'en' ? {
+	scale: 'Map zoom',
+	zoomIn: 'Zoom in', zoomOut: 'Zoom out', fit: 'Fit to view',
+	hint: 'Drag to move the map. Double-click a box to zoom to it.',
+	viewport: 'Architecture map',
+	flows: 'Flows',
+	routes: 'Relations in this view',
+} : {
+	scale: 'Zoom peta',
+	zoomIn: 'Perbesar peta', zoomOut: 'Perkecil peta', fit: 'Paskan ke layar',
+	hint: 'Seret untuk menggeser peta. Klik dua kali kotak untuk memperbesarnya.',
+	viewport: 'Peta arsitektur',
+	flows: 'Alur',
+	routes: 'Relasi di tampilan ini',
+};
+await initDim();
+const map = createMap(model);
+const initial = (() => {
+	try {
+		return render(map, { expanded: new Set(), pinned: null, flow }, uid, {
+			language, fixed: true, compactRoutes: true, interactive: false,
+		});
+	} finally {
+		map.free();
+	}
+})();
+const hasFlows = (model.flows?.length ?? 0) > 0;
+---
+
+<figure class="zoom-map zm-map not-content" data-zoom-map data-uid={uid} data-start-at={focus} data-flow={flow ?? ''} data-language={language}>
+	<div class="zm-toolbar" data-map-controls hidden>
+		<div class="zm-camera-controls" role="group" aria-label={text.scale}>
+			<button type="button" data-zoom-out aria-label={text.zoomOut} title={text.zoomOut}>
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /></svg>
+			</button>
+			<span data-zoom-value>50%</span>
+			<button type="button" data-zoom-in aria-label={text.zoomIn} title={text.zoomIn}>
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-7-7v14" /></svg>
+			</button>
+			<button type="button" data-zoom-fit aria-label={text.fit} title={text.fit}>
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5" /></svg>
+			</button>
+		</div>
+		{hasFlows && <div class="zm-flows zm-toolbar-flows" role="group" aria-label={text.flows} data-flow-buttons />}
+		<p class="zm-hint">{text.hint}</p>
+	</div>
+
+	<div class="zm-viewport" tabindex="0" role="group" aria-label={text.viewport}>
+		<div class="zm-stage" style={`--zm-w:${initial.width};--zm-h:${initial.height}`} set:html={initial.stage} />
+	</div>
+
+	<div class="zm-panels">
+		{hasFlows && <div class="zm-flows zm-flow-details" aria-live="polite" set:html={initial.flowDetails} />}
+		<details class="zm-routes zm-relations">
+			<summary>
+				<span>{text.routes} <span class="zm-relation-count">(<span data-route-count>{initial.routeCount}</span>)</span></span>
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg>
+			</summary>
+			<div class="zm-routes-body" set:html={initial.routes} />
+		</details>
+	</div>
+
+	{caption && <figcaption>{caption}</figcaption>}
+	<script is:inline type="application/json" data-zoom-data set:html={JSON.stringify(model).replace(/</g, '\\u003c')} />
+</figure>
+
+<script>
+	import { createZoomMap, initDim, type DimModel } from '@dim/zoom-map';
+	import { createCamera } from './camera';
+
+	function mount(root: HTMLElement) {
+		const raw = root.querySelector<HTMLScriptElement>('[data-zoom-data]')?.textContent;
+		const viewport = root.querySelector<HTMLElement>('.zm-viewport');
+		const stage = root.querySelector<HTMLElement>('.zm-stage');
+		const routes = root.querySelector<HTMLElement>('.zm-routes-body');
+		const routeCount = root.querySelector<HTMLElement>('[data-route-count]');
+		const flows = root.querySelector<HTMLElement>('.zm-flow-details');
+		const flowButtons = root.querySelector<HTMLElement>('[data-flow-buttons]');
+		const toolbar = root.querySelector<HTMLElement>('[data-map-controls]');
+		const zoomOut = root.querySelector<HTMLButtonElement>('[data-zoom-out]');
+		const zoomIn = root.querySelector<HTMLButtonElement>('[data-zoom-in]');
+		const zoomFit = root.querySelector<HTMLButtonElement>('[data-zoom-fit]');
+		const zoomValue = root.querySelector<HTMLElement>('[data-zoom-value]');
+		if (!raw || !viewport || !stage || !routes || !toolbar || !zoomOut || !zoomIn || !zoomFit || !zoomValue) return;
+
+		const model: DimModel = JSON.parse(raw);
+		const camera = createCamera(viewport, stage, (scale) => {
+			zoomValue.textContent = `${Math.round(scale * 100)}%`;
+			zoomOut.disabled = scale <= 0.1;
+			zoomIn.disabled = scale >= 3;
+			map.setZoom(scale);
+		});
+		const map = createZoomMap(
+			{ root, stage, routes, routeCount, flows, flowButtons },
+			{
+				uid: root.dataset.uid ?? 'zm',
+				camera: { scale: 0, focus: camera.focus },
+				compactRoutes: true,
+				flow: root.dataset.flow || null,
+				language: root.dataset.language === 'en' ? 'en' : 'id',
+				onRender: ({ width, height }) => camera.setSize(width, height),
+			},
+		);
+		map.setModel(model);
+		viewport.setAttribute('data-ready', '');
+		toolbar.hidden = false;
+		zoomOut.addEventListener('click', camera.zoomOut);
+		zoomIn.addEventListener('click', camera.zoomIn);
+		zoomFit.addEventListener('click', camera.fit);
+		const start = root.dataset.startAt ? map.getBox(root.dataset.startAt) : undefined;
+		if (start) camera.focus(start, 1.25);
+		else camera.fit();
+	}
+
+	initDim().then(() => {
+		for (const root of document.querySelectorAll<HTMLElement>('[data-zoom-map]')) {
+			try {
+				mount(root);
+			} catch (error) {
+				console.error('Could not mount DIM map', error);
+			}
+		}
+	}).catch((error) => console.error('Could not initialize DIM map', error));
+</script>
+
+<style>
+	/* Token peta (@dim/zoom-map/src/map.css) diisi dari tema Starlight docs. */
+	.zoom-map {
+		--zm-ink: var(--sl-color-white);
+		--zm-text: var(--sl-color-gray-2);
+		--zm-muted: var(--sl-color-gray-3);
+		--zm-paper: var(--sl-color-black);
+		--zm-rule: var(--sl-color-gray-5);
+		--zm-hover: var(--sl-color-gray-6);
+		--zm-accent: var(--sl-color-accent);
+		--zm-route: var(--dim-route);
+		--zm-edge: var(--dim-edge);
+		--zm-place-bg: var(--dim-place-bg);
+		--zm-place-border: var(--dim-place-border);
+		--zm-region-border: var(--dim-region-border);
+		--zm-font-mono: var(--sl-font-mono);
+		--zm-text-xs: var(--sl-text-xs);
+		--zm-text-sm: var(--sl-text-sm);
+
+		margin: 2rem 0;
+	}
+
+	.zm-toolbar {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.75rem 1.25rem;
+		margin-bottom: 0.75rem;
+	}
+
+	.zm-toolbar[hidden] { display: none; }
+
+	.zm-camera-controls {
+		display: inline-flex;
+		align-items: center;
+		border: 1.5px solid var(--zm-ink);
+		border-radius: 2px;
+		color: var(--zm-ink);
+	}
+
+	.zm-camera-controls button {
+		display: grid;
+		place-items: center;
+		inline-size: 44px;
+		block-size: 44px;
+		padding: 0;
+		border: 0;
+		background: var(--zm-paper);
+		color: inherit;
+		cursor: pointer;
+	}
+
+	.zm-camera-controls button[data-zoom-fit] { border-inline-start: 1px solid var(--zm-ink); }
+	.zm-camera-controls button:hover:not(:disabled) { background: var(--zm-hover); }
+	.zm-camera-controls button:active:not(:disabled) { box-shadow: inset 0 0 0 1px var(--zm-ink); }
+	.zm-camera-controls button:disabled { color: var(--zm-muted); cursor: default; }
+	.zm-camera-controls button:focus-visible { outline: 2px solid var(--zm-accent); outline-offset: 2px; z-index: 1; }
+	.zm-camera-controls svg { inline-size: 1.1rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+	.zm-camera-controls span { min-inline-size: 3rem; text-align: center; font-size: var(--sl-text-sm); font-variant-numeric: tabular-nums; }
+
+	.zm-toolbar-flows :global(.zm-flow) {
+		flex-direction: row;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.2rem 0.45rem;
+		cursor: pointer;
+	}
+
+	.zm-toolbar-flows :global(.zm-flow .zm-route-meta)::before {
+		content: '·';
+		margin-inline-end: 0.35rem;
+	}
+
+	.zm-toolbar-flows :global(.zm-flow[aria-pressed='true']) { color: var(--zm-route); }
+
+	.zm-hint {
+		margin: 0;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-3);
+	}
+
+	.zm-viewport {
+		block-size: clamp(20rem, 52vw, 30rem);
+		overflow: auto;
+		padding: 1rem;
+		border: 1px solid var(--sl-color-gray-5);
+		background: var(--sl-color-black);
+	}
+
+	.zm-viewport[data-ready] {
+		position: relative;
+		overflow: hidden;
+		padding: 0;
+		touch-action: pan-y;
+		cursor: grab;
+		user-select: none;
+	}
+
+	.zm-viewport[data-ready] :global([data-zoom-to]) { cursor: zoom-in; }
+	.zm-viewport[data-dragging], .zm-viewport[data-dragging] :global([data-zoom-to]) { cursor: grabbing; }
+	.zm-viewport[data-compact] :global(.zm-place) { padding: calc(var(--u) * 3) calc(var(--u) * 5); font-size: calc(var(--u) * 12); overflow: hidden; }
+	.zm-viewport[data-compact] :global(.zm-place :is(.zm-kind, .zm-tech)) { display: none; }
+	.zm-viewport[data-ready] :global([data-zoom-to]:focus-visible) { outline: calc(var(--u) * 2) solid var(--zm-accent); outline-offset: calc(var(--u) * -2); }
+
+	.zm-viewport:focus-visible {
+		outline: 2px solid var(--sl-color-accent);
+		outline-offset: 2px;
+	}
+
+	.zm-stage {
+		width: min(100%, calc(var(--zm-w) * 0.5px));
+		margin-inline: auto;
+	}
+
+	.zm-viewport[data-ready] .zm-stage {
+		--u: calc(1px / max(var(--zm-zoom, 0.5), 0.32));
+		position: absolute;
+		inset: 0 auto auto 0;
+		width: calc(var(--zm-w) * 1px);
+		margin: 0;
+		transform-origin: 0 0;
+	}
+
+	.zm-panels {
+		display: grid;
+		gap: 0.75rem;
+		margin-top: 0.75rem;
+	}
+
+	.zm-flow-details:empty { display: none; }
+	.zm-flow-details :global(.zm-flow-steps) { grid-template-columns: minmax(0, 1fr); margin-top: 0.5rem; }
+	.zm-flow-details :global(.zm-route-ends) { overflow-wrap: anywhere; }
+
+	.zm-relations { border-block: 1px solid var(--zm-rule); }
+
+	.zm-relations summary {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		min-block-size: 44px;
+		padding: 0.375rem 0.625rem;
+		color: var(--zm-ink);
+		font-weight: 600;
+		list-style: none;
+		cursor: pointer;
+	}
+
+	.zm-relations summary::-webkit-details-marker { display: none; }
+	.zm-relations summary:hover { background: var(--zm-hover); }
+	.zm-relations summary:focus-visible { outline: 2px solid var(--zm-accent); outline-offset: -2px; }
+	.zm-relations summary svg { flex: none; inline-size: 1rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+	.zm-relations[open] summary svg { transform: rotate(90deg); }
+	.zm-relation-count { color: var(--zm-muted); font-weight: 400; font-variant-numeric: tabular-nums; }
+
+	.zm-relations :global(.zm-route-list) { display: block; }
+	.zm-relations :global(.zm-route-list > li) { border-block-start: 1px solid var(--zm-rule); }
+	.zm-relations :global(.zm-route) { justify-content: center; padding-inline: 0.625rem; overflow-wrap: anywhere; }
+	.zm-relations :global(button.zm-route) { cursor: pointer; }
+	.zm-relations :global(.zm-route[aria-expanded='true'] .zm-route-ends) { color: var(--zm-route); }
+	.zm-relations :global(button.zm-route:hover) { background: var(--zm-hover); border-color: transparent; }
+	.zm-relations :global(.zm-route:focus-visible) { outline-offset: -2px; }
+	.zm-relations :global(.zm-route-detail) { margin: 0; padding: 0 0.625rem 0.625rem; }
+	.zm-relations :global(.zm-empty) { margin: 0; padding: 0.625rem; }
+
+	.zoom-map figcaption {
+		margin-top: 0.75rem;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-3);
+	}
+</style>

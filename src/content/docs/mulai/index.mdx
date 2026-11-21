@@ -1,0 +1,84 @@
+---
+title: Model pertama
+description: Buat model toko online, cek tiap tahap dengan SDK, lalu lihat hasilnya di peta yang bisa di-zoom.
+---
+
+import ZoomMap from '../../../components/zoom-map/ZoomMap.astro';
+import toko from '../../../data/toko-tutorial.json';
+
+Buat model toko online dalam satu file `toko.dim`, dari pembeli dan sistem sampai fungsi yang menyimpan pesanan. [Pasang SDK dan simpan skrip `check.mjs`](/referensi/cli/#cek-satu-file) sebelum mulai, lalu jalankan perintah tutorial dari folder tempat kamu menyimpan file itu.
+
+## 1. Orang dan sistem
+
+Buat file `toko.dim` dan isi dengan model berikut.
+
+```dim contoh-tutorial="sistem.dim"
+```
+
+Setiap elemen punya jenis (`person` atau `system`), ID yang dipakai dalam kode, dan nama yang tampil di peta. Panah `pembeli -> toko` menunjukkan bahwa pembeli yang memulai interaksi. Deklarasi tanpa blok diakhiri dengan `;`.
+
+```bash
+node check.mjs toko.dim
+```
+
+```text contoh-tutorial="sistem"
+```
+
+Dua elemen dan satu relasi sudah cukup untuk menggambarkan siapa yang memakai toko online.
+
+## 2. Isi sistemnya
+
+Ganti isi `toko.dim` dengan model ini. Ketiga `container` berada di dalam `toko` dan dirujuk dengan path seperti `toko.web`.
+
+```dim contoh-tutorial="container.dim"
+```
+
+- `ui` menandai Web sebagai antarmuka yang dipakai pembeli. `shape database` memberi Postgres bentuk database di peta.
+- Web mengirim `Pesanan` ke API dengan `data push` dan menerima `IdPesanan` dengan `data pull`. Pada `op write`, `push` sudah menjadi arah bawaan.
+- Saat `toko` tertutup di peta, relasi `pembeli -> toko.web` tampil sebagai `pembeli → toko`.
+
+```bash
+node check.mjs toko.dim
+```
+
+```text contoh-tutorial="container"
+```
+
+## 3. Turun ke kode
+
+Ganti lagi isi `toko.dim`. Kali ini `api` berisi komponen `pesanan` yang punya fungsi `simpan_pesanan()`. Gunakan path fungsi itu sebagai asal relasi `INSERT pesanan`.
+
+```dim contoh-tutorial="kode.dim" ins={10-12} ins="toko.api.pesanan.simpan"
+```
+
+```bash
+node check.mjs toko.dim
+```
+
+```text contoh-tutorial="kode"
+```
+
+Jumlah relasinya tetap tiga karena relasi `INSERT pesanan` sekarang dimulai dari fungsi. Perbesar peta untuk mengikuti panah `API → Postgres` sampai sumbernya terlihat sebagai `simpan_pesanan() → Postgres`.
+
+<ZoomMap model={toko} uid="model-pertama" />
+
+## 4. Latihan memperbaiki error
+
+Di baris `POST /pesanan`, ubah `data push "Pesanan"` menjadi `data "Pesanan"`, lalu cek lagi.
+
+```bash
+node check.mjs toko.dim
+```
+
+Cari baris ini pada output skrip.
+
+```text contoh-tutorial="tanpaArah"
+```
+
+`op call` bisa mengirim permintaan dan menerima respons, jadi tentukan arah setiap `data`. Tambahkan kembali `push`, lalu jalankan `node check.mjs toko.dim` sampai ringkasan `ok` dari langkah ketiga muncul lagi.
+
+## Selanjutnya
+
+- [Elemen dan atribut](/menulis/elemen/) dan [Relasi dan path](/menulis/relasi/) untuk detail sintaks.
+- [Interaksi dan aliran data](/konsep/aliran-data/) untuk memilih `op` dan arah `data`.
+- [Peta yang bisa di-zoom](/konsep/peta-zoom/) untuk memahami bagaimana relasi berpindah antarlevel zoom.

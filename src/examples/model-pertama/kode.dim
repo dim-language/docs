@@ -1,0 +1,21 @@
+person pembeli "Pembeli";
+
+system toko "Toko Online" {
+  container web "Web" {
+    tech "Astro";
+    ui;
+  }
+  container api "API" {
+    tech "Rust";
+    component pesanan "Pesanan" {
+      code simpan "simpan_pesanan()";
+    }
+  }
+  container db "Postgres" {
+    shape database;
+  }
+}
+
+pembeli -> toko.web "Belanja";
+toko.web -> toko.api "POST /pesanan" { op call; data push "Pesanan"; data pull "IdPesanan" }
+toko.api.pesanan.simpan -> toko.db "INSERT pesanan" { op write; data "Pesanan" }

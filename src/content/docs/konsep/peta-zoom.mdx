@@ -1,0 +1,57 @@
+---
+title: Peta yang bisa di-zoom
+description: Bagaimana satu model dim menghasilkan diagram di setiap level, lewat frontier, lifting, dan aggregasi.
+---
+
+import ZoomMap from '../../../components/zoom-map/ZoomMap.astro';
+import shop from '../../../data/shop.json';
+
+Di C4 biasa, tiap level adalah diagram terpisah yang digambar sendiri-sendiri. Di dim, hanya ada **satu model**. Setiap level zoom adalah cara pandang ke model yang sama, dihitung dari elemen mana yang sedang terbuka.
+
+Perbesar peta untuk melihat isi tiap kotak saat detailnya cukup besar untuk dibaca. Klik dua kali `Online Shop` untuk mendekat, lalu cari `API` dan masuk lebih jauh.
+
+<ZoomMap model={shop} uid="konsep" />
+
+## Tempat dan wilayah
+
+Setiap elemen yang terlihat ada dalam salah satu dari dua keadaan:
+
+- **Tempat** (kotak solid): elemen yang tertutup, atau yang memang tidak punya isi. Panah selalu menempel ke tempat.
+- **Wilayah** (batas putus-putus): elemen yang sedang dibuka. Wilayah hanya membungkus isinya, panah tidak pernah menempel ke wilayah.
+
+Kumpulan semua tempat yang sedang terlihat disebut **frontier**. Saat semua sistem tertutup, frontier-nya `Customer`, `Online Shop`, dan `Payment Gateway`.
+
+## Lifting
+
+Relasi selalu disimpan dengan ujung aslinya, misalnya dari `find_by_id()` ke `Postgres`. Untuk menggambarnya, setiap ujung dinaikkan ke leluhur terdekatnya yang ada di frontier:
+
+| Terbuka | `find_by_id()` naik ke | `Postgres` naik ke | Hasil |
+|---|---|---|---|
+| (tidak ada) | `Online Shop` | `Online Shop` | tidak digambar |
+| `shop` | `API` | `Postgres` | `API → Postgres` |
+| `shop`, `api` | `Orders` | `Postgres` | `Orders → Postgres` |
+| semua | `find_by_id()` | `Postgres` | `find_by_id() → Postgres` |
+
+Baris pertama penting: kalau kedua ujung naik ke tempat yang sama, relasinya **internal** dan tidak digambar. Itu sebabnya saat `Online Shop` tertutup, relasi di dalamnya tidak menjadi panah dari `Online Shop` ke dirinya sendiri.
+
+Karena itu juga dim melarang relasi antara elemen dan leluhurnya sendiri (error `E022`): relasi seperti itu pasti hilang di setiap level zoom.
+
+## Aggregasi
+
+Beberapa relasi bisa naik ke pasangan tempat yang sama. Saat `API` dan `Postgres` terlihat sebagai kotak, `repo.save → db` dan `repo.find → db` bisa sama-sama tampil sebagai `API → Postgres`. Keduanya digabung jadi satu panah yang tetap membawa:
+
+- daftar relasi asalnya, supaya bisa ditelusuri balik;
+- semua `op` yang terlibat (`write, read`);
+- aliran data per arah (`kirim Order · ambil Order`).
+
+Arah tetap dihormati: `a → b` dan `b → a` adalah dua panah berbeda.
+
+Buka **Relasi di tampilan ini** di bawah peta untuk melihat hasil aggregasi. Pilih satu relasi untuk menyorot panahnya dan melihat operasi serta data yang mengalir.
+
+Di editor Exact, pilih panah dari API ke Postgres. Di bagian **Tipe terkait** pada relasi `INSERT orders`, pilih `Order` untuk membuka definisi tipenya pada peta. Panel detail elemen juga menampilkan lokasi implementasi bila model mencantumkan `source`.
+
+## Apa yang dikerjakan siapa
+
+Parser **tidak** melakukan lifting. Model dari `compileProject` selalu berisi relasi dengan ujung aslinya, dan tampilan yang menghitung frontier, lifting, dan aggregasi. Dengan begitu, satu file JSON cukup untuk semua level zoom, dan semua tampilan menghasilkan diagram yang sama dari model yang sama.
+
+Aturan normatifnya ada di [spesifikasi §10](/referensi/spesifikasi/semantik-zoom/#10-semantik-zoom-lifting).

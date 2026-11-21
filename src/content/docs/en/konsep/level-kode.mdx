@@ -1,0 +1,101 @@
+---
+title: Code level
+description: Model classes, functions, methods, and fields with enough detail to read the deepest map level as a class diagram and call graph.
+---
+
+import ZoomMap from '../../../../components/zoom-map/ZoomMap.astro';
+import shop from '../../../../data/shop.json';
+
+At the deepest level of the map, a `code` element can describe what kind of unit it is, which parameters it takes, what it returns, which errors it can produce, and what it does. Editors can render a class diagram and a call graph from that model. People and agents working on the code can read a unit's contract in the same place.
+
+<ZoomMap
+  model={shop}
+  focus="shop.api.orders.repo"
+  uid="kode"
+  caption="Code details from examples/shop/. Class, interface, and struct cards show fields above the divider and methods below. Dashed arrows show structural relations."
+/>
+
+An open type such as a `class`, `interface`, `struct`, `enum`, or `trait` appears as a class diagram card. The map uses UML visibility marks `+` for public, `−` for private, `#` for protected, and `~` for internal. Abstract names are italic and static members are underlined. A relation to a method attaches to its row. Hover on a row to read its description.
+
+## Code forms
+
+`form` identifies what a `code` element represents.
+
+| `form` | Use it for |
+|---|---|
+| `module` | File or namespace |
+| `class`, `struct`, `enum` | Types with data and behavior |
+| `interface`, `trait` | Contracts without implementations |
+| `function` | Standalone function |
+| `method` | Function belonging to a type |
+| `field` | Data belonging to a type or module |
+
+The editor uses the form to decide how to draw the element. Types have field and method sections, and standalone functions appear as call graph nodes.
+
+## Parameters, return values, and errors
+
+```dim
+code handler "handle_checkout()" {
+  form function;
+  description "Memvalidasi keranjang, menyimpan order, lalu menagih pembayaran.";
+  param req "CheckoutRequest" "Isi keranjang dan alamat pengiriman";
+  returns "Result<OrderId>" "Id order yang baru dibuat";
+  throws "PaymentError" "Penagihan ditolak gateway";
+  async;
+}
+```
+
+- Write `param <name> "<type>" ["<description>"]` once per parameter. On a class or struct, it describes a constructor parameter.
+- Write `returns "<type>" ["<description>"]` at most once.
+- Write `throws "<type>" ["<description>"]` once per error type.
+- Use `type "<type>"` on fields.
+- Use `visibility` (`public`, `private`, `protected`, `internal`) and the flags `static`, `abstract`, and `async` to describe the unit further.
+
+Write types as strings as they appear in your language, such as `"Option<Order>"`, `"&str"`, or `"Promise<void>"`. dim treats their syntax as opaque.
+
+dim reports `E031` when an attribute conflicts with its form, such as `returns` on a field or `type` on a function. If you omit the form, all code attributes are accepted.
+
+## Descriptions
+
+A `class`, `interface`, `struct`, `enum`, `trait`, `function`, or `method` without a `description` receives warning `W020`.
+
+A name like `process()` or `Manager` leaves readers guessing. Use one sentence to describe what the unit does and when to use it.
+
+```dim
+// Kurang membantu
+description "Repository untuk order.";
+
+// Lebih membantu
+description "Implementasi OrderStore di atas Postgres. Semua penulisan memakai satu transaksi per order.";
+```
+
+Fields and modules can omit the description because their type or contents usually convey their purpose.
+
+## Relations between code elements
+
+An interaction between code elements works like any other relation. When function `x` calls a method, write `x -> method { op call }`. The incoming arrows provide the list of callers.
+
+| Structural `op` | Meaning | Direction |
+|---|---|---|
+| `extends` | Inheritance | Derived type → base type |
+| `implements` | Conforms to a contract | Implementation → interface or trait |
+| `owns` | Composition | Owner → owned element |
+| `refers` | Association | Holder → referenced element |
+
+```dim
+shop.api.orders.repo -> shop.api.orders.store { op implements }
+```
+
+Structural relations connect two `code` elements and carry no data. They lift at higher levels. If a class in component A extends a class in component B, the map shows an `A → B` dependency at the component level.
+
+## Recursion
+
+Direct recursion is the only permitted self-relation.
+
+```dim
+walk -> walk "telusuri anak berikutnya" { op call }
+```
+
+The map shows a loop on the element. If you close its parent, the loop disappears with the other relations inside that parent. Write indirect recursion (`a → b → a`) as two ordinary relations. The editor can detect the cycle.
+
+See [specification §6.4](/en/referensi/spesifikasi/model/#64-code-details) for the full rules.

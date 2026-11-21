@@ -1,0 +1,181 @@
+---
+// Diff dua model dim (model dasar dan turunan `amends`), dihitung dari id elemen dan id relasi
+// yang stabil (spesifikasi §11.3). Semua isi tabel berasal dari output parser.
+import type { DimEdge, DimModel, DimNode } from '@dim/zoom-map';
+
+interface Props {
+	base: DimModel;
+	derived: DimModel;
+	caption?: string;
+}
+
+const { base, derived, caption } = Astro.props;
+const english = Astro.locals.starlightRoute.lang === 'en';
+const text = english ? {
+	viewport: 'Model comparison table. Scroll horizontally on narrow screens.',
+	change: 'Change',
+	empty: 'empty',
+	ditambah: 'Added',
+	dihapus: 'Removed',
+	diubah: 'Changed',
+	elemen: 'element',
+	relasi: 'relation',
+	unchanged: (n: number) => n === 1
+		? '1 other element or relation is identical in both models.'
+		: `${n} other elements and relations are identical in both models.`,
+} : {
+	viewport: 'Tabel perbedaan model, bisa digeser ke samping di layar sempit',
+	change: 'Perubahan',
+	empty: 'kosong',
+	ditambah: 'ditambah',
+	dihapus: 'dihapus',
+	diubah: 'diubah',
+	elemen: 'elemen',
+	relasi: 'relasi',
+	unchanged: (n: number) => `${n} elemen dan relasi lain sama persis di kedua model.`,
+};
+
+type Row = { change: 'ditambah' | 'dihapus' | 'diubah'; what: 'elemen' | 'relasi'; id: string; detail: string };
+
+const show = (v: unknown) => (v === null || v === undefined ? text.empty : Array.isArray(v) ? v.join(', ') || text.empty : String(v));
+
+function nodeDetail(n: DimNode) {
+	return [n.kind, n.name !== n.id.split('.').pop() ? n.name : '', n.tech ?? ''].filter(Boolean).join(' · ');
+}
+
+function edgeDetail(e: DimEdge) {
+	return [`${e.from} → ${e.to}`, e.op, e.label ?? ''].filter(Boolean).join(' · ');
+}
+
+function changedFields(a: Record<string, unknown>, b: Record<string, unknown>, fields: string[]) {
+	return fields
+		.filter((f) => JSON.stringify(a[f]) !== JSON.stringify(b[f]))
+		.map((f) => `${f}: ${show(a[f])} → ${show(b[f])}`);
+}
+
+const NODE_FIELDS = ['name', 'description', 'tech', 'shape', 'tags', 'external', 'ui', 'code'];
+const EDGE_FIELDS = ['from', 'to', 'label', 'op', 'data', 'tech', 'description', 'tags'];
+
+const rows: Row[] = [];
+const baseNodes = new Map(base.nodes.map((n) => [n.id, n]));
+const derivedNodes = new Map(derived.nodes.map((n) => [n.id, n]));
+for (const n of derived.nodes) {
+	const old = baseNodes.get(n.id);
+	if (!old) rows.push({ change: 'ditambah', what: 'elemen', id: n.id, detail: nodeDetail(n) });
+	else {
+		const diff = changedFields(old as never, n as never, NODE_FIELDS);
+		if (diff.length) rows.push({ change: 'diubah', what: 'elemen', id: n.id, detail: diff.join('; ') });
+	}
+}
+for (const n of base.nodes) {
+	if (!derivedNodes.has(n.id)) rows.push({ change: 'dihapus', what: 'elemen', id: n.id, detail: nodeDetail(n) });
+}
+const baseEdges = new Map(base.edges.map((e) => [e.id, e]));
+const derivedEdges = new Map(derived.edges.map((e) => [e.id, e]));
+for (const e of derived.edges) {
+	const old = baseEdges.get(e.id);
+	if (!old) rows.push({ change: 'ditambah', what: 'relasi', id: e.id, detail: edgeDetail(e) });
+	else {
+		const diff = changedFields(old as never, e as never, EDGE_FIELDS);
+		if (diff.length) rows.push({ change: 'diubah', what: 'relasi', id: e.id, detail: diff.join('; ') });
+	}
+}
+for (const e of base.edges) {
+	if (!derivedEdges.has(e.id)) rows.push({ change: 'dihapus', what: 'relasi', id: e.id, detail: edgeDetail(e) });
+}
+
+const order = { dihapus: 0, diubah: 1, ditambah: 2 };
+rows.sort((a, b) => order[a.change] - order[b.change] || a.what.localeCompare(b.what));
+const unchanged = derived.nodes.length + derived.edges.length - rows.filter((r) => r.change !== 'dihapus').length;
+---
+
+<figure class="model-diff not-content">
+	<div class="md-scroll" tabindex="0" aria-label={text.viewport}>
+		<table>
+			<thead>
+				<tr>
+					<th scope="col">{text.change}</th>
+					<th scope="col">Id</th>
+					<th scope="col">Detail</th>
+				</tr>
+			</thead>
+			<tbody>
+				{
+					rows.map((r) => (
+						<tr data-change={r.change}>
+							<td>
+								{text[r.change]} {text[r.what]}
+							</td>
+							<td>
+								<code>{r.id}</code>
+							</td>
+							<td>{r.detail}</td>
+						</tr>
+					))
+				}
+			</tbody>
+		</table>
+	</div>
+	<figcaption>
+		{caption}
+		{caption && ' '}
+		{text.unchanged(unchanged)}
+	</figcaption>
+</figure>
+
+<style>
+	.model-diff {
+		margin: 1.5rem 0;
+	}
+
+	.md-scroll {
+		overflow-x: auto;
+	}
+
+	.md-scroll:focus-visible {
+		outline: 2px solid var(--sl-color-accent);
+		outline-offset: 2px;
+	}
+
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: var(--sl-text-sm);
+	}
+
+	th,
+	td {
+		padding: 0.5rem 0.75rem;
+		border-bottom: 1px solid var(--sl-color-gray-5);
+		text-align: start;
+		vertical-align: top;
+	}
+
+	th {
+		color: var(--sl-color-white);
+		font-weight: 600;
+		border-bottom-width: 1.5px;
+		border-bottom-color: var(--sl-color-gray-3);
+	}
+
+	td:first-child {
+		white-space: nowrap;
+		font-weight: 600;
+		color: var(--sl-color-white);
+	}
+
+	/* Yang dihapus dicoret, seperti jalan yang ditutup di revisi peta. */
+	tr[data-change='dihapus'] td:nth-child(2) code {
+		text-decoration: line-through;
+	}
+
+	td code {
+		white-space: nowrap;
+	}
+
+	figcaption {
+		margin-top: 0.75rem;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-3);
+	}
+</style>

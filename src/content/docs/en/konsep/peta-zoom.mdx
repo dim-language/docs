@@ -1,0 +1,51 @@
+---
+title: The zoomable map
+description: How one dim model produces a diagram at each level using a frontier, lifting, and aggregation.
+---
+
+import ZoomMap from '../../../../components/zoom-map/ZoomMap.astro';
+import shop from '../../../../data/shop.json';
+
+C4 commonly uses a separate diagram for each level. dim builds every view from **one model**. The elements you open determine what the map displays.
+
+Zoom in to see the contents of each box as they become large enough to read. Double-click `Online Shop` to move closer, then find `API` and zoom in further.
+
+<ZoomMap model={shop} uid="konsep" />
+
+## Places and regions
+
+- A **place** is a solid box for an element that is closed or has no children. Arrows attach to places.
+- A **region** is a dashed boundary around the contents of an open element.
+
+The **frontier** is the set of visible places. With all systems closed, it contains `Customer`, `Online Shop`, and `Payment Gateway`.
+
+## Lifting
+
+dim stores each relation with its original endpoints, such as `find_by_id()` and `Postgres`. To draw the relation, the map lifts each endpoint to its nearest ancestor on the frontier, using the endpoint itself if it is already visible.
+
+| Open elements | `find_by_id()` lifts to | `Postgres` lifts to | Result |
+|---|---|---|---|
+| None | `Online Shop` | `Online Shop` | Hidden |
+| `shop` | `API` | `Postgres` | `API → Postgres` |
+| `shop` and `api` | `Orders` | `Postgres` | `Orders → Postgres` |
+| All | `find_by_id()` | `Postgres` | `find_by_id() → Postgres` |
+
+When both endpoints lift to the same place, the relation is **internal** and the map hides it. That's why relations inside a closed `Online Shop` don't become self-arrows.
+
+A relation between an element and its own ancestor would be hidden at every level, so dim reports error `E022`.
+
+## Aggregation
+
+Several relations can lift to the same ordered pair of places. When `API` and `Postgres` are visible as boxes, `repo.save → db` and `repo.find → db` can both appear as `API → Postgres`. Their combined arrow retains the original relations, every `op` (`write` and `read` here), and the data in each direction (`send Order · receive Order`).
+
+Direction still matters. `a → b` and `b → a` are separate arrows.
+
+Open **Relations in this view** below the map to see the aggregate relations. Select a relation to highlight its arrow and see its operations and data flow.
+
+In the Exact editor, select the arrow from API to Postgres. Under **Referenced types** on the `INSERT orders` relation, choose `Order` to open its definition on the map. The element detail also shows the implementation location when the model supplies a `source`.
+
+## What the parser and renderer do
+
+`compileProject` returns relations with their original endpoints. The renderer computes the frontier, lifts the endpoints, and aggregates arrows. One JSON file supports every level, and renderers derive the same diagrams from the same model.
+
+See [specification §10](/en/referensi/spesifikasi/semantik-zoom/#10-zoom-semantics-lifting) for the normative rules.

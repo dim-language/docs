@@ -1,0 +1,49 @@
+---
+title: Flows
+description: Mark a sequence of relations as a user journey you can highlight at every zoom level.
+---
+
+import ZoomMap from '../../../../components/zoom-map/ZoomMap.astro';
+import shop from '../../../../data/shop.json';
+
+Arrows show which elements interact. To see what happens after a customer clicks Pay, follow a **sequence** of relations. A `flow` records that sequence in the model.
+
+```dim
+flow checkout "Checkout" {
+  description "Dari pembeli menekan bayar sampai order tersimpan.";
+  step checkout_click;
+  step checkout_post;
+  step run_checkout;
+  step charge "Tagih dulu";
+  step charge_gateway;
+  step save_order "Simpan setelah tertagih";
+  step insert_order;
+}
+```
+
+Each `step` names a relation by its explicit ID, as in `charge: a -> b`. Give any relation used in a flow an explicit ID. An automatically generated ID such as `a->b#0` changes when the endpoints change. A step can specify its own label or use the relation's label.
+
+## Flows at each zoom level
+
+Write a flow using relations at their most detailed level. When you zoom out, dim lifts each step with its relation.
+
+1. Hide a step when both ends of its relation are inside the same closed element.
+2. Merge successive steps that map to the same arrow.
+3. Renumber the remaining steps for that level.
+
+<ZoomMap
+  model={shop}
+  uid="alur"
+  flow="checkout"
+  caption="Zoom in to follow the Checkout flow. Steps inside a box appear when its contents are large enough to read."
+/>
+
+When `Checkout` and `Payments` are visible as boxes, `charge`, the call from `checkout()` to `PaymentClient.charge()`, appears as `Checkout → Payments`. The map hides `run_checkout` because both ends are in the `Checkout` component.
+
+## When to model a flow
+
+- Trace a journey people often ask about when they join the team, such as checkout, login, or refunds.
+- Mark a critical path the team needs to preserve during a refactor.
+- Give each branch its own flow so that each one describes a single sequence.
+
+See [specification §12](/en/referensi/spesifikasi/komposisi-dan-flow/#12-flows) for the full rules.

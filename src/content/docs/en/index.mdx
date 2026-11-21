@@ -1,0 +1,127 @@
+---
+title: dim, a language for modeling software architecture
+description: Describe software architecture in a .dim file, explore its relations on a zoomable map, and check the model with the TypeScript SDK.
+template: splash
+tableOfContents: false
+hero:
+  title: One architecture model, from systems to functions.
+  tagline: dim (Diagram In Markup) is a text language for describing systems and how their parts interact. Write a model in a .dim file, then explore the architecture on a zoomable map.
+  actions:
+    - text: Try the checkout map
+      link: '#checkout-map'
+      variant: primary
+    - text: Write your first model
+      link: /en/mulai/
+      variant: minimal
+---
+
+import ZoomMap from '../../../components/zoom-map/ZoomMap.astro';
+import shop from '../../../data/shop.json';
+
+<div class="dim-landing">
+
+<section class="dim-demo" id="checkout-map">
+<div class="dim-split">
+<div>
+
+## Follow checkout from system to code
+
+In this online shop, `OrderRepository.save()` saves an order to Postgres. dim uses that relation to draw **API → Postgres** when you look inside the shop. At the system level, the relation stays inside the **Online Shop** box.
+
+[How dim derives arrows at each zoom level](/en/konsep/peta-zoom/)
+
+</div>
+<div>
+
+```dim title="shop.dim"
+insert_order: api.orders.repo.save -> db "INSERT orders" {
+  op write;
+  data "Order";
+}
+```
+
+</div>
+</div>
+
+Select **Checkout**, then zoom in on **Online Shop**. Look for the **INSERT orders** step to Postgres in the flow below the map.
+
+<ZoomMap model={shop} uid="beranda" />
+
+</section>
+
+<section class="dim-split">
+<div>
+
+## Describe the request and response
+
+The checkout button starts the call. The Web App sends a `CheckoutRequest` with `data push` and receives an `OrderId` from the API with `data pull`. The **Web App → API** arrow records both.
+
+[How to describe interactions and data flow](/en/konsep/aliran-data/)
+
+</div>
+<div>
+
+```dim title="shop.dim"
+checkout_post: web.checkout.button -> api.checkout.route "POST /checkout" {
+  op call;
+  tech "HTTPS/JSON";
+  data push "CheckoutRequest";
+  data pull "OrderId";
+}
+```
+
+</div>
+</section>
+
+<section class="dim-split">
+<div>
+
+## Check the model locally and in CI
+
+Use `compileProject` to validate the model and its imports. For example, if you drop `push` from `data push "CheckoutRequest"`, the compiler reports `E035` on the line that needs a direction. You can run the same check in CI.
+
+[SDK API and diagnostics](/en/referensi/cli/)
+
+</div>
+<div>
+
+```ts
+const { diagnostics } = compileProject("main.dim", files);
+```
+
+```text contoh-tutorial="tanpaArah"
+```
+
+</div>
+</section>
+
+<section class="dim-features">
+
+## Start with a system you know
+
+Describe who uses the system and which other systems it talks to. Add containers, components, and functions where you want to explain what happens inside.
+
+<div class="dim-features-grid">
+<div>
+
+### Write and check a model
+
+- [Write your first model](/en/mulai/) with a tutorial that goes from systems to functions.
+- [Install the SDK](/en/referensi/cli/#install) to check models and export JSON.
+- [Read the language specification](/en/referensi/spesifikasi/) for syntax and validation rules.
+
+</div>
+<div>
+
+### Add architecture details
+
+- Define [elements](/en/menulis/elemen/) and [relations](/en/menulis/relasi/), then describe [HTTP contracts](/en/konsep/endpoint/) or [code details](/en/konsep/level-kode/) where needed.
+- Use a [flow](/en/konsep/alur/) to follow a sequence such as checkout or refunds.
+- [Split a model across files](/en/konsep/komposisi/) and [describe proposed changes](/en/konsep/komposisi/#amends-for-derived-models) on top of the current architecture.
+
+</div>
+</div>
+
+</section>
+
+</div>

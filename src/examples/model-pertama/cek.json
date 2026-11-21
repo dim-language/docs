@@ -1,0 +1,6 @@
+{
+	"sistem": "ok: 1 file, 2 elemen, 1 relasi, 0 flow",
+	"container": "ok: 1 file, 5 elemen, 3 relasi, 0 flow",
+	"kode": "ok: 1 file, 7 elemen, 3 relasi, 0 flow",
+	"tanpaArah": "error[E035]: arah `data` wajib ditulis (`push` atau `pull`) karena `op call` tidak punya arah default"
+}

@@ -1,0 +1,163 @@
+{
+  "name": "dim",
+  "displayName": "dim",
+  "scopeName": "source.dim",
+  "comment": "{{kinds}}, {{attributes}}, dan {{values}} diisi dari @dim/zoom-map/vocab.json oleh astro.config.mjs",
+  "fileTypes": [
+    "dim"
+  ],
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#statements"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.dim",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.dim",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.triple.dim",
+          "begin": "\"\"\"",
+          "end": "\"\"\"",
+          "patterns": [
+            {
+              "include": "#escapes"
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.double.dim",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "include": "#escapes"
+            }
+          ]
+        }
+      ]
+    },
+    "escapes": {
+      "patterns": [
+        {
+          "name": "constant.character.escape.dim",
+          "match": "\\\\[\"\\\\nt]"
+        },
+        {
+          "name": "invalid.illegal.escape.dim",
+          "match": "\\\\."
+        }
+      ]
+    },
+    "statements": {
+      "patterns": [
+        {
+          "comment": "Deklarasi elemen: <kind> <id>",
+          "match": "\\b({{kinds}})\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": {
+              "name": "storage.type.kind.dim"
+            },
+            "2": {
+              "name": "entity.name.type.dim"
+            }
+          }
+        },
+        {
+          "comment": "Komposisi file dan flow (v0.3): keyword diikuti string, path, atau id",
+          "match": "\\b(import|amends|dim)\\b(?=\\s*\")",
+          "name": "keyword.control.import.dim"
+        },
+        {
+          "match": "\\b(extend|remove|unset)\\b(?=\\s*(::)?[A-Za-z_])",
+          "name": "keyword.control.dim"
+        },
+        {
+          "match": "\\b(flow)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": {
+              "name": "storage.type.flow.dim"
+            },
+            "2": {
+              "name": "entity.name.type.dim"
+            }
+          }
+        },
+        {
+          "comment": "this: awal path (v0.5)",
+          "name": "variable.language.this.dim",
+          "match": "\\bthis\\b"
+        },
+        {
+          "comment": "Id relasi eksplisit: <id>: a -> b",
+          "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\s*(:)(?!:)",
+          "captures": {
+            "1": {
+              "name": "entity.name.label.dim"
+            },
+            "2": {
+              "name": "punctuation.separator.label.dim"
+            }
+          }
+        },
+        {
+          "comment": "Atribut yang dikenal, kecuali kalau dipakai sebagai nama elemen di path",
+          "match": "\\b({{attributes}})\\b(?!\\s*(->|\\.|:))",
+          "name": "variable.other.property.dim"
+        },
+        {
+          "comment": "Nilai yang dikenal: op, arah data, shape, form, visibility, method HTTP, dan skema auth (kecuali none dan cookie)",
+          "match": "\\b({{values}})\\b(?!\\s*(->|\\.|:))",
+          "name": "constant.language.dim"
+        },
+        {
+          "comment": "Bilangan bulat (v0.4), mis. status HTTP",
+          "name": "constant.numeric.integer.dim",
+          "match": "\\b[0-9]+\\b"
+        },
+        {
+          "name": "keyword.operator.arrow.dim",
+          "match": "->"
+        },
+        {
+          "name": "keyword.operator.root.dim",
+          "match": "::"
+        },
+        {
+          "name": "punctuation.accessor.dim",
+          "match": "\\."
+        },
+        {
+          "name": "punctuation.terminator.dim",
+          "match": ";"
+        },
+        {
+          "name": "punctuation.section.block.dim",
+          "match": "[{}]"
+        },
+        {
+          "name": "variable.other.path.dim",
+          "match": "[A-Za-z_][A-Za-z0-9_]*"
+        }
+      ]
+    }
+  }
+}

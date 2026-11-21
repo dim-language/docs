@@ -1,0 +1,127 @@
+---
+title: dim, bahasa untuk memodelkan arsitektur software
+description: Tulis arsitektur software dalam file .dim, lihat relasinya di peta yang bisa di-zoom, dan cek model dengan SDK TypeScript.
+template: splash
+tableOfContents: false
+hero:
+  title: Satu model arsitektur, dari sistem sampai fungsi.
+  tagline: dim (Diagram In Markup) adalah bahasa teks untuk mendeskripsikan sistem dan interaksi antarbagian. Tulis model dalam file .dim, lalu jelajahi arsitekturnya di peta yang bisa di-zoom.
+  actions:
+    - text: Coba peta checkout
+      link: '#peta-checkout'
+      variant: primary
+    - text: Tulis model pertama
+      link: /mulai/
+      variant: minimal
+---
+
+import ZoomMap from '../../components/zoom-map/ZoomMap.astro';
+import shop from '../../data/shop.json';
+
+<div class="dim-landing">
+
+<section class="dim-demo" id="peta-checkout">
+<div class="dim-split">
+<div>
+
+## Ikuti checkout dari toko sampai kode
+
+Di model toko online ini, method `OrderRepository.save()` menyimpan pesanan ke Postgres. dim memakai relasi itu untuk menampilkan **API → Postgres** saat kamu melihat isi toko. Saat toko tertutup, relasi itu berada di dalam kotak **Online Shop**.
+
+[Cara dim menghitung panah saat zoom](/konsep/peta-zoom/)
+
+</div>
+<div>
+
+```dim title="shop.dim"
+insert_order: api.orders.repo.save -> db "INSERT orders" {
+  op write;
+  data "Order";
+}
+```
+
+</div>
+</div>
+
+Pilih **Checkout**, lalu perbesar **Online Shop**. Cari langkah **INSERT orders** menuju Postgres di daftar alur di bawah peta.
+
+<ZoomMap model={shop} uid="beranda" />
+
+</section>
+
+<section class="dim-split">
+<div>
+
+## Catat data yang dikirim dan diterima
+
+Tombol checkout memulai panggilan ke API. Dengan `data push`, Web App mengirim `CheckoutRequest`. Dengan `data pull`, Web App menerima `OrderId` dari API. Keduanya tercatat pada panah **Web App → API**.
+
+[Cara menulis interaksi dan aliran data](/konsep/aliran-data/)
+
+</div>
+<div>
+
+```dim title="shop.dim"
+checkout_post: web.checkout.button -> api.checkout.route "POST /checkout" {
+  op call;
+  tech "HTTPS/JSON";
+  data push "CheckoutRequest";
+  data pull "OrderId";
+}
+```
+
+</div>
+</section>
+
+<section class="dim-split">
+<div>
+
+## Cek model di terminal dan CI
+
+Pakai `compileProject` untuk memeriksa model beserta file yang diimpor. Misalnya, jika kamu menghapus `push` dari `data push "CheckoutRequest"`, compiler melaporkan `E035` pada baris yang perlu diperbaiki. Kamu juga bisa menjalankan pemeriksaan yang sama di CI.
+
+[API SDK dan format diagnostik](/referensi/cli/)
+
+</div>
+<div>
+
+```ts
+const { diagnostics } = compileProject("main.dim", files);
+```
+
+```text contoh-tutorial="tanpaArah"
+```
+
+</div>
+</section>
+
+<section class="dim-features">
+
+## Mulai dari sistem yang kamu kenal
+
+Catat siapa yang memakai sistem dan sistem lain yang terhubung dengannya. Setelah itu, tambahkan container, komponen, dan fungsi di bagian yang ingin kamu jelaskan lebih rinci.
+
+<div class="dim-features-grid">
+<div>
+
+### Tulis dan jalankan model
+
+- [Tulis model pertama](/mulai/) untuk mengikuti tutorial dari sistem sampai fungsi.
+- [Pasang SDK](/referensi/cli/#pasang) untuk memeriksa model dan mengekspor JSON.
+- [Baca spesifikasi bahasa](/referensi/spesifikasi/) untuk mencari aturan sintaks dan validasi.
+
+</div>
+<div>
+
+### Tambahkan detail arsitektur
+
+- Susun [elemen](/menulis/elemen/) dan [relasi](/menulis/relasi/), lalu catat [kontrak HTTP](/konsep/endpoint/) atau [detail kode](/konsep/level-kode/) di bagian yang membutuhkannya.
+- Gunakan [flow](/konsep/alur/) untuk mengikuti urutan relasi seperti checkout atau refund.
+- [Pecah model ke beberapa file](/konsep/komposisi/) dan [tulis usulan perubahan](/konsep/komposisi/#amends-model-turunan) di atas model yang sudah ada.
+
+</div>
+</div>
+
+</section>
+
+</div>

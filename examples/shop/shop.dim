@@ -1,0 +1,159 @@
+// Sistem toko online: container, komponen, dan level kode.
+// Di-import oleh main.dim; relasi ke sistem lain ditulis di sana.
+
+system shop "Online Shop" {
+  container web "Web App" {
+    tech "Next.js";
+    ui;
+    component checkout "Checkout Page" {
+      code button "CheckoutButton.onClick()" {
+        form function;
+        description "Mengirim isi keranjang ke API saat pembeli menekan tombol bayar.";
+        param event "MouseEvent";
+        returns "Promise<void>";
+        async;
+      }
+    }
+  }
+
+  container api "API" {
+    tech "Rust/axum";
+    description """
+      Backend utama.
+      Menangani checkout dan order.
+      """;
+
+    component checkout "Checkout" {
+      code route "post_checkout()" {
+        form function;
+        description "Handler HTTP POST /checkout: membaca body JSON lalu menjalankan CheckoutService.";
+        param req "Json<CheckoutRequest>";
+        returns "Result<Json<OrderId>>";
+        async;
+      }
+      code service "CheckoutService" {
+        form class;
+        description "Menjalankan checkout: menghitung total, menagih pembayaran, lalu menyimpan order.";
+        param store "Arc<dyn OrderStore>";
+        param payments "PaymentClient";
+        code store "store" { form field; type "Arc<dyn OrderStore>"; visibility private }
+        code payments "payments" { form field; type "PaymentClient"; visibility private }
+        code run "checkout()" {
+          form method;
+          description "Satu checkout dari keranjang sampai order tersimpan. Order tidak disimpan kalau penagihan gagal.";
+          param cart "Cart" "Isi keranjang dan alamat pengiriman";
+          returns "Result<OrderId>" "Id order yang baru dibuat";
+          throws "PaymentError" "Penagihan ditolak gateway";
+          async;
+        }
+        code total "total_price()" {
+          form method;
+          visibility private;
+          description "Menjumlahkan harga item; bundel dihitung dengan menjumlahkan item di dalamnya.";
+          param items "&[Item]";
+          returns "Money";
+        }
+      }
+    }
+
+    component payments "Payments" {
+      code client "PaymentClient" {
+        form class;
+        description "Klien HTTP ke payment gateway: menandatangani request dan mengulang saat timeout.";
+        param base_url "Url";
+        code charge "charge()" {
+          form method;
+          description "Menagih satu pembayaran. Aman diulang karena memakai order id sebagai idempotency key.";
+          param order "OrderId";
+          param amount "Money";
+          returns "Result<ChargeId>";
+          throws "PaymentError" "Ditolak, atau gateway tidak merespons";
+          async;
+        }
+      }
+    }
+
+    component orders "Orders" {
+      code order "Order" {
+        form struct;
+        description "Order yang sudah dibayar dan menunggu dikirim.";
+        code id "id" { form field; type "OrderId" }
+        code items "items" { form field; type "Vec<Item>" }
+        code total "total" { form field; type "Money" }
+      }
+      code store "OrderStore" {
+        form interface;
+        description "Kontrak penyimpanan order, supaya CheckoutService tidak bergantung langsung ke Postgres.";
+        code save "save()" {
+          form method;
+          abstract;
+          description "Menyimpan order baru.";
+          param order "&Order";
+          returns "Result<()>";
+          async;
+        }
+      }
+      code repo "OrderRepository" {
+        form class;
+        description "Implementasi OrderStore di atas Postgres. Semua penulisan memakai satu transaksi per order.";
+        param pool "PgPool" "Koneksi database bersama";
+        code pool "pool" { form field; type "PgPool"; visibility private }
+        code find "find_by_id()" {
+          form method;
+          description "Mengambil satu order beserta item-itemnya.";
+          param id "OrderId";
+          returns "Option<Order>" "None kalau order tidak ada";
+          async;
+        }
+        code save "save()" {
+          form method;
+          description "Menyimpan order baru dalam satu transaksi.";
+          param order "&Order";
+          returns "Result<()>";
+          throws "DbError" "Gagal menulis ke database";
+          async;
+        }
+      }
+    }
+  }
+
+  container db "Postgres" {
+    tech "PostgreSQL";
+    shape database;
+  }
+
+  container reports "Laporan Harian" {
+    tech "PHP cron";
+    description "Skrip lama yang membaca order langsung dari database setiap malam.";
+  }
+
+  // Relasi di dalam blok `shop` memakai path relatif terhadap `shop`.
+  checkout_post: web.checkout.button -> api.checkout.route "POST /checkout" {
+    op call;
+    tech "HTTPS/JSON";
+    data push "CheckoutRequest";
+    data pull "OrderId";
+  }
+  run_checkout: api.checkout.route -> api.checkout.service.run "Jalankan checkout" {
+    op call;
+    data push "Cart";
+    data pull "OrderId";
+  }
+  api.checkout.service.run -> api.checkout.service.total "Hitung total" { op call; data pull "Money" }
+  api.checkout.service.total -> api.checkout.service.total "Isi bundel" { op call }
+  charge: api.checkout.service.run -> api.payments.client.charge "Tagih" {
+    op call;
+    data push "Money";
+    data pull "ChargeId";
+  }
+  save_order: api.checkout.service.run -> api.orders.store.save "Simpan order" { op call; data push "Order" }
+  insert_order: api.orders.repo.save -> db "INSERT orders" { op write; data "Order" }
+  api.orders.repo.save -> api.orders.repo.pool "Ambil koneksi" { op read }
+  api.orders.repo.find -> db "SELECT orders" { op read; data "Order" }
+  reports -> db "SELECT orders" { op read; data "Order" }
+
+  // Struktur kelas.
+  api.orders.repo -> api.orders.store { op implements }
+  api.checkout.service.store -> api.orders.store { op refers }
+  api.checkout.service.payments -> api.payments.client { op refers }
+}
