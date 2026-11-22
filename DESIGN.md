@@ -31,7 +31,9 @@ dim adalah peta arsitektur yang bisa di-zoom. Situsnya dibuat seperti peta cetak
 | Peran | Font | Alasan |
 |---|---|---|
 | Teks | Source Sans 3 | Humanist sans keturunan tradisi label peta (Frutiger/Myriad); jelas di ukuran kecil dan bacaan panjang. |
-| Heading | Source Serif 4 (600) | Judul peta cetak tradisional memakai serif; satu keluarga desain dengan Source Sans 3 jadi tetap serasi. |
+| Heading | Source Sans 3 (600) | Selaras dengan teks dokumentasi. |
+| Caption Polaroid | Kalam (400) | Tulisan tangan untuk komik Brian. |
+| Wordmark dim | Source Serif 4 (600) | Serif khusus untuk nama dim di header. |
 | Kode | IBM Plex Mono | Mono yang tegas dan mudah dibedakan (`0`/`O`, `1`/`l`), terasa teknis tanpa jadi gaya "terminal". |
 
 Semua font di-host sendiri lewat `@fontsource` (tidak ada request ke pihak ketiga yang memblokir render).

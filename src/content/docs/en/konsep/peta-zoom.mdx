@@ -1,10 +1,12 @@
 ---
-title: The zoomable map
+title: Read arrows at different zoom levels
 description: How one dim model produces a diagram at each level using a frontier, lifting, and aggregation.
 ---
 
 import ZoomMap from '../../../../components/zoom-map/ZoomMap.astro';
 import shop from '../../../../data/shop.json';
+
+During review, find who writes to Postgres. Start at the system level and zoom until the writing function appears.
 
 C4 commonly uses a separate diagram for each level. dim builds every view from **one model**. The elements you open determine what the map displays.
 
@@ -49,3 +51,7 @@ In the Exact editor, select the arrow from API to Postgres. Under **Referenced t
 `compileProject` returns relations with their original endpoints. The renderer computes the frontier, lifts the endpoints, and aggregates arrows. One JSON file supports every level, and renderers derive the same diagrams from the same model.
 
 See [specification §10](/en/referensi/spesifikasi/semantik-zoom/#10-zoom-semantics-lifting) for the normative rules.
+
+## Check the result
+
+Select the INSERT relation when API and Postgres are visible. Zoom into API until its source appears. Match the INSERT label at both levels to confirm you followed the same operation.

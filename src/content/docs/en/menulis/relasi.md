@@ -1,7 +1,9 @@
 ---
-title: Relations and paths
+title: Connect two elements
 description: Connect elements across levels, describe interactions with op, and resolve paths inside blocks.
 ---
+
+When Web creates an order through the API, first find the IDs of both containers. Use their full paths to declare a relation outside the system block.
 
 A relation connects two elements at any level. A function can connect to a database, and a container can connect to a function in another system.
 
@@ -85,3 +87,7 @@ A `step` in a [flow](/en/konsep/alur/) or `remove` in a [derived model](/en/kons
 - **`E020`.** A path must resolve. The diagnostic identifies where lookup failed.
 
 See [specification §4.4](/en/referensi/spesifikasi/sintaks/#44-relations) and [§7](/en/referensi/spesifikasi/model/#7-path-resolution) for the full rules.
+
+## Check the result
+
+In the tutorial model, change the POST label to the operation name from your code and recheck the file. The count should stay at three relations. If it grows, check whether you added a second arrow for the same interaction.

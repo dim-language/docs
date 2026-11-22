@@ -1,7 +1,11 @@
 ---
-title: Interactions and data flow
+title: Separate the caller from data direction
 description: How dim records who initiates an interaction and which way the data flows.
 ---
+
+import BrianNote from '../../../../components/BrianNote.astro';
+
+Web needs an order ID after checkout. Find the POST call in the Web code and record what it sends and which value it reads from the response.
 
 A relation in dim answers two questions.
 
@@ -62,3 +66,9 @@ If an explicit direction conflicts with the operation, as in `op read; data push
 ## What happens when you zoom out
 
 The data flows lift with the relation. In the [zoomable map](/en/konsep/peta-zoom/), `API → Postgres` carries `send Order · receive Order` because one function writes to the database and another reads from it. See [specification §6.3](/en/referensi/spesifikasi/model/#63-data-flow) for the full rules.
+
+## Check the result
+
+<BrianNote scene="missing-direction">If the API sends the response, do we need another arrow? Trace who started the request.</BrianNote>
+
+Read the checkout relation from left to right. Web starts the call and sends CheckoutRequest. Now read the pull from Web’s perspective. The value available after the call completes should be OrderId.

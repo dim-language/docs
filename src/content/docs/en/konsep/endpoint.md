@@ -1,7 +1,9 @@
 ---
-title: HTTP endpoints
+title: Document an HTTP endpoint
 description: Describe an HTTP route with its authentication, rate limits, inputs, and responses so client relations can inherit the contract.
 ---
+
+The login team is adding a route that exchanges an email and password for a session. Put the contract on the handler so callers can reference the same route.
 
 Write an HTTP route as a `code` element with `form endpoint`. Its contract records the method and path, who can call it, its rate limits, the input it accepts, and its possible responses. Write that contract once on the endpoint. Client relations can derive their labels and data from it.
 
@@ -86,3 +88,7 @@ The `login_post` relation gets its omitted attributes from the endpoint.
 Values written on the relation take precedence. When several clients call the same endpoint, keep the method, path, and data types on the endpoint so the relations pick up changes to the contract.
 
 See [specification §13](/en/referensi/spesifikasi/endpoint-http/#13-http-endpoints) for the full rules.
+
+## Check the result
+
+Follow login_post to the endpoint. Combine the prefixes and path, then compare POST /v1/auth/login, LoginRequest and AuthSession with the route test. If the response changes, update returns on the handler.

@@ -1,0 +1,43 @@
+---
+import { compileProject, initDim } from '@dim/sdk';
+import { renderMapHtml } from '@dim/sdk/map';
+import '@dim/sdk/map.css';
+
+interface Props {
+	source: string;
+	language: 'id' | 'en';
+}
+
+await initDim();
+const { source, language } = Astro.props;
+const { model, diagnostics } = compileProject('toko.dim', { 'toko.dim': source });
+if (!model) throw new Error(diagnostics.map(d => d.message).join('\n'));
+const html = renderMapHtml(model, { uid: 'shop', language });
+---
+<div class="shop-map not-content" set:html={html} />
+
+<script>
+	import { mountAll } from '@dim/sdk/map';
+	mountAll().catch(console.error);
+</script>
+
+<style>
+	.shop-map {
+		color-scheme: light dark;
+		--zm-ink: var(--sl-color-white, CanvasText);
+		--zm-text: var(--sl-color-gray-2, CanvasText);
+		--zm-muted: var(--sl-color-gray-3, GrayText);
+		--zm-paper: var(--sl-color-black, Canvas);
+		--zm-rule: var(--sl-color-gray-5, GrayText);
+		--zm-hover: var(--sl-color-gray-6, ButtonFace);
+		--zm-accent: var(--sl-color-accent-high, LinkText);
+		--zm-route: var(--dim-route, LinkText);
+		--zm-edge: var(--dim-edge, CanvasText);
+		--zm-place-bg: var(--dim-place-bg, Canvas);
+		--zm-place-border: var(--dim-place-border, CanvasText);
+		--zm-region-border: var(--dim-region-border, GrayText);
+		--zm-font-mono: ui-monospace, monospace;
+		--zm-text-xs: .75rem;
+		--zm-text-sm: .875rem;
+	}
+</style>

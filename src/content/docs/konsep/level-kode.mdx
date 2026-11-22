@@ -1,10 +1,12 @@
 ---
-title: Level kode
+title: Catat kontrak fungsi
 description: Menulis class, function, method, dan field dengan parameter, nilai kembali, dan keterangan, supaya level paling dalam peta bisa dibaca sebagai class diagram dan call graph.
 ---
 
 import ZoomMap from '../../../components/zoom-map/ZoomMap.astro';
 import shop from '../../../data/shop.json';
+
+Pilih fungsi checkout yang dipanggil lintas komponen. Salin tipe parameter dan hasil dari signature, lalu cari satu kondisi error dari implementasinya.
 
 Di level paling dalam, elemen `code` bisa menjelaskan dirinya selengkap class diagram: bentuknya apa, butuh parameter apa, mengembalikan apa, error apa yang bisa terjadi, dan **untuk apa dia ada**.
 
@@ -103,3 +105,7 @@ walk -> walk "telusuri anak berikutnya" { op call }
 Di peta, rekursi digambar sebagai loop di kotaknya. Begitu kotak itu tertutup di dalam elemen induknya, loop-nya ikut hilang seperti relasi internal lain. Rekursi tidak langsung (`a → b → a`) ditulis sebagai dua relasi biasa; editor bisa mendeteksinya sebagai siklus.
 
 Aturan lengkapnya ada di [spesifikasi §6.4](/referensi/spesifikasi/model/#64-detail-kode).
+
+## Cek hasilnya
+
+Untuk contoh handler, cocokkan CheckoutRequest, `Result<OrderId>`, dan PaymentError dengan signature serta jalur gagal fungsi. Saat tipe hasil berubah, ubah returns dan periksa kembali model bersama diff kode.

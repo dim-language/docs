@@ -1,10 +1,12 @@
 ---
-title: Code level
+title: Describe a function contract
 description: Model classes, functions, methods, and fields with enough detail to read the deepest map level as a class diagram and call graph.
 ---
 
 import ZoomMap from '../../../../components/zoom-map/ZoomMap.astro';
 import shop from '../../../../data/shop.json';
+
+Pick a checkout function called across components. Read the parameter and return types from its signature and identify one failure condition in its implementation.
 
 At the deepest level of the map, a `code` element can describe what kind of unit it is, which parameters it takes, what it returns, which errors it can produce, and what it does. Editors can render a class diagram and a call graph from that model. People and agents working on the code can read a unit's contract in the same place.
 
@@ -99,3 +101,7 @@ walk -> walk "telusuri anak berikutnya" { op call }
 The map shows a loop on the element. If you close its parent, the loop disappears with the other relations inside that parent. Write indirect recursion (`a → b → a`) as two ordinary relations. The editor can detect the cycle.
 
 See [specification §6.4](/en/referensi/spesifikasi/model/#64-code-details) for the full rules.
+
+## Check the result
+
+For the handler example, match CheckoutRequest, `Result<OrderId>` and PaymentError against the signature and failure path. When the return type changes, update returns and review the model alongside the code diff.

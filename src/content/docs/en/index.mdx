@@ -3,63 +3,50 @@ title: dim, a language for modeling software architecture
 description: Describe software architecture in a .dim file, explore its relations on a zoomable map, and check the model with the TypeScript SDK.
 template: splash
 tableOfContents: false
-hero:
-  title: One architecture model, from systems to functions.
-  tagline: dim (Diagram In Markup) is a text language for describing systems and how their parts interact. Write a model in a .dim file, then explore the architecture on a zoomable map.
-  actions:
-    - text: Try the checkout map
-      link: '#checkout-map'
-      variant: primary
-    - text: Write your first model
-      link: /en/mulai/
-      variant: minimal
 ---
 
+import '@fontsource/kalam/latin-400.css';
+import { LinkButton } from '@astrojs/starlight/components';
 import ZoomMap from '../../../components/zoom-map/ZoomMap.astro';
+import MapIntro from '../../../components/MapIntro.astro';
 import shop from '../../../data/shop.json';
 
 <div class="dim-landing">
 
-<section class="dim-demo" id="checkout-map">
-<div class="dim-split">
-<div>
-
-## Follow checkout from system to code
-
-In this online shop, `OrderRepository.save()` saves an order to Postgres. dim uses that relation to draw **API → Postgres** when you look inside the shop. At the system level, the relation stays inside the **Online Shop** box.
-
-[How dim derives arrows at each zoom level](/en/konsep/peta-zoom/)
-
-</div>
-<div>
-
-```dim title="shop.dim"
-insert_order: api.orders.repo.save -> db "INSERT orders" {
-  op write;
-  data "Order";
-}
-```
-
-</div>
-</div>
-
-Select **Checkout**, then zoom in on **Online Shop**. Look for the **INSERT orders** step to Postgres in the flow below the map.
-
+<div class="dim-demo" id="checkout-map">
+<MapIntro text="One map for the team and the AI agent." />
 <ZoomMap model={shop} uid="beranda" />
+</div>
 
+<section class="dim-map-action">
+<div class="dim-pitch">
+<ol class="dim-comic" role="list">
+<li><span class="dim-photo"><img src="/brian/hello.webp" alt="" width="400" height="400" loading="lazy" /></span><p>This is Brian. (Not his real name.)</p></li>
+<li><span class="dim-photo"><img src="/brian/architect.webp" alt="" width="400" height="400" loading="lazy" /></span><p>The architect asks Brian to implement A.</p></li>
+<li><span class="dim-photo"><img src="/brian/idea.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Brian hears B. “Got it.”</p></li>
+<li><span class="dim-photo"><img src="/brian/agent.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Brian prompts for B. His agent ships C.</p></li>
+<li><span class="dim-photo"><img src="/brian/review.webp" alt="" width="400" height="400" loading="lazy" /></span><p>“Brian, walk me through how A became C.”</p></li>
+</ol>
+<div class="dim-comic-close">
+
+<p class="dim-punchline">This happens to some of us. Now (hopefully) you don’t have to.</p>
+
+<LinkButton href="/en/mulai/" icon="right-arrow">Use dim, start here</LinkButton>
+</div>
+</div>
 </section>
 
-<section class="dim-split">
-<div>
+<div class="dim-examples">
+<section class="dim-example">
+<header>
 
-## Describe the request and response
+## “We get the whole order back, right?”
 
-The checkout button starts the call. The Web App sends a `CheckoutRequest` with `data push` and receives an `OrderId` from the API with `data pull`. The **Web App → API** arrow records both.
+</header>
+<img class="dim-scene" src="/brian/order-id.webp" width="640" height="374" alt="" loading="lazy" />
+<div class="dim-example-body">
 
-[How to describe interactions and data flow](/en/konsep/aliran-data/)
-
-</div>
-<div>
+This time Brian asks. His architect shakes her head. “Just the ID.” They pull up **Web App → API** and write that down. Now Brian can give his agent a file that says exactly what goes out (`CheckoutRequest`) and what comes back (`OrderId`).
 
 ```dim title="shop.dim"
 checkout_post: web.checkout.button -> api.checkout.route "POST /checkout" {
@@ -70,41 +57,54 @@ checkout_post: web.checkout.button -> api.checkout.route "POST /checkout" {
 }
 ```
 
-</div>
-</section>
-
-<section class="dim-split">
-<div>
-
-## Check the model locally and in CI
-
-Use `compileProject` to validate the model and its imports. For example, if you drop `push` from `data push "CheckoutRequest"`, the compiler reports `E035` on the line that needs a direction. You can run the same check in CI.
-
-[SDK API and diagnostics](/en/referensi/cli/)
-
-</div>
-<div>
-
-```ts
-const { diagnostics } = compileProject("main.dim", files);
-```
-
-```text contoh-tutorial="tanpaArah"
-```
+<LinkButton href="/en/konsep/aliran-data/" icon="right-arrow">Explore data flow</LinkButton>
 
 </div>
 </section>
+
+<section class="dim-example">
+<header>
+
+## “Which way is that data going?”
+
+</header>
+<img class="dim-scene" src="/brian/missing-direction.webp" width="640" height="330" alt="" loading="lazy" />
+<div class="dim-example-body">
+
+Brian wrote down the request type. He left out who sends it. CI flags the missing direction with `E035`. The web app sends the request, so Brian adds `push`.
+
+```diff
+- data "CheckoutRequest";
++ data push "CheckoutRequest";
+```
+
+<LinkButton href="/en/referensi/cli/" icon="right-arrow">Check a model with the SDK</LinkButton>
+
+</div>
+</section>
+
+</div>
+
+<div class="dim-definition">
+<p><dfn>dim (Diagram In Markup)</dfn> is a language for describing software architecture in text. You can explore the model as a map, from systems down to functions.</p>
+</div>
 
 <section class="dim-features">
+<header class="dim-guide-intro">
+<img src="/brian/your-turn.webp" width="285" height="480" loading="lazy" alt="" />
+<div>
 
-## Start with a system you know
+## Your turn. Bring the PR.
 
-Describe who uses the system and which other systems it talks to. Add containers, components, and functions where you want to explain what happens inside.
+Yes, you behind the screen. Sketch the flow before Brian takes another guess.
+
+</div>
+</header>
 
 <div class="dim-features-grid">
 <div>
 
-### Write and check a model
+### Make your first one
 
 - [Write your first model](/en/mulai/) with a tutorial that goes from systems to functions.
 - [Install the SDK](/en/referensi/cli/#install) to check models and export JSON.
@@ -113,7 +113,7 @@ Describe who uses the system and which other systems it talks to. Add containers
 </div>
 <div>
 
-### Add architecture details
+### When the system gets bigger
 
 - Define [elements](/en/menulis/elemen/) and [relations](/en/menulis/relasi/), then describe [HTTP contracts](/en/konsep/endpoint/) or [code details](/en/konsep/level-kode/) where needed.
 - Use a [flow](/en/konsep/alur/) to follow a sequence such as checkout or refunds.

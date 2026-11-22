@@ -6,7 +6,7 @@ description: Validasi model, ekspor JSON, dan format file DIM di TypeScript.
 ## Pasang
 
 ```sh
-npm install @dim/sdk
+npm install https://github.com/dim-language/dim-sdk/releases/download/v0.2.0/dim-sdk-0.2.0.tgz
 ```
 
 Paket juga tersedia di [GitHub Releases](https://github.com/dim-language/dim-sdk/releases/tag/v0.2.0).

@@ -1,10 +1,12 @@
 ---
-title: Peta yang bisa di-zoom
+title: Baca panah saat zoom berubah
 description: Bagaimana satu model dim menghasilkan diagram di setiap level, lewat frontier, lifting, dan aggregasi.
 ---
 
 import ZoomMap from '../../../components/zoom-map/ZoomMap.astro';
 import shop from '../../../data/shop.json';
+
+Saat review, cari siapa yang menulis ke Postgres. Mulai dari tampilan sistem, lalu perbesar sampai fungsi penulisnya terbaca.
 
 Di C4 biasa, tiap level adalah diagram terpisah yang digambar sendiri-sendiri. Di dim, hanya ada **satu model**. Setiap level zoom adalah cara pandang ke model yang sama, dihitung dari elemen mana yang sedang terbuka.
 
@@ -55,3 +57,7 @@ Di editor Exact, pilih panah dari API ke Postgres. Di bagian **Tipe terkait** pa
 Parser **tidak** melakukan lifting. Model dari `compileProject` selalu berisi relasi dengan ujung aslinya, dan tampilan yang menghitung frontier, lifting, dan aggregasi. Dengan begitu, satu file JSON cukup untuk semua level zoom, dan semua tampilan menghasilkan diagram yang sama dari model yang sama.
 
 Aturan normatifnya ada di [spesifikasi §10](/referensi/spesifikasi/semantik-zoom/#10-semantik-zoom-lifting).
+
+## Cek hasilnya
+
+Pilih relasi INSERT saat API dan Postgres terlihat. Perbesar API sampai sumber relasinya muncul. Cocokkan label INSERT di kedua level untuk memastikan kamu mengikuti operasi yang sama.

@@ -5,10 +5,24 @@ description: Model an online shop, check each step with the SDK, then explore th
 
 import ZoomMap from '../../../../components/zoom-map/ZoomMap.astro';
 import toko from '../../../../data/toko-tutorial.json';
+import BrianNote from '../../../../components/BrianNote.astro';
 
-Build a model of an online shop in one file called `toko.dim`. Start with the customer and system, then work down to the function that saves an order. [Install the SDK and save the `check.mjs` script](/en/referensi/cli/#check-one-file) and run the commands from the folder where you save the file.
+<BrianNote scene="order-id">When a customer checks out, what does Web send to the API? What comes back?</BrianNote>
 
-The example uses Indonesian names such as `toko` (shop) and `pesanan` (order), and the script prints its messages in Indonesian. Keep those names when copying the model so the paths match.
+## Set up a project folder
+
+Answer that question with one file called `toko.dim`. With Node.js 24 and Bun installed, run these commands in a terminal.
+
+```sh
+mkdir dim-checkout
+cd dim-checkout
+bun add https://github.com/dim-language/dim-sdk/releases/download/v0.2.0/dim-sdk-0.2.0.tgz
+```
+
+Save this as `check.mjs` in that folder. It reads the file you give it, runs the compiler and prints the element and relation counts. The example uses Indonesian names: `toko` means shop and `pesanan` means order. Keep them as written so the paths match.
+
+```js contoh-tutorial="check.mjs"
+```
 
 ## 1. A person and a system
 
@@ -34,6 +48,8 @@ Replace `toko.dim` with this model. The three containers belong to `toko`. Refer
 
 ```dim contoh-tutorial="container.dim"
 ```
+
+<BrianNote scene="review">Before reading on, trace the POST relation from Web. Which value leaves Web and which comes back? Look at the word after each `data`.</BrianNote>
 
 - `ui` marks Web as the interface the customer uses. `shape database` gives Postgres the database shape on the map.
 - Web sends `Pesanan` to the API with `data push` and receives `IdPesanan` with `data pull`. The direction defaults to `push` for `op write`.
@@ -62,6 +78,8 @@ node check.mjs toko.dim
 
 The model still has three relations. The `INSERT pesanan` relation now starts at the function. Zoom in to follow the `API → Postgres` arrow until its source appears as `simpan_pesanan() → Postgres`.
 
+In the map below, zoom until Web and API appear. Select the POST relation and read its two data entries. Web sends `Pesanan` and receives `IdPesanan`. Zoom out until only the shop is visible. The POST arrow disappears because both ends are inside the shop.
+
 <ZoomMap model={toko} uid="model-pertama" />
 
 ## 4. Fix a validation error
@@ -79,8 +97,16 @@ Look for this line in the output.
 
 An `op call` can send a request and receive a response, so specify a direction for each `data` attribute. Restore `push` and run `node check.mjs toko.dim` again to get the `ok` summary from step three.
 
+## Try it on a pull request
+
+<BrianNote scene="your-turn">Pick one change you’re reviewing. Who starts the interaction, and what do they expect back?</BrianNote>
+
+Copy `toko.dim` to `pr.dim`. Change the Web and API display names to match your system. Replace the POST label and the request and response types with the ones in the diff. Keep the IDs so the paths still resolve. Run `node check.mjs pr.dim`. Once it prints `ok`, ask a reviewer to read the relation and name the value the caller receives. Check the answer against the code in the PR.
+
 ## Next steps
 
 - [Elements and attributes](/en/menulis/elemen/) and [Relations and paths](/en/menulis/relasi/) explain the syntax.
 - [Interactions and data flow](/en/konsep/aliran-data/) covers `op` and data direction.
 - [The zoomable map](/en/konsep/peta-zoom/) shows how dim moves relations between levels.
+
+- [Find a guide for your next task](/en/panduan/) or [embed your model on a web page](/en/ekosistem/peta-web/).

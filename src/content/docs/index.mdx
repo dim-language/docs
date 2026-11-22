@@ -3,63 +3,50 @@ title: dim, bahasa untuk memodelkan arsitektur software
 description: Tulis arsitektur software dalam file .dim, lihat relasinya di peta yang bisa di-zoom, dan cek model dengan SDK TypeScript.
 template: splash
 tableOfContents: false
-hero:
-  title: Satu model arsitektur, dari sistem sampai fungsi.
-  tagline: dim (Diagram In Markup) adalah bahasa teks untuk mendeskripsikan sistem dan interaksi antarbagian. Tulis model dalam file .dim, lalu jelajahi arsitekturnya di peta yang bisa di-zoom.
-  actions:
-    - text: Coba peta checkout
-      link: '#peta-checkout'
-      variant: primary
-    - text: Tulis model pertama
-      link: /mulai/
-      variant: minimal
 ---
 
+import '@fontsource/kalam/latin-400.css';
+import { LinkButton } from '@astrojs/starlight/components';
 import ZoomMap from '../../components/zoom-map/ZoomMap.astro';
+import MapIntro from '../../components/MapIntro.astro';
 import shop from '../../data/shop.json';
 
 <div class="dim-landing">
 
-<section class="dim-demo" id="peta-checkout">
-<div class="dim-split">
-<div>
-
-## Ikuti checkout dari toko sampai kode
-
-Di model toko online ini, method `OrderRepository.save()` menyimpan pesanan ke Postgres. dim memakai relasi itu untuk menampilkan **API → Postgres** saat kamu melihat isi toko. Saat toko tertutup, relasi itu berada di dalam kotak **Online Shop**.
-
-[Cara dim menghitung panah saat zoom](/konsep/peta-zoom/)
-
-</div>
-<div>
-
-```dim title="shop.dim"
-insert_order: api.orders.repo.save -> db "INSERT orders" {
-  op write;
-  data "Order";
-}
-```
-
-</div>
-</div>
-
-Pilih **Checkout**, lalu perbesar **Online Shop**. Cari langkah **INSERT orders** menuju Postgres di daftar alur di bawah peta.
-
+<div class="dim-demo" id="peta-checkout">
+<MapIntro text="Satu peta buat tim dan agen AI." />
 <ZoomMap model={shop} uid="beranda" />
+</div>
 
+<section class="dim-map-action">
+<div class="dim-pitch">
+<ol class="dim-comic" role="list">
+<li><span class="dim-photo"><img src="/brian/hello.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Kenalin, Brian. (Bukan nama asli.)</p></li>
+<li><span class="dim-photo"><img src="/brian/architect.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Arsiteknya minta Brian bikin A.</p></li>
+<li><span class="dim-photo"><img src="/brian/idea.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Brian nangkepnya B. “Siap.”</p></li>
+<li><span class="dim-photo"><img src="/brian/agent.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Brian minta B di prompt. Agennya bikin C.</p></li>
+<li><span class="dim-photo"><img src="/brian/review.webp" alt="" width="400" height="400" loading="lazy" /></span><p>“Brian, coba jelasin kok A bisa jadi C.”</p></li>
+</ol>
+<div class="dim-comic-close">
+
+<p class="dim-punchline">Kita pernah ngalamin gini, sekarang (semoga aja) lo ga perlu</p>
+
+<LinkButton href="/mulai/" icon="right-arrow">Pakai dim, mulai di sini</LinkButton>
+</div>
+</div>
 </section>
 
-<section class="dim-split">
-<div>
+<div class="dim-examples">
+<section class="dim-example">
+<header>
 
-## Catat data yang dikirim dan diterima
+## “Baliknya satu order, kan?”
 
-Tombol checkout memulai panggilan ke API. Dengan `data push`, Web App mengirim `CheckoutRequest`. Dengan `data pull`, Web App menerima `OrderId` dari API. Keduanya tercatat pada panah **Web App → API**.
+</header>
+<img class="dim-scene" src="/brian/order-id.webp" width="640" height="374" alt="" loading="lazy" />
+<div class="dim-example-body">
 
-[Cara menulis interaksi dan aliran data](/konsep/aliran-data/)
-
-</div>
-<div>
+Kali ini Brian nanya dulu. Arsiteknya geleng. “ID-nya aja.” Mereka buka model dan catat kesepakatannya di panah **Web App → API**. Sekarang Brian bisa kasih agennya file yang bilang persis apa yang dikirim (`CheckoutRequest`) dan apa yang balik (`OrderId`).
 
 ```dim title="shop.dim"
 checkout_post: web.checkout.button -> api.checkout.route "POST /checkout" {
@@ -70,54 +57,67 @@ checkout_post: web.checkout.button -> api.checkout.route "POST /checkout" {
 }
 ```
 
-</div>
-</section>
-
-<section class="dim-split">
-<div>
-
-## Cek model di terminal dan CI
-
-Pakai `compileProject` untuk memeriksa model beserta file yang diimpor. Misalnya, jika kamu menghapus `push` dari `data push "CheckoutRequest"`, compiler melaporkan `E035` pada baris yang perlu diperbaiki. Kamu juga bisa menjalankan pemeriksaan yang sama di CI.
-
-[API SDK dan format diagnostik](/referensi/cli/)
-
-</div>
-<div>
-
-```ts
-const { diagnostics } = compileProject("main.dim", files);
-```
-
-```text contoh-tutorial="tanpaArah"
-```
+<LinkButton href="/konsep/aliran-data/" icon="right-arrow">Pelajari aliran data</LinkButton>
 
 </div>
 </section>
+
+<section class="dim-example">
+<header>
+
+## “Lah, arah datanya ke mana?”
+
+</header>
+<img class="dim-scene" src="/brian/missing-direction.webp" width="640" height="330" alt="" loading="lazy" />
+<div class="dim-example-body">
+
+Brian udah nulis tipe request-nya. Yang kelupaan: siapa yang ngirim? Pas model dicek di CI, muncul `E035`. Karena Web App yang ngirim request ke API, Brian tinggal tambahin `push`.
+
+```diff
+- data "CheckoutRequest";
++ data push "CheckoutRequest";
+```
+
+<LinkButton href="/referensi/cli/" icon="right-arrow">Cek model pakai SDK</LinkButton>
+
+</div>
+</section>
+
+</div>
+
+<div class="dim-definition">
+<p><dfn>dim (Diagram In Markup)</dfn> itu bahasa buat nulis arsitektur software sebagai teks. Modelnya bisa lo jelajahi sebagai peta, dari sistem sampai fungsi.</p>
+</div>
 
 <section class="dim-features">
+<header class="dim-guide-intro">
+<img src="/brian/your-turn.webp" width="285" height="480" loading="lazy" alt="" />
+<div>
 
-## Mulai dari sistem yang kamu kenal
+## Giliran lo. Bawa satu PR.
 
-Catat siapa yang memakai sistem dan sistem lain yang terhubung dengannya. Setelah itu, tambahkan container, komponen, dan fungsi di bagian yang ingin kamu jelaskan lebih rinci.
+Iya, lo yang di balik layar. Gambar alurnya sebelum Brian nebak lagi.
+
+</div>
+</header>
 
 <div class="dim-features-grid">
 <div>
 
-### Tulis dan jalankan model
+### Bikin yang pertama
 
-- [Tulis model pertama](/mulai/) untuk mengikuti tutorial dari sistem sampai fungsi.
-- [Pasang SDK](/referensi/cli/#pasang) untuk memeriksa model dan mengekspor JSON.
-- [Baca spesifikasi bahasa](/referensi/spesifikasi/) untuk mencari aturan sintaks dan validasi.
+- [Tulis model pertama](/mulai/) bareng panduan langkah demi langkah, dari sistem sampai fungsi.
+- [Pasang SDK](/referensi/cli/#pasang) buat ngecek model lo dan ekspor JSON.
+- [Baca spesifikasi bahasa](/referensi/spesifikasi/) kalau lo butuh aturan sintaks atau validasi.
 
 </div>
 <div>
 
-### Tambahkan detail arsitektur
+### Pas sistemnya mulai rame
 
-- Susun [elemen](/menulis/elemen/) dan [relasi](/menulis/relasi/), lalu catat [kontrak HTTP](/konsep/endpoint/) atau [detail kode](/konsep/level-kode/) di bagian yang membutuhkannya.
-- Gunakan [flow](/konsep/alur/) untuk mengikuti urutan relasi seperti checkout atau refund.
-- [Pecah model ke beberapa file](/konsep/komposisi/) dan [tulis usulan perubahan](/konsep/komposisi/#amends-model-turunan) di atas model yang sudah ada.
+- Susun [elemen](/menulis/elemen/) dan [relasi](/menulis/relasi/), lalu catat [kontrak HTTP](/konsep/endpoint/) atau [detail kode](/konsep/level-kode/) kalau lo perlu nunjukin isinya.
+- Pakai [flow](/konsep/alur/) buat ngikutin checkout atau refund, langkah demi langkah.
+- [Pecah model ke beberapa file](/konsep/komposisi/) dan [tulis usulan perubahan](/konsep/komposisi/#amends-model-turunan) pakai model lo sekarang sebagai dasarnya.
 
 </div>
 </div>

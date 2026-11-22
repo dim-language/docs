@@ -1,0 +1,21 @@
+---
+interface Props {
+	text: string;
+}
+---
+<div class="dim-map-intro" hidden>
+	<span>{Astro.props.text}</span>
+	<img src="/brian/cheering.webp" alt="" height="360" />
+</div>
+<script is:inline>
+	{
+		const intro = document.currentScript.previousElementSibling;
+		const navigation = performance.getEntriesByType('navigation')[0];
+		const returning = navigation?.type === 'back_forward' ||
+			(navigation?.type !== 'reload' && document.referrer.startsWith(location.origin + '/'));
+		if (!returning && !location.hash && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+			intro.hidden = false;
+			intro.addEventListener('animationend', () => { intro.hidden = true; }, { once: true });
+		}
+	}
+</script>

@@ -63,7 +63,7 @@ export default defineConfig({
 							const example = codeBlock.metaOptions.getString('contoh-tutorial');
 							if (!example) return;
 
-							const source = /^[a-z-]+\.(dim|mjs)$/.test(example)
+							const source = (/^[a-z-]+\.(dim|mjs)$/.test(example) || example === 'ShopMap.astro')
 								? readFileSync(new URL(example, tutorialDir), 'utf8')
 								: JSON.parse(readFileSync(new URL('cek.json', tutorialDir), 'utf8'))[example];
 							if (typeof source !== 'string') throw new Error(`Contoh tutorial tidak ditemukan: ${example}`);
@@ -85,33 +85,25 @@ export default defineConfig({
 					overridesByLang: { 'bash,sh,shell': { frame: 'none' } },
 				},
 			},
+			components: { Sidebar: './src/components/DocsSidebar.astro' },
 			sidebar: [
 				{
-					label: 'Mulai',
-					translations: { en: 'Getting started' },
-					items: [{ slug: 'mulai/apa-itu-dim' }, { slug: 'mulai' }],
+					label: 'Tutorial',
+					items: [{ slug: 'mulai' }, { slug: 'mulai/apa-itu-dim' }],
 				},
 				{
-					label: 'Menulis model',
-					translations: { en: 'Writing models' },
-					items: [{ slug: 'menulis/elemen' }, { slug: 'menulis/relasi' }, { slug: 'menulis/memodelkan' }],
-				},
-				{
-					label: 'Konsep',
-					translations: { en: 'Concepts' },
+					label: 'Panduan', translations: { en: 'Guide' },
 					items: [
-						{ slug: 'konsep/peta-zoom' },
-						{ slug: 'konsep/aliran-data' },
-						{ slug: 'konsep/level-kode' },
-						{ slug: 'konsep/endpoint' },
-						{ slug: 'konsep/alur' },
+						{ slug: 'panduan' }, { slug: 'menulis/memodelkan' }, { slug: 'menulis/elemen' },
+						{ slug: 'menulis/relasi' }, { slug: 'konsep/aliran-data' }, { slug: 'konsep/peta-zoom' },
+						{ slug: 'konsep/level-kode' }, { slug: 'konsep/endpoint' }, { slug: 'konsep/alur' },
 						{ slug: 'konsep/komposisi' },
 					],
 				},
 				{
-					label: 'Referensi',
-					translations: { en: 'Reference' },
+					label: 'Referensi', translations: { en: 'Reference' },
 					items: [
+						{ slug: 'referensi' }, { slug: 'referensi/cli' },
 						{
 							label: 'Spesifikasi bahasa',
 							translations: { en: 'Language specification' },
@@ -128,8 +120,11 @@ export default defineConfig({
 								{ slug: 'referensi/spesifikasi/bentuk-kanonik' },
 							],
 						},
-						{ slug: 'referensi/cli' },
 					],
+				},
+				{
+					label: 'Ekosistem', translations: { en: 'Ecosystem' },
+					items: [{ slug: 'ekosistem' }, { slug: 'ekosistem/peta-web' }],
 				},
 			],
 		}),

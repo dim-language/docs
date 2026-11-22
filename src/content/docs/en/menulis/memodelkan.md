@@ -1,7 +1,9 @@
 ---
-title: Modeling a system
+title: Map an existing system
 description: Build a dim model of an existing system, starting with context and adding detail where you need it.
 ---
+
+Pick a PR that touches two services. Open the changed handler, identify its caller, then follow its first outgoing call. Use those three facts to decide which part of the system to draw.
 
 You can build the model in stages. Each step leaves you with a valid model you can use and extend later.
 
@@ -127,3 +129,7 @@ See [File composition](/en/konsep/komposisi/) for examples.
 - Label a relation with what the initiator does, such as `"INSERT orders"` or `"Charge payment"`.
 - Use code type names for data, such as `"Order"` and `"ChargeRequest"`, so the same data has the same name in each relation.
 - Use `description` to explain why the element exists.
+
+## Check the result
+
+Compare the arrows with one request from a log or test. A reviewer should be able to trace the caller, the destination service and the operation using the model paths.

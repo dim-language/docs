@@ -1,7 +1,11 @@
 ---
-title: Interaksi dan aliran data
+title: Bedakan pemanggil dari arah data
 description: Kenapa arah panah di dim berarti siapa yang memulai, dan bagaimana arah data dicatat terpisah lewat push dan pull.
 ---
+
+import BrianNote from '../../../components/BrianNote.astro';
+
+Web perlu ID pesanan setelah checkout. Lihat pemanggilan POST di kode Web, lalu catat apa yang Web kirim dan apa yang dipakai dari respons.
 
 Setiap relasi di dim menjawab dua pertanyaan yang berbeda:
 
@@ -62,3 +66,9 @@ Kalau arah yang ditulis bertentangan dengan `op` (misalnya `op read; data push`)
 ## Saat di-zoom out
 
 Aliran data ikut naik bersama relasinya. Di [peta zoom](/konsep/peta-zoom/), panah `API → Postgres` membawa `kirim Order · ambil Order` karena di dalamnya ada satu fungsi yang menulis dan satu yang membaca. Aturan lengkapnya ada di [spesifikasi §6.3](/referensi/spesifikasi/model/#63-aliran-data).
+
+## Cek hasilnya
+
+<BrianNote scene="missing-direction">Kalau API yang ngirim respons, perlu panah kedua? Coba telusuri siapa yang mulai request.</BrianNote>
+
+Baca relasi checkout dari kiri ke kanan. Web memulai panggilan dan mengirim CheckoutRequest. Sekarang baca bagian pull dari sudut pandang Web. Nilai yang harus bisa dipakai setelah panggilan selesai adalah OrderId.

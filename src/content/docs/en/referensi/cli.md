@@ -6,7 +6,7 @@ description: Validate models, export JSON, and format DIM files in TypeScript.
 ## Install
 
 ```sh
-npm install @dim/sdk
+npm install https://github.com/dim-language/dim-sdk/releases/download/v0.2.0/dim-sdk-0.2.0.tgz
 ```
 
 The package is also available from [GitHub Releases](https://github.com/dim-language/dim-sdk/releases/tag/v0.2.0).

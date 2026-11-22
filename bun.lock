@@ -8,6 +8,7 @@
         "@astrojs/starlight": "^0.42.10",
         "@dim/sdk": "https://github.com/dim-language/dim-sdk/releases/download/v0.2.0/dim-sdk-0.2.0.tgz",
         "@fontsource/ibm-plex-mono": "^5.3.0",
+        "@fontsource/kalam": "^5.3.0",
         "@fontsource/source-sans-3": "^5.3.1",
         "@fontsource/source-serif-4": "^5.3.1",
         "astro": "^7.3.6",
@@ -139,6 +140,8 @@
     "@expressive-code/plugin-text-markers": ["@expressive-code/plugin-text-markers@0.44.3", "", { "dependencies": { "@expressive-code/core": "^0.44.3" } }, "sha512-4Ae2xRSDV5kdWPsi40xWbOtoihbzM0zLVjQKkDAnD5KzFXl+6/kd+VhuWOlTRVaJ5cqGk++vCbAaf0MR1XbZlw=="],
 
     "@fontsource/ibm-plex-mono": ["@fontsource/ibm-plex-mono@5.3.0", "", {}, "sha512-eTgnZjZEGk1QtD3ZstF+Vclo2HLAni8YMy34/DxllwZvyz1lR/1RF/xTiAquOBO7MvqBx8D2Ig2WCPMVfdZu7Q=="],
+
+    "@fontsource/kalam": ["@fontsource/kalam@5.3.0", "", {}, "sha512-FDkVoDfPDCSN/eO81FOYtUI67eMgpVBJmjBtAqSL0PmEhJyeFY2biC+CR+yEttksgXR9+swpFdYmQTyjwBq80Q=="],
 
     "@fontsource/source-sans-3": ["@fontsource/source-sans-3@5.3.1", "", {}, "sha512-O3YxvbotUOgYI2Zx0bBcEMNjnwitRf9P2+9pd54sMoux1NHrdXnMwZusw2P78lFhEzOPN4glOEQmX0ASaS68uA=="],
 

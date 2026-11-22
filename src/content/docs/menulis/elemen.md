@@ -1,7 +1,9 @@
 ---
-title: Elemen dan atribut
+title: Pilih elemen dan atribut
 description: Lima jenis elemen dim, aturan nesting-nya, id dan nama, dan atribut yang menjelaskan setiap elemen.
 ---
+
+Tim checkout punya satu API dan satu database. Letakkan keduanya di dalam sistem toko supaya pembaca bisa membuka toko dan melihat bagian-bagian yang dipelihara tim.
 
 Model dim terdiri dari **elemen** yang bersarang, dan **relasi** di antara elemen-elemen itu. Halaman ini membahas elemen. Relasi dibahas di [Relasi dan path](/menulis/relasi/).
 
@@ -103,3 +105,7 @@ container api "API" {
 ```
 
 Aturan lengkapnya ada di [spesifikasi §3–§6](/referensi/spesifikasi/sintaks/#3-struktur-leksikal).
+
+## Cek hasilnya
+
+Simpan contoh pertama sebagai `shop.dim` dan jalankan `node check.mjs shop.dim` dari tutorial. Hitung lima elemen dari `shop` sampai `repo` dan `db`. Mengubah nama tampilan Postgres tetap menghasilkan lima elemen dengan path database yang sama.

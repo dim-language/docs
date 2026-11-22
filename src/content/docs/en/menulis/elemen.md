@@ -1,7 +1,9 @@
 ---
-title: Elements and attributes
+title: Choose elements and attributes
 description: The five kinds of dim elements, their nesting rules, IDs, names, and attributes.
 ---
+
+The checkout team owns an API and a database. Place both inside the shop system so readers can open the shop to see what the team maintains.
 
 A dim model contains nested **elements** connected by **relations**. See [Relations and paths](/en/menulis/relasi/) for how to connect them.
 
@@ -103,3 +105,7 @@ container api "API" {
 ```
 
 See [specification §§3–6](/en/referensi/spesifikasi/sintaks/#3-lexical-structure) for the full rules.
+
+## Check the result
+
+Save the first example as `shop.dim` and run the tutorial’s `node check.mjs shop.dim`. Count five elements from `shop` through `repo` and `db`. Renaming the Postgres display label should leave the count and the database path intact.

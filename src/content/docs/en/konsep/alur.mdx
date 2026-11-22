@@ -1,10 +1,12 @@
 ---
-title: Flows
+title: Trace a flow
 description: Mark a sequence of relations as a user journey you can highlight at every zoom level.
 ---
 
 import ZoomMap from '../../../../components/zoom-map/ZoomMap.astro';
 import shop from '../../../../data/shop.json';
+
+A reviewer wants to know when payment is charged before the order is saved. Give the checkout relations IDs and order those IDs as flow steps.
 
 Arrows show which elements interact. To see what happens after a customer clicks Pay, follow a **sequence** of relations. A `flow` records that sequence in the model.
 
@@ -47,3 +49,7 @@ When `Checkout` and `Payments` are visible as boxes, `charge`, the call from `ch
 - Give each branch its own flow so that each one describes a single sequence.
 
 See [specification §12](/en/referensi/spesifikasi/komposisi-dan-flow/#12-flows) for the full rules.
+
+## Check the result
+
+Zoom into the checkout map until the internal steps appear. Compare the charge and write steps with the order in the file. If they are reversed, reorder the steps and compile again.

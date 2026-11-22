@@ -1,7 +1,9 @@
 ---
-title: Endpoint HTTP
+title: Dokumentasikan endpoint HTTP
 description: Menulis route HTTP sebagai elemen code, lengkap dengan auth, rate limit, input, dan respons, lalu membiarkan relasi dari client mengambil kontraknya.
 ---
+
+Tim login menambah route untuk menukar email dan password dengan sesi. Tulis kontraknya pada handler supaya pemanggil bisa merujuk route yang sama.
 
 Route HTTP ditulis sebagai elemen `code` dengan `form endpoint`. Isinya adalah kontrak route itu: method dan path, siapa yang boleh memanggil, batas lajunya, input yang diterima, dan respons yang mungkin. Kontrak ini cukup ditulis sekali, di endpoint-nya. Relasi dari client mengambil label dan datanya dari sana.
 
@@ -86,3 +88,7 @@ Relasi `login_post` di contoh di atas tidak menulis `op`, label, maupun `data`. 
 Yang ditulis di relasi selalu menang. Karena kontraknya hanya ada di endpoint, relasi dari beberapa client ke endpoint yang sama tidak perlu mengulang method, path, dan tipe datanya, dan tidak bisa basi saat endpoint berubah.
 
 Aturan lengkapnya ada di [spesifikasi §13](/referensi/spesifikasi/endpoint-http/#13-endpoint-http).
+
+## Cek hasilnya
+
+Ikuti login_post sampai endpoint. Gabungkan prefix dan path, lalu cocokkan POST /v1/auth/login, body LoginRequest, dan respons AuthSession dengan test route. Kalau respons berubah, perbarui returns di handler.

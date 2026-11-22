@@ -1,7 +1,9 @@
 ---
-title: Relasi dan path
+title: Hubungkan dua elemen
 description: Menulis relasi antar elemen di level mana pun, jenis interaksi dengan op, dan cara path dirujuk dari dalam blok.
 ---
+
+Saat Web membuat pesanan lewat API, mulailah dengan mencari ID kedua container. Pakai path lengkap untuk menulis relasi di luar blok sistem.
 
 Relasi menghubungkan dua elemen, di level mana pun. Fungsi boleh berelasi dengan database, container boleh berelasi dengan fungsi di sistem lain.
 
@@ -85,3 +87,7 @@ Id ini dipakai oleh `step` di [alur](/konsep/alur/), dan oleh `remove` di [model
 - **Path yang tidak ada** (`E020`). Pesannya menyebut di bagian path mana pencariannya berhenti.
 
 Aturan lengkapnya ada di [spesifikasi §4.4](/referensi/spesifikasi/sintaks/#44-relasi) dan [§7](/referensi/spesifikasi/model/#7-resolusi-path).
+
+## Cek hasilnya
+
+Di model tutorial, ganti label POST dengan nama operasi dari kode, lalu cek ulang file. Jumlah relasinya harus tetap tiga. Kalau bertambah, periksa apakah kamu menambahkan panah kedua untuk interaksi yang sama.

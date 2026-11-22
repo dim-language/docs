@@ -1,7 +1,9 @@
 ---
-title: Cara memodelkan sistem
+title: Petakan sistem yang sudah berjalan
 description: Langkah-langkah menulis model dim untuk sistem yang sudah ada, dari gambaran besar sampai detail yang perlu saja.
 ---
+
+Ambil satu PR yang menyentuh dua layanan. Buka handler yang berubah, cari pemanggilnya, lalu ikuti panggilan pertama yang keluar dari layanan itu. Pakai tiga fakta tersebut untuk memilih bagian sistem yang akan digambar.
 
 Model dim tidak perlu ditulis lengkap sekaligus. Setiap langkah di bawah menghasilkan model yang valid dan sudah berguna, jadi kamu bisa berhenti di langkah mana pun, lalu menambah detail saat dibutuhkan.
 
@@ -127,3 +129,7 @@ Contohnya ada di [Komposisi file](/konsep/komposisi/).
 - **Label relasi** menjelaskan apa yang dilakukan pemula: `"INSERT orders"`, `"Menagih pembayaran"`, bukan `"relasi ke db"`.
 - **Nama data** ditulis seperti nama tipe di kode (`"Order"`, `"ChargeRequest"`), supaya sama di semua relasi.
 - **`description`** menjawab *kenapa* elemen itu ada, bukan mengulang namanya.
+
+## Cek hasilnya
+
+Bandingkan panah model dengan satu request nyata dari log atau test. Pembaca harus bisa menelusuri pemanggil, layanan tujuan, dan operasi yang dilakukan dengan mengikuti path di model.

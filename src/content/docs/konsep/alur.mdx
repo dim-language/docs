@@ -1,10 +1,12 @@
 ---
-title: Alur (flow)
+title: Telusuri satu flow
 description: Menandai urutan relasi sebagai satu user journey yang bisa disorot di setiap level zoom.
 ---
 
 import ZoomMap from '../../../components/zoom-map/ZoomMap.astro';
 import shop from '../../../data/shop.json';
+
+Seorang reviewer ingin tahu kapan pembayaran ditagih sebelum pesanan disimpan. Beri ID pada relasi checkout dan urutkan ID itu sebagai langkah flow.
 
 Panah di peta menjawab "siapa bicara dengan siapa". Pertanyaan berikutnya biasanya "apa yang terjadi saat pembeli menekan bayar?". Jawabannya adalah **urutan** beberapa relasi, dan `flow` menyimpan urutan itu di model.
 
@@ -47,3 +49,7 @@ Saat komponen `Checkout` dan `Payments` terlihat sebagai kotak, `charge` (method
 - Bukan untuk menggambar semua kemungkinan cabang. Flow adalah satu urutan; cabang lain ditulis sebagai flow lain.
 
 Aturan lengkapnya ada di [spesifikasi §12](/referensi/spesifikasi/komposisi-dan-flow/#12-flow).
+
+## Cek hasilnya
+
+Di peta checkout, perbesar sampai langkah internal terlihat. Cocokkan langkah penagihan dan penyimpanan dengan urutan step di file. Jika urutannya keliru, ubah urutan step dan kompilasi kembali.

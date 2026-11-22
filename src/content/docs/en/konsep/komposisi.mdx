@@ -1,11 +1,13 @@
 ---
-title: File composition
+title: Split a model across files
 description: Split a model across files with import and extend, then derive another model with amends and remove.
 ---
 
 import ModelDiff from '../../../../components/model-diff/ModelDiff.astro';
 import shop from '../../../../data/shop.json';
 import toBe from '../../../../data/shop-to-be.json';
+
+The payments team wants to maintain its own gateway model. Move the gateway declaration into payment.dim and import it from the entry file that declares the checkout relations.
 
 As an architecture model grows, split it across files so each part is easier to read or own. dim still resolves paths, lifts arrows, and assigns relation IDs as if you had written **one model** in a single file.
 
@@ -89,3 +91,7 @@ Element IDs are paths, and relation IDs are stable. dim can use them to compare 
 The relation `shop.reports → shop.db` disappears when its endpoint is removed. Other relations keep the same default IDs, such as `a->b#0`, in both models because dim still counts removed relations when assigning numbers.
 
 See [specification §11](/en/referensi/spesifikasi/komposisi-dan-flow/#11-file-composition) for the full rules, including the order in which files take effect.
+
+## Check the result
+
+Compile main.dim with compileProject, supplying every imported file. Compare the gateway path and checkout relation before and after the split. Each should still occur once.
