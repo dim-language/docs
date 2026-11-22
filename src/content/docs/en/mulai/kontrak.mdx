@@ -1,0 +1,35 @@
+---
+title: 3. The confirmation screen changes
+description: Revise the response contract when the product team changes the confirmation screen.
+---
+
+import BrianNote from '../../../../components/BrianNote.astro';
+
+After trying the prototype on a phone, the product team decides to show just the order number. The API team trims the checkout response. Brian spots the line in his model that has just gone stale.
+
+<BrianNote scene="order-id">If all we get back is the ID, which part of the POST arrow do I change?</BrianNote>
+
+Edit just the POST relation in `toko.dim`. Web still sends a full order and the API still persists it.
+
+```diff
+- toko.web -> toko.api "POST /pesanan" { op call; data push "Pesanan"; data pull "Pesanan" }
++ toko.web -> toko.api "POST /pesanan" { op call; data push "Pesanan"; data pull "IdPesanan" }
+```
+
+```sh
+node check.mjs toko.dim
+```
+
+```text contoh-tutorial="container"
+```
+
+## Check the direction during review
+
+The arrow count stays the same. To see what the compiler checks, remove `push` from the request and run the command again.
+
+```text contoh-tutorial="tanpaArah"
+```
+
+Each data type on an `op call` needs a direction. Restore `push`, rerun the check until it prints `ok`, then compare `data pull "IdPesanan"` with the API team’s agreed response. The response type promised to Web still needs a human review.
+
+[4. Review with the architect](/en/mulai/review/)

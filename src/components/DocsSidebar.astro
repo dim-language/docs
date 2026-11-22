@@ -4,7 +4,7 @@ import SidebarSublist from '@astrojs/starlight/components/SidebarSublist.astro';
 import MobileMenuFooter from '@astrojs/starlight/components/MobileMenuFooter.astro';
 
 const { sidebar, lang } = Astro.locals.starlightRoute;
-const icons = ['rocket', 'open-book', 'information', 'puzzle'] as const;
+const icons = ['information', 'rocket', 'open-book', 'list-format'] as const;
 type Entry = (typeof sidebar)[number];
 function isCurrent(entry: Entry): boolean {
 	return entry.type === 'link' ? entry.isCurrent : entry.entries.some(isCurrent);

@@ -14,3 +14,4 @@ Pilih pekerjaan yang sedang kamu hadapi. Kalau belum punya file `.dim`, mulai de
 - [Catat kontrak fungsi](/konsep/level-kode/) — Tuliskan parameter, hasil, dan kondisi error.
 - [Pilih elemen dan atribut](/menulis/elemen/) — Tentukan batas sistem serta container di dalamnya.
 - [Hubungkan dua elemen](/menulis/relasi/) — Pilih path sumber dan tujuan, lalu beri nama interaksinya.
+- [Pasang peta di halaman Astro](/ekosistem/peta-web/) — Bagikan model interaktif ke reviewer.

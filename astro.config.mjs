@@ -88,8 +88,15 @@ export default defineConfig({
 			components: { Sidebar: './src/components/DocsSidebar.astro' },
 			sidebar: [
 				{
+					label: 'Pengantar', translations: { en: 'Introduction' },
+					items: [{ slug: 'mulai/apa-itu-dim' }, { slug: 'ekosistem' }],
+				},
+				{
 					label: 'Tutorial',
-					items: [{ slug: 'mulai' }, { slug: 'mulai/apa-itu-dim' }],
+					items: [
+						{ slug: 'mulai' }, { slug: 'mulai/checkout' },
+						{ slug: 'mulai/kontrak' }, { slug: 'mulai/review' },
+					],
 				},
 				{
 					label: 'Panduan', translations: { en: 'Guide' },
@@ -97,7 +104,7 @@ export default defineConfig({
 						{ slug: 'panduan' }, { slug: 'menulis/memodelkan' }, { slug: 'menulis/elemen' },
 						{ slug: 'menulis/relasi' }, { slug: 'konsep/aliran-data' }, { slug: 'konsep/peta-zoom' },
 						{ slug: 'konsep/level-kode' }, { slug: 'konsep/endpoint' }, { slug: 'konsep/alur' },
-						{ slug: 'konsep/komposisi' },
+						{ slug: 'konsep/komposisi' }, { slug: 'ekosistem/peta-web' },
 					],
 				},
 				{
@@ -121,10 +128,6 @@ export default defineConfig({
 							],
 						},
 					],
-				},
-				{
-					label: 'Ekosistem', translations: { en: 'Ecosystem' },
-					items: [{ slug: 'ekosistem' }, { slug: 'ekosistem/peta-web' }],
 				},
 			],
 		}),

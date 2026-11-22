@@ -1,0 +1,24 @@
+---
+title: 2. Tim menambahkan checkout
+description: Ikuti pesanan dari Web sampai tersimpan di Postgres.
+---
+
+Di rapat desain, tim Web menunjukkan layar struk. Setelah pembeli menekan Pesan, layar itu akan menampilkan rincian pesanan yang baru tersimpan. Tim API menyanggupi dua hal. API akan menulis pesanan ke Postgres, lalu mengembalikan pesanan lengkap ke Web. Brian membuka peta kemarin. Panah dari pembeli ke toko belum cukup untuk menjelaskan dari mana isi struk berasal.
+
+## Buka kotak toko
+
+Ganti isi `toko.dim` dari bab pertama dengan rancangan tim. Di dalam `toko`, tandai antarmuka pembeli dengan `ui`. Pindahkan ujung panah Belanja ke `toko.web`.
+
+```dim contoh-tutorial="checkout.dim"
+```
+
+```sh
+node check.mjs toko.dim
+```
+
+```text contoh-tutorial="container"
+```
+
+Ikuti panah POST dari sisi Web. `push` membawa pesanan ke API. Setelah penulisan ke database, `pull` membawa pesanan lengkap kembali ke layar struk. Brian meminta kedua tim membaca panah itu sebelum mereka mulai mengerjakan bagiannya.
+
+[3. Layar konfirmasi berubah](/mulai/kontrak/)

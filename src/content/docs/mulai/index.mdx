@@ -1,17 +1,13 @@
 ---
-title: Model pertama
-description: Buat model toko online, cek tiap tahap dengan SDK, lalu lihat hasilnya di peta yang bisa di-zoom.
+title: 1. Tugas pertama Brian
+description: Bantu Brian memetakan siapa yang memakai toko online.
 ---
 
-import ZoomMap from '../../../components/zoom-map/ZoomMap.astro';
-import toko from '../../../data/toko-tutorial.json';
-import BrianNote from '../../../components/BrianNote.astro';
-
-<BrianNote scene="order-id">Waktu pembeli checkout, Web mengirim apa ke API? Apa yang balik ke pembeli?</BrianNote>
+Senin pagi, Brian dapat tiket untuk mendokumentasikan checkout toko online. Di tiket cuma ada satu kalimat dari tim produk. “Pembeli bisa pesan lewat toko.” Besok tim Web dan API akan membawa rancangan mereka. Hari ini Brian perlu menyiapkan peta yang bisa mereka koreksi bersama.
 
 ## Siapkan folder kerja
 
-Kita akan menjawabnya lewat satu file `toko.dim`. Siapkan Node.js 24 dan Bun, lalu jalankan perintah berikut di terminal.
+Simpan peta Brian di satu file `toko.dim`. Siapkan Node.js 24 dan Bun, lalu jalankan perintah berikut di terminal.
 
 ```sh
 mkdir dim-checkout
@@ -24,7 +20,7 @@ Simpan kode berikut sebagai `check.mjs` di folder itu. Skrip ini membaca file ya
 ```js contoh-tutorial="check.mjs"
 ```
 
-## 1. Orang dan sistem
+## Orang dan sistem
 
 Buat file `toko.dim` dan isi dengan model berikut.
 
@@ -42,71 +38,8 @@ node check.mjs toko.dim
 
 Dua elemen dan satu relasi sudah cukup untuk menggambarkan siapa yang memakai toko online.
 
-## 2. Isi sistemnya
+## Kelanjutan tiket Brian
 
-Ganti isi `toko.dim` dengan model ini. Ketiga `container` berada di dalam `toko` dan dirujuk dengan path seperti `toko.web`.
-
-```dim contoh-tutorial="container.dim"
-```
-
-<BrianNote scene="review">Tutup dulu jawabannya. Dari sudut pandang Web, mana yang dikirim dan mana yang diterima? Cari dua kata setelah `data` di relasi POST.</BrianNote>
-
-- `ui` menandai Web sebagai antarmuka yang dipakai pembeli. `shape database` memberi Postgres bentuk database di peta.
-- Web mengirim `Pesanan` ke API dengan `data push` dan menerima `IdPesanan` dengan `data pull`. Pada `op write`, `push` sudah menjadi arah bawaan.
-- Saat `toko` tertutup di peta, relasi `pembeli -> toko.web` tampil sebagai `pembeli → toko`.
-
-```bash
-node check.mjs toko.dim
-```
-
-```text contoh-tutorial="container"
-```
-
-## 3. Turun ke kode
-
-Ganti lagi isi `toko.dim`. Kali ini `api` berisi komponen `pesanan` yang punya fungsi `simpan_pesanan()`. Gunakan path fungsi itu sebagai asal relasi `INSERT pesanan`.
-
-```dim contoh-tutorial="kode.dim" ins={10-12} ins="toko.api.pesanan.simpan"
-```
-
-```bash
-node check.mjs toko.dim
-```
-
-```text contoh-tutorial="kode"
-```
-
-Jumlah relasinya tetap tiga karena relasi `INSERT pesanan` sekarang dimulai dari fungsi. Perbesar peta untuk mengikuti panah `API → Postgres` sampai sumbernya terlihat sebagai `simpan_pesanan() → Postgres`.
-
-Di peta berikut, perbesar sampai Web dan API terlihat. Pilih relasi POST dan baca dua entri datanya. Web mengirim `Pesanan` dan menerima `IdPesanan`. Perkecil sampai toko tertutup. Panah POST menghilang karena kedua ujungnya ada di dalam toko.
-
-<ZoomMap model={toko} uid="model-pertama" />
-
-## 4. Latihan memperbaiki error
-
-Di baris `POST /pesanan`, ubah `data push "Pesanan"` menjadi `data "Pesanan"`, lalu cek lagi.
-
-```bash
-node check.mjs toko.dim
-```
-
-Cari baris ini pada output skrip.
-
-```text contoh-tutorial="tanpaArah"
-```
-
-`op call` bisa mengirim permintaan dan menerima respons, jadi tentukan arah setiap `data`. Tambahkan kembali `push`, lalu jalankan `node check.mjs toko.dim` sampai ringkasan `ok` dari langkah ketiga muncul lagi.
-
-## Coba dengan satu PR
-
-<BrianNote scene="your-turn">Ambil satu perubahan yang lagi lo review. Siapa yang mulai interaksi, dan apa yang dia harapkan balik?</BrianNote>
-
-Salin `toko.dim` ke `pr.dim`. Ganti nama tampilan Web dan API sesuai sistemmu, lalu ubah label POST serta tipe request dan respons sesuai diff PR. Pertahankan ID agar path tetap cocok. Jalankan `node check.mjs pr.dim`. Setelah muncul `ok`, minta reviewer membaca relasi itu dan menyebutkan hasil yang diterima pemanggil. Cocokkan jawabannya dengan kode PR.
-
-## Selanjutnya
-
-- [Elemen dan atribut](/menulis/elemen/) dan [Relasi dan path](/menulis/relasi/) untuk detail sintaks.
-- [Interaksi dan aliran data](/konsep/aliran-data/) untuk memilih `op` dan arah `data`.
-- [Peta yang bisa di-zoom](/konsep/peta-zoom/) untuk memahami bagaimana relasi berpindah antarlevel zoom.
-
-- [Pilih panduan untuk pekerjaan berikutnya](/panduan/) atau [pasang modelmu di halaman web](/ekosistem/peta-web/).
+- [2. Tim menambahkan checkout](/mulai/checkout/)
+- [3. Layar konfirmasi berubah](/mulai/kontrak/)
+- [4. Review dengan arsitek](/mulai/review/)

@@ -14,3 +14,4 @@ Choose the task in front of you. If you don’t have a `.dim` file yet, start wi
 - [Describe a function contract](/en/konsep/level-kode/) — Record parameters, return values and error conditions.
 - [Choose elements and attributes](/en/menulis/elemen/) — Identify the system boundary and its containers.
 - [Connect two elements](/en/menulis/relasi/) — Choose source and target paths and name their interaction.
+- [Embed a map on an Astro page](/en/ekosistem/peta-web/) — Share an interactive model with reviewers.

@@ -5,6 +5,9 @@ system shop "Online Shop" {
   container web "Web App" {
     tech "Next.js";
     ui;
+    component detail "Detail Pesanan" {
+      description "Menampilkan pesanan dan menerima permintaan refund dari pembeli.";
+    }
     component checkout "Checkout Page" {
       code button "CheckoutButton.onClick()" {
         form function;
@@ -74,6 +77,20 @@ system shop "Online Shop" {
     }
 
     component orders "Orders" {
+      code detail "get_order()" {
+        form function;
+        description "Mencari pesanan untuk halaman detail.";
+        param id "OrderId";
+        returns "Option<Order>";
+        async;
+      }
+      code refund "refund_order()" {
+        form function;
+        description "Meminta refund ke gateway dan mencatat nomor refund setelah gateway mengonfirmasi.";
+        param id "OrderId";
+        returns "Result<RefundId>";
+        async;
+      }
       code order "Order" {
         form struct;
         description "Order yang sudah dibayar dan menunggu dikirim.";
@@ -149,7 +166,19 @@ system shop "Online Shop" {
   save_order: api.checkout.service.run -> api.orders.store.save "Simpan order" { op call; data push "Order" }
   insert_order: api.orders.repo.save -> db "INSERT orders" { op write; data "Order" }
   api.orders.repo.save -> api.orders.repo.pool "Ambil koneksi" { op read }
-  api.orders.repo.find -> db "SELECT orders" { op read; data "Order" }
+  detail_get: web.detail -> api.orders.detail "GET /orders/{id}" {
+    op call; data push "OrderId"; data pull "Order";
+  }
+  find_order: api.orders.detail -> api.orders.repo.find "Cari berdasarkan ID" {
+    op call; data push "OrderId"; data pull "Order";
+  }
+  refund_post: web.detail -> api.orders.refund "POST /orders/{id}/refund" {
+    op call; data push "OrderId"; data pull "RefundId";
+  }
+  record_refund: api.orders.refund -> db "UPDATE orders" {
+    op write; data "RefundId";
+  }
+  select_order: api.orders.repo.find -> db "SELECT orders" { op read; data "Order" }
   reports -> db "SELECT orders" { op read; data "Order" }
 
   // Struktur kelas.

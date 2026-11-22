@@ -17,6 +17,7 @@ function check(path) {
 
 test.each([
 	['sistem.dim', cek.sistem],
+	['checkout.dim', cek.container],
 	['container.dim', cek.container],
 	['kode.dim', cek.kode],
 ])('%s lolos dengan ringkasan yang tampil di tutorial', (file, expected) => {

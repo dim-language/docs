@@ -16,6 +16,15 @@ charge_gateway: shop.api.payments.client.charge -> payment.gateway "POST /charge
   data pull "ChargeResult";
 }
 
+open_detail: customer -> shop.web.detail "Buka detail pesanan";
+request_refund: customer -> shop.web.detail "Ajukan refund";
+refund_gateway: shop.api.orders.refund -> payment.gateway "POST /refunds" {
+  op call;
+  tech "HTTPS";
+  data push "RefundRequest";
+  data pull "RefundId";
+}
+
 // Tim ops menambah keterangan tanpa mengubah shop.dim.
 extend shop.db {
   description "Satu instance primer dengan satu replika baca.";
@@ -31,4 +40,20 @@ flow checkout "Checkout" {
   step charge_gateway;
   step save_order "Simpan setelah tertagih";
   step insert_order;
+}
+
+flow order_detail "Detail pesanan" {
+  description "Pembeli membuka pesanan yang sudah dibuat untuk melihat rincian barang dan totalnya.";
+  step open_detail "Pembeli memilih pesanan";
+  step detail_get "Web meminta rincian untuk ID yang dipilih";
+  step find_order "API mencari pesanan lewat repository";
+  step select_order "Repository membaca pesanan dari Postgres untuk ditampilkan di Web";
+}
+
+flow refund "Refund" {
+  description "Pembeli mengajukan pengembalian dana untuk pesanan yang sudah dibayar.";
+  step request_refund "Pembeli menekan tombol refund di detail pesanan";
+  step refund_post "Web mengirim ID pesanan ke API";
+  step refund_gateway "Gateway memproses permintaan dan mengembalikan ID refund";
+  step record_refund "API mencatat ID refund pada pesanan di Postgres";
 }

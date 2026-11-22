@@ -1,17 +1,13 @@
 ---
-title: Your first model
-description: Model an online shop, check each step with the SDK, then explore the result in a zoomable map.
+title: 1. Brian’s first assignment
+description: Help Brian map who uses the online shop.
 ---
 
-import ZoomMap from '../../../../components/zoom-map/ZoomMap.astro';
-import toko from '../../../../data/toko-tutorial.json';
-import BrianNote from '../../../../components/BrianNote.astro';
-
-<BrianNote scene="order-id">When a customer checks out, what does Web send to the API? What comes back?</BrianNote>
+On Monday morning Brian picks up a ticket to document checkout. The product team has written one sentence. “A customer can place an order through the shop.” The Web and API teams will bring their designs tomorrow. Today Brian needs a map they can mark up together.
 
 ## Set up a project folder
 
-Answer that question with one file called `toko.dim`. With Node.js 24 and Bun installed, run these commands in a terminal.
+Keep Brian’s map in a file called `toko.dim`. With Node.js 24 and Bun installed, run these commands in a terminal.
 
 ```sh
 mkdir dim-checkout
@@ -24,7 +20,7 @@ Save this as `check.mjs` in that folder. It reads the file you give it, runs the
 ```js contoh-tutorial="check.mjs"
 ```
 
-## 1. A person and a system
+## A person and a system
 
 Create `toko.dim` with this model.
 
@@ -42,71 +38,8 @@ node check.mjs toko.dim
 
 Two elements and a relation show who uses the shop.
 
-## 2. Inside the system
+## What happens to Brian’s ticket
 
-Replace `toko.dim` with this model. The three containers belong to `toko`. Refer to them by paths such as `toko.web`.
-
-```dim contoh-tutorial="container.dim"
-```
-
-<BrianNote scene="review">Before reading on, trace the POST relation from Web. Which value leaves Web and which comes back? Look at the word after each `data`.</BrianNote>
-
-- `ui` marks Web as the interface the customer uses. `shape database` gives Postgres the database shape on the map.
-- Web sends `Pesanan` to the API with `data push` and receives `IdPesanan` with `data pull`. The direction defaults to `push` for `op write`.
-- When `toko` is closed on the map, the relation `pembeli -> toko.web` appears as `pembeli → toko`.
-
-```bash
-node check.mjs toko.dim
-```
-
-```text contoh-tutorial="container"
-```
-
-## 3. Down to the code
-
-Replace the file again. This time `api` contains the `pesanan` component and its `simpan_pesanan()` function. The function's path is the source of the `INSERT pesanan` relation.
-
-```dim contoh-tutorial="kode.dim" ins={10-12} ins="toko.api.pesanan.simpan"
-```
-
-```bash
-node check.mjs toko.dim
-```
-
-```text contoh-tutorial="kode"
-```
-
-The model still has three relations. The `INSERT pesanan` relation now starts at the function. Zoom in to follow the `API → Postgres` arrow until its source appears as `simpan_pesanan() → Postgres`.
-
-In the map below, zoom until Web and API appear. Select the POST relation and read its two data entries. Web sends `Pesanan` and receives `IdPesanan`. Zoom out until only the shop is visible. The POST arrow disappears because both ends are inside the shop.
-
-<ZoomMap model={toko} uid="model-pertama" />
-
-## 4. Fix a validation error
-
-In the `POST /pesanan` relation, change `data push "Pesanan"` to `data "Pesanan"` and run the check again.
-
-```bash
-node check.mjs toko.dim
-```
-
-Look for this line in the output.
-
-```text contoh-tutorial="tanpaArah"
-```
-
-An `op call` can send a request and receive a response, so specify a direction for each `data` attribute. Restore `push` and run `node check.mjs toko.dim` again to get the `ok` summary from step three.
-
-## Try it on a pull request
-
-<BrianNote scene="your-turn">Pick one change you’re reviewing. Who starts the interaction, and what do they expect back?</BrianNote>
-
-Copy `toko.dim` to `pr.dim`. Change the Web and API display names to match your system. Replace the POST label and the request and response types with the ones in the diff. Keep the IDs so the paths still resolve. Run `node check.mjs pr.dim`. Once it prints `ok`, ask a reviewer to read the relation and name the value the caller receives. Check the answer against the code in the PR.
-
-## Next steps
-
-- [Elements and attributes](/en/menulis/elemen/) and [Relations and paths](/en/menulis/relasi/) explain the syntax.
-- [Interactions and data flow](/en/konsep/aliran-data/) covers `op` and data direction.
-- [The zoomable map](/en/konsep/peta-zoom/) shows how dim moves relations between levels.
-
-- [Find a guide for your next task](/en/panduan/) or [embed your model on a web page](/en/ekosistem/peta-web/).
+- [2. The team adds checkout](/en/mulai/checkout/)
+- [3. The confirmation screen changes](/en/mulai/kontrak/)
+- [4. Review with the architect](/en/mulai/review/)

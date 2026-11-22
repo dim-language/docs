@@ -1,0 +1,35 @@
+---
+title: 3. Layar konfirmasi berubah
+description: Revisi kontrak respons setelah tim produk mengubah layar konfirmasi.
+---
+
+import BrianNote from '../../../components/BrianNote.astro';
+
+Saat mencoba prototipe di ponsel, tim produk memutuskan untuk menampilkan nomor pesanan saja. Tim API pun memangkas respons checkout. Brian menemukan satu baris di model yang sekarang sudah basi.
+
+<BrianNote scene="order-id">Kalau yang balik cuma ID, bagian mana dari panah POST yang mesti gue ubah?</BrianNote>
+
+Di `toko.dim`, edit relasi POST saja. Web masih mengirim pesanan lengkap dan API masih menyimpannya.
+
+```diff
+- toko.web -> toko.api "POST /pesanan" { op call; data push "Pesanan"; data pull "Pesanan" }
++ toko.web -> toko.api "POST /pesanan" { op call; data push "Pesanan"; data pull "IdPesanan" }
+```
+
+```sh
+node check.mjs toko.dim
+```
+
+```text contoh-tutorial="container"
+```
+
+## Periksa arah saat review
+
+Jumlah panah tetap sama. Untuk melihat apa yang diperiksa compiler, coba hapus kata `push` dari request dan jalankan lagi perintah tadi.
+
+```text contoh-tutorial="tanpaArah"
+```
+
+Untuk `op call`, setiap tipe data perlu arah. Kembalikan `push`, jalankan cek sampai muncul `ok`, lalu cocokkan `data pull "IdPesanan"` dengan respons yang disepakati tim API. Tipe yang dijanjikan ke Web tetap perlu diperiksa saat review.
+
+[4. Review dengan arsitek](/mulai/review/)
