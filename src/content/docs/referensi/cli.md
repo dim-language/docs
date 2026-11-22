@@ -6,10 +6,10 @@ description: Validasi model, ekspor JSON, dan format file DIM di TypeScript.
 ## Pasang
 
 ```sh
-npm install @dim/zoom-map
+npm install @dim/sdk
 ```
 
-Paket juga tersedia di [GitHub Releases](https://github.com/dim-language/dim-sdk/releases/tag/v0.1.0).
+Paket juga tersedia di [GitHub Releases](https://github.com/dim-language/dim-sdk/releases/tag/v0.2.0).
 
 SDK menyertakan runtime WebAssembly. Panggil dan tunggu `initDim()` sebelum menggunakan compiler, formatter, atau peta.
 
@@ -31,7 +31,7 @@ Kode keluar `1` berarti model gagal dikompilasi. Diagnostik memuat lokasi file, 
 `compileProject` menerima nama file utama dan isi semua file proyek. Pakai path relatif dengan pemisah `/`.
 
 ```ts
-import { compileProject, formatFile, initDim } from '@dim/zoom-map';
+import { compileProject, formatFile, initDim } from '@dim/sdk';
 
 await initDim();
 const files = {
@@ -47,4 +47,4 @@ const formatted = formatFile('main.dim', files['main.dim']);
 if (formatted.text !== null) console.log(formatted.text);
 ```
 
-Gunakan `createMap(model)` untuk proyeksi peta, lalu panggil `free()` setelah selesai. Untuk syarat penggunaan komersial, baca [lisensi SDK](https://github.com/dim-language/dim-sdk/blob/main/LICENSE).
+`createMap(model)` memberi keadaan dan isi peta yang dihitung SDK Rust: `map.view(state, 'id')` mengembalikan kotak, panah, relasi, dan langkah alur dengan teksnya. Panggil `free()` setelah selesai. Untuk menampilkan peta di halaman web, pakai `renderMapHtml` dan `mountAll` dari `@dim/sdk/map` beserta `@dim/sdk/map.css`. Untuk syarat penggunaan komersial, baca [lisensi SDK](https://github.com/dim-language/dim-sdk/blob/main/LICENSE).

@@ -7,7 +7,7 @@ import { darkTheme, lightTheme } from './src/code/themes.mjs';
 
 // Grammar dim untuk Shiki. Daftar katanya (`{{kinds}}`, `{{attributes}}`, …) diisi dari kosakata compiler,
 // yang dirilis bersama runtime SDK.
-const vocab = JSON.parse(readFileSync(new URL(import.meta.resolve('@dim/zoom-map/vocab.json')), 'utf-8'));
+const vocab = JSON.parse(readFileSync(new URL(import.meta.resolve('@dim/sdk/vocab.json')), 'utf-8'));
 const words = {
 	kinds: vocab.kinds,
 	attributes: vocab.attributes,
