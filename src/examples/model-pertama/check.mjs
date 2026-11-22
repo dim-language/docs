@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { basename } from 'node:path';
-import { compileProject, initDim } from '@dim/zoom-map';
+import { compileProject, initDim } from '@dim/sdk';
 
 const path = process.argv[2];
 if (!path) throw new Error('Usage: node check.mjs <file.dim>');

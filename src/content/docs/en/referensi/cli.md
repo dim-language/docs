@@ -6,10 +6,10 @@ description: Validate models, export JSON, and format DIM files in TypeScript.
 ## Install
 
 ```sh
-npm install @dim/zoom-map
+npm install @dim/sdk
 ```
 
-The package is also available from [GitHub Releases](https://github.com/dim-language/dim-sdk/releases/tag/v0.1.0).
+The package is also available from [GitHub Releases](https://github.com/dim-language/dim-sdk/releases/tag/v0.2.0).
 
 The SDK includes a WebAssembly runtime. Call and await `initDim()` before using the compiler, formatter, or map.
 
@@ -31,7 +31,7 @@ Exit code `1` means the model failed to compile. Diagnostics include the file, l
 `compileProject` takes an entry filename and the contents of all project files. Use relative paths with `/` separators.
 
 ```ts
-import { compileProject, formatFile, initDim } from '@dim/zoom-map';
+import { compileProject, formatFile, initDim } from '@dim/sdk';
 
 await initDim();
 const files = {
@@ -47,4 +47,4 @@ const formatted = formatFile('main.dim', files['main.dim']);
 if (formatted.text !== null) console.log(formatted.text);
 ```
 
-Use `createMap(model)` to project a map and call `free()` when you are done. See the [SDK license](https://github.com/dim-language/dim-sdk/blob/main/LICENSE) for commercial use terms.
+`createMap(model)` gives you the map state and view model computed by the Rust SDK: `map.view(state, 'en')` returns the boxes, arrows, relations, and flow steps with their text. Call `free()` when you are done. To show the map on a web page, use `renderMapHtml` and `mountAll` from `@dim/sdk/map` with `@dim/sdk/map.css`. See the [SDK license](https://github.com/dim-language/dim-sdk/blob/main/LICENSE) for commercial use terms.

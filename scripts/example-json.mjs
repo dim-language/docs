@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { compileProject, initDim } from '@dim/zoom-map';
+import { compileProject, initDim } from '@dim/sdk';
 
 const shop = new URL('../examples/shop/', import.meta.url);
 const tutorial = new URL('../src/examples/model-pertama/', import.meta.url);

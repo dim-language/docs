@@ -2,7 +2,7 @@
   "name": "dim",
   "displayName": "dim",
   "scopeName": "source.dim",
-  "comment": "{{kinds}}, {{attributes}}, dan {{values}} diisi dari @dim/zoom-map/vocab.json oleh astro.config.mjs",
+  "comment": "{{kinds}}, {{attributes}}, dan {{values}} diisi dari @dim/sdk/vocab.json oleh astro.config.mjs",
   "fileTypes": [
     "dim"
   ],
