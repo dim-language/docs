@@ -3,7 +3,7 @@ title: Bedakan pemanggil dari arah data
 description: Kenapa arah panah di dim berarti siapa yang memulai, dan bagaimana arah data dicatat terpisah lewat push dan pull.
 ---
 
-import BrianNote from '../../../components/BrianNote.astro';
+import DidoNote from '../../../components/DidoNote.astro';
 
 Web perlu ID pesanan setelah checkout. Lihat pemanggilan POST di kode Web, lalu catat apa yang Web kirim dan apa yang dipakai dari respons.
 
@@ -69,6 +69,6 @@ Aliran data ikut naik bersama relasinya. Di [peta zoom](/konsep/peta-zoom/), pan
 
 ## Cek hasilnya
 
-<BrianNote scene="missing-direction">Kalau API yang ngirim respons, perlu panah kedua? Coba telusuri siapa yang mulai request.</BrianNote>
+<DidoNote scene="missing-direction">Kalau API yang ngirim respons, perlu panah kedua? Coba telusuri siapa yang mulai request.</DidoNote>
 
 Baca relasi checkout dari kiri ke kanan. Web memulai panggilan dan mengirim CheckoutRequest. Sekarang baca bagian pull dari sudut pandang Web. Nilai yang harus bisa dipakai setelah panggilan selesai adalah OrderId.

@@ -21,11 +21,11 @@ import shop from '../../data/shop.json';
 <section class="dim-map-action">
 <div class="dim-pitch">
 <ol class="dim-comic" role="list">
-<li><span class="dim-photo"><img src="/brian/hello.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Kenalin, Brian. (Bukan nama asli.)</p></li>
-<li><span class="dim-photo"><img src="/brian/architect.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Arsiteknya minta Brian bikin A.</p></li>
-<li><span class="dim-photo"><img src="/brian/idea.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Brian nangkepnya B. “Siap.”</p></li>
-<li><span class="dim-photo"><img src="/brian/agent.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Brian minta B di prompt. Agennya bikin C.</p></li>
-<li><span class="dim-photo"><img src="/brian/review.webp" alt="" width="400" height="400" loading="lazy" /></span><p>“Brian, coba jelasin kok A bisa jadi C.”</p></li>
+<li><span class="dim-photo"><img src="/dido/hello.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Kenalin, Dido. (Bukan nama asli.)</p></li>
+<li><span class="dim-photo"><img src="/dido/architect.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Arsiteknya minta Dido bikin A.</p></li>
+<li><span class="dim-photo"><img src="/dido/idea.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Dido nangkepnya B. “Siap.”</p></li>
+<li><span class="dim-photo"><img src="/dido/agent.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Dido minta B di prompt. Agennya bikin C.</p></li>
+<li><span class="dim-photo"><img src="/dido/review.webp" alt="" width="400" height="400" loading="lazy" /></span><p>“Dido, coba jelasin kok A bisa jadi C.”</p></li>
 </ol>
 <div class="dim-comic-close">
 
@@ -43,10 +43,10 @@ import shop from '../../data/shop.json';
 ## “Baliknya satu order, kan?”
 
 </header>
-<img class="dim-scene" src="/brian/order-id.webp" width="640" height="374" alt="" loading="lazy" />
+<img class="dim-scene" src="/dido/order-id.webp" width="640" height="374" alt="" loading="lazy" />
 <div class="dim-example-body">
 
-Kali ini Brian nanya dulu. Arsiteknya geleng. “ID-nya aja.” Mereka buka model dan catat kesepakatannya di panah **Web App → API**. Sekarang Brian bisa kasih agennya file yang bilang persis apa yang dikirim (`CheckoutRequest`) dan apa yang balik (`OrderId`).
+Kali ini Dido nanya dulu. Arsiteknya geleng. “ID-nya aja.” Mereka buka model dan catat kesepakatannya di panah **Web App → API**. Sekarang Dido bisa kasih agennya file yang bilang persis apa yang dikirim (`CheckoutRequest`) dan apa yang balik (`OrderId`).
 
 ```dim title="shop.dim"
 checkout_post: web.checkout.button -> api.checkout.route "POST /checkout" {
@@ -68,10 +68,10 @@ checkout_post: web.checkout.button -> api.checkout.route "POST /checkout" {
 ## “Lah, arah datanya ke mana?”
 
 </header>
-<img class="dim-scene" src="/brian/missing-direction.webp" width="640" height="330" alt="" loading="lazy" />
+<img class="dim-scene" src="/dido/missing-direction.webp" width="640" height="330" alt="" loading="lazy" />
 <div class="dim-example-body">
 
-Brian udah nulis tipe request-nya. Yang kelupaan: siapa yang ngirim? Pas model dicek di CI, muncul `E035`. Karena Web App yang ngirim request ke API, Brian tinggal tambahin `push`.
+Dido udah nulis tipe request-nya. Yang kelupaan: siapa yang ngirim? Pas model dicek di CI, muncul `E035`. Karena Web App yang ngirim request ke API, Dido tinggal tambahin `push`.
 
 ```diff
 - data "CheckoutRequest";
@@ -91,12 +91,12 @@ Brian udah nulis tipe request-nya. Yang kelupaan: siapa yang ngirim? Pas model d
 
 <section class="dim-features">
 <header class="dim-guide-intro">
-<img src="/brian/your-turn.webp" width="285" height="480" loading="lazy" alt="" />
+<img src="/dido/your-turn.webp" width="285" height="480" loading="lazy" alt="" />
 <div>
 
 ## Giliran lo. Bawa satu PR.
 
-Iya, lo yang di balik layar. Gambar alurnya sebelum Brian nebak lagi.
+Iya, lo yang di balik layar. Gambar alurnya sebelum Dido nebak lagi.
 
 </div>
 </header>

@@ -3,11 +3,11 @@ title: 3. Layar konfirmasi berubah
 description: Revisi kontrak respons setelah tim produk mengubah layar konfirmasi.
 ---
 
-import BrianNote from '../../../components/BrianNote.astro';
+import DidoNote from '../../../components/DidoNote.astro';
 
-Saat mencoba prototipe di ponsel, tim produk memutuskan untuk menampilkan nomor pesanan saja. Tim API pun memangkas respons checkout. Brian menemukan satu baris di model yang sekarang sudah basi.
+Saat mencoba prototipe di ponsel, tim produk memutuskan untuk menampilkan nomor pesanan saja. Tim API pun memangkas respons checkout. Dido menemukan satu baris di model yang sekarang sudah basi.
 
-<BrianNote scene="order-id">Kalau yang balik cuma ID, bagian mana dari panah POST yang mesti gue ubah?</BrianNote>
+<DidoNote scene="order-id">Kalau yang balik cuma ID, bagian mana dari panah POST yang mesti gue ubah?</DidoNote>
 
 Di `toko.dim`, edit relasi POST saja. Web masih mengirim pesanan lengkap dan API masih menyimpannya.
 

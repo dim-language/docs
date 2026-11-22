@@ -3,11 +3,11 @@ title: 3. The confirmation screen changes
 description: Revise the response contract when the product team changes the confirmation screen.
 ---
 
-import BrianNote from '../../../../components/BrianNote.astro';
+import DidoNote from '../../../../components/DidoNote.astro';
 
-After trying the prototype on a phone, the product team decides to show just the order number. The API team trims the checkout response. Brian spots the line in his model that has just gone stale.
+After trying the prototype on a phone, the product team decides to show just the order number. The API team trims the checkout response. Dido spots the line in his model that has just gone stale.
 
-<BrianNote scene="order-id">If all we get back is the ID, which part of the POST arrow do I change?</BrianNote>
+<DidoNote scene="order-id">If all we get back is the ID, which part of the POST arrow do I change?</DidoNote>
 
 Edit just the POST relation in `toko.dim`. Web still sends a full order and the API still persists it.
 

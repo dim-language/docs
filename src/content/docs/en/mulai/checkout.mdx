@@ -3,7 +3,7 @@ title: 2. The team adds checkout
 description: Follow an order from Web to Postgres.
 ---
 
-At the design meeting the Web team shows Brian a receipt screen. When the customer clicks Order, it will display the details of the order just saved. The API team agrees to write the order to Postgres and return the full order to Web. Brian opens yesterday’s map. The arrow from customer to shop leaves one question open. Where do the details on the receipt come from?
+At the design meeting the Web team shows Dido a receipt screen. When the customer clicks Order, it will display the details of the order just saved. The API team agrees to write the order to Postgres and return the full order to Web. Dido opens yesterday’s map. The arrow from customer to shop leaves one question open. Where do the details on the receipt come from?
 
 ## Open up the shop
 
@@ -19,6 +19,6 @@ node check.mjs toko.dim
 ```text contoh-tutorial="container"
 ```
 
-Read the POST arrow from Web’s side. The `push` carries the order to the API. After the database write, the `pull` carries the full order back to the receipt screen. Brian asks both teams to read that arrow before they start work.
+Read the POST arrow from Web’s side. The `push` carries the order to the API. After the database write, the `pull` carries the full order back to the receipt screen. Dido asks both teams to read that arrow before they start work.
 
 [3. The confirmation screen changes](/en/mulai/kontrak/)

@@ -5,9 +5,9 @@ description: Trace the order write from the map to the function responsible.
 
 import ZoomMap from '../../../../components/zoom-map/ZoomMap.astro';
 import toko from '../../../../data/toko-tutorial.json';
-import BrianNote from '../../../../components/BrianNote.astro';
+import DidoNote from '../../../../components/DidoNote.astro';
 
-Before approving the PR, the system architect stops at API → Postgres. “If an order gets written twice, which function do we inspect first?” The backend team points to `simpan_pesanan()` in the orders component. The architect asks Brian to record who owns the INSERT so the on-call engineer can find it on the map.
+Before approving the PR, the system architect stops at API → Postgres. “If an order gets written twice, which function do we inspect first?” The backend team points to `simpan_pesanan()` in the orders component. The architect asks Dido to record who owns the INSERT so the on-call engineer can find it on the map.
 
 Add the component and function inside `api`, then move the source of the INSERT arrow to that function. Compare your file with the final `toko.dim` below.
 
@@ -27,10 +27,10 @@ In the map below, zoom until Web and API appear. Select the POST relation and re
 
 <ZoomMap model={toko} uid="model-pertama" />
 
-At handoff, the Web team can point to the ID received by the confirmation screen. The on-call engineer can open the API and find the function that writes the order. Brian attaches that same model to the checkout ticket.
+At handoff, the Web team can point to the ID received by the confirmation screen. The on-call engineer can open the API and find the function that writes the order. Dido attaches that same model to the checkout ticket.
 
 ## Try it on a pull request
 
-<BrianNote scene="your-turn">Pick one change you’re reviewing. Who starts the interaction, and what do they expect back?</BrianNote>
+<DidoNote scene="your-turn">Pick one change you’re reviewing. Who starts the interaction, and what do they expect back?</DidoNote>
 
 Copy `toko.dim` to `pr.dim`. Change the Web and API display names to match your system. Replace the POST label and the request and response types with the ones in the diff. Keep the IDs so the paths still resolve. Run `node check.mjs pr.dim`. Once it prints `ok`, ask a reviewer to read the relation and name the value the caller receives. Check the answer against the code in the PR.

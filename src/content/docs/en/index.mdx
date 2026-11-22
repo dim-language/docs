@@ -21,11 +21,11 @@ import shop from '../../../data/shop.json';
 <section class="dim-map-action">
 <div class="dim-pitch">
 <ol class="dim-comic" role="list">
-<li><span class="dim-photo"><img src="/brian/hello.webp" alt="" width="400" height="400" loading="lazy" /></span><p>This is Brian. (Not his real name.)</p></li>
-<li><span class="dim-photo"><img src="/brian/architect.webp" alt="" width="400" height="400" loading="lazy" /></span><p>The architect asks Brian to implement A.</p></li>
-<li><span class="dim-photo"><img src="/brian/idea.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Brian hears B. “Got it.”</p></li>
-<li><span class="dim-photo"><img src="/brian/agent.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Brian prompts for B. His agent ships C.</p></li>
-<li><span class="dim-photo"><img src="/brian/review.webp" alt="" width="400" height="400" loading="lazy" /></span><p>“Brian, walk me through how A became C.”</p></li>
+<li><span class="dim-photo"><img src="/dido/hello.webp" alt="" width="400" height="400" loading="lazy" /></span><p>This is Dido. (Not his real name.)</p></li>
+<li><span class="dim-photo"><img src="/dido/architect.webp" alt="" width="400" height="400" loading="lazy" /></span><p>The architect asks Dido to implement A.</p></li>
+<li><span class="dim-photo"><img src="/dido/idea.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Dido hears B. “Got it.”</p></li>
+<li><span class="dim-photo"><img src="/dido/agent.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Dido prompts for B. His agent ships C.</p></li>
+<li><span class="dim-photo"><img src="/dido/review.webp" alt="" width="400" height="400" loading="lazy" /></span><p>“Dido, walk me through how A became C.”</p></li>
 </ol>
 <div class="dim-comic-close">
 
@@ -43,10 +43,10 @@ import shop from '../../../data/shop.json';
 ## “We get the whole order back, right?”
 
 </header>
-<img class="dim-scene" src="/brian/order-id.webp" width="640" height="374" alt="" loading="lazy" />
+<img class="dim-scene" src="/dido/order-id.webp" width="640" height="374" alt="" loading="lazy" />
 <div class="dim-example-body">
 
-This time Brian asks. His architect shakes her head. “Just the ID.” They pull up **Web App → API** and write that down. Now Brian can give his agent a file that says exactly what goes out (`CheckoutRequest`) and what comes back (`OrderId`).
+This time Dido asks. His architect shakes her head. “Just the ID.” They pull up **Web App → API** and write that down. Now Dido can give his agent a file that says exactly what goes out (`CheckoutRequest`) and what comes back (`OrderId`).
 
 ```dim title="shop.dim"
 checkout_post: web.checkout.button -> api.checkout.route "POST /checkout" {
@@ -68,10 +68,10 @@ checkout_post: web.checkout.button -> api.checkout.route "POST /checkout" {
 ## “Which way is that data going?”
 
 </header>
-<img class="dim-scene" src="/brian/missing-direction.webp" width="640" height="330" alt="" loading="lazy" />
+<img class="dim-scene" src="/dido/missing-direction.webp" width="640" height="330" alt="" loading="lazy" />
 <div class="dim-example-body">
 
-Brian wrote down the request type. He left out who sends it. CI flags the missing direction with `E035`. The web app sends the request, so Brian adds `push`.
+Dido wrote down the request type. He left out who sends it. CI flags the missing direction with `E035`. The web app sends the request, so Dido adds `push`.
 
 ```diff
 - data "CheckoutRequest";
@@ -91,12 +91,12 @@ Brian wrote down the request type. He left out who sends it. CI flags the missin
 
 <section class="dim-features">
 <header class="dim-guide-intro">
-<img src="/brian/your-turn.webp" width="285" height="480" loading="lazy" alt="" />
+<img src="/dido/your-turn.webp" width="285" height="480" loading="lazy" alt="" />
 <div>
 
 ## Your turn. Bring the PR.
 
-Yes, you behind the screen. Sketch the flow before Brian takes another guess.
+Yes, you behind the screen. Sketch the flow before Dido takes another guess.
 
 </div>
 </header>
