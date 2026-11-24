@@ -97,9 +97,7 @@ system shop "Online Shop" {
 
       endpoint createOrder "Buat order" {
         description "Membuat order dari keranjang.";
-        protocol http;
-        verb post;
-        path "/orders";
+        http post "/orders";
         body cart;
         returns 201 order;
       }
@@ -168,7 +166,7 @@ Versi 0.6 tidak kompatibel dengan 0.5. Ringkasannya:
 | Tipe | string yang dipotong per kata | ekspresi tipe dengan primitif dim dan rujukan lewat path ([§8](/referensi/spesifikasi/tipe/#8-tipe)) |
 | Relasi | id dan `op` opsional | id dan `op` wajib; aturan ujung per `op` ([§9](/referensi/spesifikasi/relasi/#9-relasi)) |
 | Pewarisan | `op extends` | `op inherits` |
-| Endpoint | `code` dengan `form endpoint`, hanya HTTP | kind `endpoint` dengan protokol `http`, `grpc`, `graphql`, `event` ([§10](/referensi/spesifikasi/endpoint/#10-endpoint)) |
+| Endpoint | `code` dengan `form endpoint`, hanya HTTP | kind `endpoint` dengan satu baris protokol: `http`, `grpc`, `graphql`, atau `event` ([§10](/referensi/spesifikasi/endpoint/#10-endpoint)) |
 | Flow | urutan lurus | cabang `alt`, `opt`, `par` ([§12](/referensi/spesifikasi/komposisi-dan-flow/#12-flow)) |
 | Deployment | tidak ada | `environment`, `node`, `infra`, `deploy` ([§13](/referensi/spesifikasi/deployment/#13-deployment)) |
 | Warning | ada | tidak ada; semua pelanggaran adalah error |

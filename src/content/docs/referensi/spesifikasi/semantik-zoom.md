@@ -45,7 +45,7 @@ Relasi yang sudah di-lift dikelompokkan berdasarkan pasangan berarah `(vis(a), v
 
 - `sources`: id relasi asal, untuk ditelusuri balik.
 - `ops`: himpunan `op` unik dari relasi asal, urut sesuai kemunculan pertama.
-- `data`: semua aliran data dari relasi asal, termasuk yang diambil dari endpoint ([§10.7](/referensi/spesifikasi/endpoint/#107-relasi-ke-endpoint)), digabung per arah. Paling banyak satu entri `push` dan satu `pull`, dengan tipe unik sesuai kemunculan pertama.
+- `data`: semua aliran data dari relasi asal, termasuk yang diambil dari endpoint ([§10.8](/referensi/spesifikasi/endpoint/#108-relasi-ke-endpoint)), digabung per arah. Paling banyak satu entri `push` dan satu `pull`, dengan tipe unik sesuai kemunculan pertama.
 - Relasi struktural ikut di-lift. Class di component A yang `inherits` class di component B tetap terlihat sebagai `A → B`, karena itu dependency yang nyata. Kelompok yang hanya berisi relasi struktural digambar dengan garis putus-putus.
 - `a -> b` dan `b -> a` adalah dua kelompok berbeda.
 - Kelompok dengan satu relasi yang tidak di-lift memakai label relasi itu ([§9.6](/referensi/spesifikasi/relasi/#96-label)). Kelompok lain diberi label ringkasan, misalnya jumlah relasinya.

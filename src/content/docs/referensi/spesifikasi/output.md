@@ -31,7 +31,7 @@ Parser menghasilkan satu dokumen JSON. Bentuknya didefinisikan oleh JSON Schema 
       ] },
     { "kind": "endpoint", "protocol": "http", "id": "shop.api.orders.createOrder", "parent": "shop.api.orders",
       "name": "Buat order", "description": "Membuat order dari keranjang.",
-      "verb": "post", "path": "/orders", "fullPath": "/orders",
+      "method": "post", "path": "/orders", "fullPath": "/orders",
       "body": { "ref": "shop.api.orders.cart" },
       "returns": { "status": 201, "type": { "ref": "shop.api.orders.order" } } }
   ],
@@ -79,7 +79,7 @@ Field yang ada di setiap elemen: `kind`, `id` (path lengkap), `name`, dan, kecua
 | `system` | `external` |
 | `container` | `role`, `paradigms`, `techs`, `external`, `prefix`, `auth`, `rates` |
 | `component` | `paradigms`, `techs`, `prefix`, `auth`, `rates` |
-| `endpoint` | `protocol`, `handler`, `auth`, `rates` (yang berlaku), lalu field per protokol: `verb`, `path`, `fullPath`, `params`, `queries`, `headers`, `cookies`, `body`, `returns`, `throws`, `sets` untuk `http`; `service`, `rpc`, `request`, `returns`, `stream`, `throws` untuk `grpc`; `operation`, `field`, `params`, `returns`, `throws` untuk `graphql`; `event`, `channel`, `payload` untuk `event` |
+| `endpoint` | `protocol` (`http`, `grpc`, `graphql`, atau `event`, dari baris protokolnya), `handler`, `auth`, `rates` (yang berlaku), lalu field per protokol: `method`, `path`, `fullPath`, `params`, `queries`, `headers`, `cookies`, `body`, `returns`, `throws`, `sets` untuk HTTP; `service`, `rpc`, `request`, `returns`, `stream`, `throws` untuk gRPC; `operation`, `field`, `params`, `returns`, `throws` untuk GraphQL; `event`, `queue`, `payload` untuk event |
 | `code` | `form`, lalu field per form: `async`, `pure`, `effects`, `visibility`, `static`, `abstract`, `fields`, `variants`, `params`, `returns`, `throws`, `type` sesuai [§7.3](/referensi/spesifikasi/level-kode/#73-properti-unit-kode)–[§7.4](/referensi/spesifikasi/level-kode/#74-member) |
 
 `source` berbentuk `{ "root": "<id>", "path": "<path>", "line": <n> }`, dengan `root` yang sudah diwariskan.

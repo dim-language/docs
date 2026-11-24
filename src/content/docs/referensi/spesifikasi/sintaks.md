@@ -42,16 +42,17 @@ Semua keyword ditulis dengan huruf kecil dan **reserved**: tidak boleh dipakai s
 | Kelompok | Keyword |
 |---|---|
 | Kind elemen | `person`, `system`, `container`, `component`, `endpoint` |
+| Baris protokol endpoint | `http`, `grpc`, `graphql`, `event`, `on` |
 | Kind level kode | `module`, `function`, `class`, `interface`, `method`, `constructor`, `record`, `enum`, `union`, `alias` |
 | Deployment | `environment`, `node`, `infra`, `deploy`, `omit` |
 | Member | `field`, `variant`, `param`, `returns`, `throws`, `query`, `header`, `cookie`, `body`, `sets` |
 | Komposisi dan flow | `dim`, `import`, `amends`, `extend`, `remove`, `unset`, `flow`, `step`, `opt`, `alt`, `case`, `par`, `lane` |
 | Konfigurasi | `tech`, `tag`, `scope`, `root`, `style` |
-| Properti | `description`, `tags`, `role`, `paradigm`, `external`, `source`, `path`, `line`, `repo`, `branch`, `version`, `url`, `meta`, `op`, `data`, `push`, `pull`, `protocol`, `handler`, `verb`, `status`, `auth`, `rate`, `per`, `prefix`, `service`, `rpc`, `request`, `stream`, `operation`, `channel`, `event`, `payload`, `replicas`, `icon`, `background`, `kind`, `type`, `async`, `pure`, `effects`, `static`, `abstract`, `visibility` |
+| Properti | `description`, `tags`, `role`, `paradigm`, `external`, `source`, `path`, `line`, `repo`, `branch`, `version`, `url`, `meta`, `op`, `data`, `push`, `pull`, `handler`, `status`, `auth`, `rate`, `per`, `prefix`, `request`, `stream`, `payload`, `replicas`, `icon`, `background`, `kind`, `type`, `async`, `pure`, `effects`, `static`, `abstract`, `visibility` |
 | Tipe | `string`, `int`, `float`, `decimal`, `bool`, `bytes`, `date`, `datetime`, `duration`, `uuid`, `url`, `map` |
 | Lainnya | `this` |
 
-Nilai enum, seperti nama `op` (`call`, `read`), peran (`database`), atau nama icon, **bukan** keyword. Nilai itu hanya dikenali di posisi properti yang memakainya, jadi elemen boleh bernama `call` atau `database`. Sebaliknya, keyword boleh muncul sebagai nilai enum, misalnya `protocol event` atau `type url`.
+Nilai enum, seperti nama `op` (`call`, `read`), peran (`database`), atau nama icon, **bukan** keyword. Nilai itu hanya dikenali di posisi properti yang memakainya, jadi elemen boleh bernama `call` atau `database`. Sebaliknya, keyword boleh muncul sebagai nilai enum, misalnya `graphql query` atau `type url`.
 
 ### 3.6 Prosa
 
@@ -105,10 +106,10 @@ Beberapa properti menerima string yang isinya **diperiksa formatnya**. String se
 |---|---|---|
 | `url` | URL absolut berskema `https` atau `http` | `repo`, `url` di tech |
 | `filePath` | relatif, pemisah `/`, tanpa `\`, tanpa `/` di akhir, tanpa segmen kosong; `.` berarti root itu sendiri; `..` tidak boleh | `path` di `source` |
-| `httpPath` | diawali `/`, tidak diakhiri `/` kecuali `"/"`; parameter ditulis `{nama}` dengan nama berupa IDENT | `path` dan `prefix` endpoint HTTP |
+| `httpPath` | diawali `/`, tidak diakhiri `/` kecuali `"/"`; parameter ditulis `{nama}` dengan nama berupa IDENT | path di baris `http`, dan `prefix` |
 | `version` | huruf, angka, `.`, `+`, `-`; diawali huruf atau angka | `version` di tech |
 | `branch` | nama ref git yang valid, tanpa spasi | `branch` di root |
-| `externalName` | `[A-Za-z_][A-Za-z0-9_]*` | nama service dan RPC gRPC, field GraphQL, nama event |
+| `externalName` | `[A-Za-z_][A-Za-z0-9_]*` | service dan rpc di baris `grpc`, field di baris `graphql`, nama di baris `event` |
 | `headerName` | huruf, angka, dan `-`; tanpa membedakan huruf besar-kecil | `header`, `sets header` |
 | `cookieName` | karakter token HTTP (RFC 9110) | `cookie`, `sets cookie` |
 | `scopeValue` | huruf, angka, dan `:._-` | nilai `scope` di config |

@@ -62,9 +62,9 @@ Aturan ini hanya ada di tempat yang membuat sebuah `op` tidak bermakna. Tanpanya
 | `op` | Ujung `dari` | Ujung `ke` |
 |---|---|---|
 | `use` | apa pun | apa pun kecuali penyimpanan dan antrian |
-| `call` | bukan `person` | bukan `person`, penyimpanan, atau antrian; endpoint hanya yang protokolnya `http`, `grpc`, atau `graphql` |
+| `call` | bukan `person` | bukan `person`, penyimpanan, atau antrian; endpoint hanya yang protokolnya HTTP, gRPC, atau GraphQL |
 | `read`, `write` | bukan `person` | penyimpanan |
-| `publish`, `subscribe` | bukan `person` | container berperan `queue`, atau endpoint `event` ([§10.5](/referensi/spesifikasi/endpoint/#105-event)) |
+| `publish`, `subscribe` | bukan `person` | container berperan `queue`, atau endpoint event ([§10.6](/referensi/spesifikasi/endpoint/#106-event)) |
 | struktural | unit kode | unit kode, sesuai tabel [§7.5](/referensi/spesifikasi/level-kode/#75-relasi-di-level-kode) |
 
 Aturan tambahan untuk `person`:
@@ -107,7 +107,7 @@ Aturan:
 - Arah **selalu ditulis**. Tidak ada arah default dari `op`, jadi setiap baris `data` bisa dibaca tanpa mengingat tabel.
 - Arah harus cocok dengan `op`. `read` dan `subscribe` hanya `pull`. `write` dan `publish` hanya `push`. `call` dan `use` boleh keduanya. Pelanggaran adalah `E406`.
 - Relasi struktural tidak punya `data` (`E406`).
-- Relasi ke endpoint tidak menulis `data` (`E406`), karena datanya sudah ditentukan endpoint ([§10.7](/referensi/spesifikasi/endpoint/#107-relasi-ke-endpoint)).
+- Relasi ke endpoint tidak menulis `data` (`E406`), karena datanya sudah ditentukan endpoint ([§10.8](/referensi/spesifikasi/endpoint/#108-relasi-ke-endpoint)).
 
 **Kenapa panah tidak dipakai untuk arah data?**
 
@@ -121,10 +121,10 @@ Label adalah prosa yang digambar di atas panah dan muncul di daftar langkah flow
 
 | Relasi | Label turunan |
 |---|---|
-| `call` ke endpoint `http` | method dan path lengkap, mis. `POST /v1/orders` |
-| `call` ke endpoint `grpc` | `<Service>/<Rpc>` |
-| `call` ke endpoint `graphql` | operasi dan field, mis. `mutation createOrder` |
-| `publish`/`subscribe` ke endpoint `event` | nama event |
+| `call` ke endpoint HTTP | method dan path lengkap, mis. `POST /v1/orders` |
+| `call` ke endpoint gRPC | `<Service>/<Rpc>` |
+| `call` ke endpoint GraphQL | operasi dan field, mis. `mutation createOrder` |
+| `publish`/`subscribe` ke endpoint event | nama event |
 | `read`, `write`, `publish`, `subscribe` dengan `data` | kata kerja `op` diikuti nama tipe, mis. "tulis Order" |
 | struktural | nama `op` |
 | selain itu | tidak ada label |

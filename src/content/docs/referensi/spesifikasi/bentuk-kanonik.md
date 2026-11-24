@@ -33,8 +33,8 @@ Formatter hanya bekerja pada teks yang valid. Teks dengan error tidak diformat.
 
 Di dalam setiap blok, statement dikelompokkan dan diurutkan:
 
-1. **Properti**, dalam urutan tetap: `description`, `role`, `protocol`, `paradigm`, properti khusus kind (dalam urutan tabelnya di bab masing-masing), `tech`, `tags`, `external`, `source`, `meta`.
-2. **Member**, dalam urutan tabel [§7.4](/referensi/spesifikasi/level-kode/#74-member) dan [§10.2](/referensi/spesifikasi/endpoint/#102-http). Member sejenis tetap dalam urutan tulisan, karena urutan `param` dan `field` bermakna.
+1. **Properti**, dalam urutan tetap: `description`, `role`, baris protokol endpoint, `paradigm`, properti khusus kind (dalam urutan tabelnya di bab masing-masing), `tech`, `tags`, `external`, `source`, `meta`.
+2. **Member**, dalam urutan tabel [§7.4](/referensi/spesifikasi/level-kode/#74-member) dan [§10.3](/referensi/spesifikasi/endpoint/#103-http). Member sejenis tetap dalam urutan tulisan, karena urutan `param` dan `field` bermakna.
 3. **Elemen anak**, dalam urutan tulisan.
 4. **`extend`**, dalam urutan tulisan.
 5. **Relasi**, dalam urutan tulisan.

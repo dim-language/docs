@@ -61,7 +61,7 @@ Tag dirujuk dengan `tags <id> [<id> ...];` di elemen, relasi, dan flow.
 scope <id> "<nilai>";
 ```
 
-Scope izin yang diminta `auth` di endpoint ([§10.6](/referensi/spesifikasi/endpoint/#106-prefix-auth-dan-rate)). `nilai` adalah literal `scopeValue`, yaitu bentuk scope seperti yang dikirim di token, misalnya `"orders:write"`. Nilai yang sama di dua scope adalah `E103`.
+Scope izin yang diminta `auth` di endpoint ([§10.7](/referensi/spesifikasi/endpoint/#107-prefix-auth-dan-rate)). `nilai` adalah literal `scopeValue`, yaitu bentuk scope seperti yang dikirim di token, misalnya `"orders:write"`. Nilai yang sama di dua scope adalah `E103`.
 
 ### 5.5 `root`
 

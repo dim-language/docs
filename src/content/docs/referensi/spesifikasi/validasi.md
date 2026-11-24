@@ -84,13 +84,13 @@ Kode dikelompokkan per bab: `E0xx` leksikal dan grammar, `E1xx` konfigurasi, `E2
 
 | Kode | Kondisi |
 |---|---|
-| `E501` | `protocol` tidak ditulis atau tidak dikenal |
-| `E502` | properti tidak berlaku untuk protokol endpoint ini |
+| `E501` | endpoint tanpa baris protokol, atau dengan lebih dari satu |
+| `E502` | properti atau member tidak berlaku untuk protokol endpoint ini |
 | `E503` | placeholder di path HTTP lengkap tanpa `param`, atau `param` tanpa placeholder |
 | `E504` | status `returns` HTTP di luar 200–399, status `throws` HTTP di luar 400–599, atau kode status gRPC tidak dikenal |
-| `E505` | dua endpoint dalam satu container dengan kontrak yang sama (HTTP: verb dan path lengkap; gRPC: service dan rpc; GraphQL: operasi dan field; event: nama dan channel) |
+| `E505` | dua endpoint dalam satu container dengan kontrak yang sama (HTTP: method dan path lengkap; gRPC: service dan rpc; GraphQL: operasi dan field; event: nama dan queue) |
 | `E506` | `handler` tidak menunjuk `function` atau `method` di container yang sama |
-| `E507` | `channel` tidak menunjuk container berperan `queue` |
+| `E507` | queue di baris `event` tidak menunjuk container berperan `queue` |
 | `E508` | `auth none` dengan scope, atau kunci `rate` duplikat di satu elemen |
 | `E509` | `body` pada `get` atau `head` |
 | `E510` | `prefix`, `auth`, atau `rate` di elemen tanpa endpoint yang cocok di bawahnya |
