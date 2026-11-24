@@ -105,7 +105,7 @@ submit: button -> handler "Submit cart" {
 Rules:
 
 - The direction is **always written**. There's no default from `op`, so every `data` line can be read without remembering a table.
-- The direction must fit the `op`. `read` and `subscribe` only `pull`. `write` and `publish` only `push`. `call` and `use` can do both. A mismatch is `E406`.
+- The direction must fit the `op`. `read` and `subscribe` only `pull`. `write` and `publish` only `push`. `call` and `use` can do both. A missing or mismatched direction is `E406`.
 - Structural relations have no `data` (`E406`).
 - Relations to endpoints don't write `data` (`E406`), because the endpoint already defines it ([§10.8](/en/referensi/spesifikasi/endpoint/#108-relations-to-endpoints)).
 

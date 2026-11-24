@@ -1,93 +1,86 @@
 ---
 title: Connect two elements
-description: Connect elements across levels, describe interactions with op, and resolve paths inside blocks.
+description: Writing relations with an id and an op at any level, their end rules, and how paths resolve from inside a block.
 ---
 
-When Web creates an order through the API, first find the IDs of both containers. Use their full paths to declare a relation outside the system block.
+When the Web app creates an order through the API, start by finding the paths of both elements. Give the relation an id that describes the interaction, then pick a fitting `op`.
 
-A relation connects two elements at any level. A function can connect to a database, and a container can connect to a function in another system.
+A relation connects two elements at any level. A function can relate to a database, and a container can relate to a function in another system.
 
 ```dim
-[<id>:] <dari> -> <ke> ["<label>"] [{ <atribut> … }]
+<id>: <from> -> <to> ["<label>"] { op <op>; … }
 ```
 
 ```dim
-customer -> shop.web "Belanja";
-shop.web -> shop.api "POST /orders" {
-  op call;
-  tech "HTTPS/JSON";
-  data push "Order";
-  data pull "OrderId";
+shopping: customer -> shop.web "Shops" { op use; }
+saveOrder: shop.api.orders -> shop.db "Save order" {
+  op write;
+  data push shop.api.orders.order;
+  tech postgres;
 }
 ```
 
-## Arrow direction
+## The id and `op` are always written
 
-Write the arrow **from the party that starts the interaction**. In `api -> db { op read }`, the API initiates the read and depends on the database. The data flows back to the API. Record its direction separately with `data push` or `data pull`. See [Interactions and data flow](/en/konsep/aliran-data/).
-
-## Relation attributes
-
-| Attribute | Value | Meaning |
-|---|---|---|
-| `op` | One name | Kind of interaction. Defaults to `use`. |
-| `data` | `[push\|pull]` and a data name | What flows. Can occur multiple times. |
-| `tech` | One string | Protocol, such as `"HTTPS/JSON"`, `"gRPC"`, or `"SQS"` |
-| `description` | One string | Additional description |
-| `tags` | One or more strings | Free-form labels |
-
-Use the following operations for runtime interactions.
+- The **id** is camelCase and unique across the model. It's used by `step` in [flows](/en/konsep/alur/), by `remove` in [derived models](/en/konsep/komposisi/), and by the map to trace where an arrow comes from.
+- The **`op`** states the kind of interaction. There's no default `op`, so every relation can be read without guessing.
 
 | `op` | Meaning |
 |---|---|
-| `use` | General interaction |
-| `call` | Synchronous call such as a function call, HTTP request, or RPC |
-| `read` | Read data from the target |
-| `write` | Send or store data at the target |
-| `publish` | Send an asynchronous message to a queue or topic |
-| `subscribe` | Receive asynchronous messages from a queue or topic |
+| `use` | a general interaction, including a person using an application |
+| `call` | a synchronous call: function, HTTP, RPC |
+| `read` | fetching data from storage |
+| `write` | saving data to storage |
+| `publish` | sending an async message to a queue |
+| `subscribe` | receiving async messages from a queue |
 
-Use `extends`, `implements`, `owns`, and `refers` for structural relations. They connect two `code` elements and carry no data. See [Relations between code elements](/en/konsep/level-kode/#relations-between-code-elements) for examples.
+For the shape of code, there's `inherits`, `implements`, `owns`, and `refers`. Examples are in [Record a function contract](/en/konsep/level-kode/#relations-between-code).
+
+## Arrow direction
+
+The arrow always points **from whoever starts the interaction**. `api -> db { op read; }` means `api` reads from `db`. The data flows from `db` to `api`, but the arrow still starts at `api`, because `api` depends on `db`. The direction of data is recorded separately with `data push` and `data pull`. See [Separate the caller from the data direction](/en/konsep/aliran-data/).
+
+## Ends that make sense
+
+`op` and container roles lock together, so an arrow always means something:
+
+| `op` | Allowed target |
+|---|---|
+| `read`, `write` | a `database`, `storage`, or `cache` container, or its contents |
+| `publish`, `subscribe` | a `queue` container, or an event endpoint |
+| `call` | anything except a `person`, storage, and queues |
+| `use` | anything except storage and queues |
+
+A `person` can only use a system or an application (`role app`). People don't call APIs or databases directly.
 
 ## Where to write a relation
 
-Write a relation at the top level or inside any element block. dim resolves each path **relative to the block that contains the relation**.
+A relation can be written at the top level of a file, or inside any element's block. Its paths are read **relative to the block where the relation is written**:
 
 ```dim
 system shop "Online Shop" {
   container api "API" {
-    component orders "Orders" {
-      code repo "OrderRepository";
-    }
-    orders.repo -> db "INSERT orders" { op write }
+    role service;
+    component orders "Orders" { description "Stores orders."; }
+    saveOrder: orders -> db "INSERT orders" { op write; }
   }
-  container db "Postgres";
+  container db "Postgres" { role database; }
 }
 ```
 
-For each path, dim looks for the first name in the current block, then in enclosing blocks up to the top level. In this example, it finds `orders` in `shop.api` and `db` in `shop`. Once it finds the first name, each later segment has to name a direct child of the previous one.
+For each path, the first name is looked up starting at the block where the relation is written. If it isn't found, the lookup moves up to the enclosing block, all the way to the top level. In this example, `orders` is found in `shop.api`, and `db` is found in `shop`. Once the first name is found, the rest of the path must be direct children, one after another.
 
-Keep relations within a system block for shorter paths. The top level is a convenient place for relations between systems.
+**The same name at two levels.** If the first name of a path is found at one level, but an outer level also has a child with that name, a reader can't tell which is meant. dim rejects it with `E209`. Write a longer path (`api.payments`), `this` for the element whose block you're in, or an absolute path starting with `::` (`::shop.api.payments`).
 
-**Shadowing.** The nearest matching name wins. Inside `shop.web`, `checkout` resolves to `shop.web.checkout`. To reach the API checkout, write a longer path (`api.checkout`) or an absolute path (`::shop.api.checkout`). The `::` prefix starts the lookup at the top level. Shadowed paths produce warning `W011`.
+## What isn't allowed
 
-## Relation IDs
+- **A relation to itself** (`E403`), except direct recursion: a `call` from a `function` or `method` to itself.
+- **A relation between an element and its ancestor or descendant** (`E404`), such as `shop.api.orders -> shop.api`. Such a relation always disappears when the map zooms out.
+- **Ends that don't fit the `op`** (`E405`), such as a `read` that targets a `service` container.
+- **A path that doesn't exist** (`E208`). The message says where in the path the lookup stopped.
 
-Give a relation an explicit ID by putting `<id>:` before it.
-
-```dim
-checkout_post: web.checkout.button -> api.checkout.route "POST /checkout" { op call }
-```
-
-A `step` in a [flow](/en/konsep/alur/) or `remove` in a [derived model](/en/konsep/komposisi/) uses that ID. Relation IDs must be unique across the model (`E023`). You can display and trace a relation without an explicit ID. To refer to it in the source, give it an ID.
-
-## Validation rules
-
-- **`E021`.** A self-relation is valid only for direct recursion, with `op call` and the same `code` element on both ends.
-- **`E022`.** Relations between an element and its ancestor or descendant are invalid, as in `shop.api.orders -> shop.api`. Both endpoints would lift to the same box when zoomed out.
-- **`E020`.** A path must resolve. The diagnostic identifies where lookup failed.
-
-See [specification §4.4](/en/referensi/spesifikasi/sintaks/#44-relations) and [§7](/en/referensi/spesifikasi/model/#7-path-resolution) for the full rules.
+The full rules are in [specification §9](/en/referensi/spesifikasi/relasi/#9-relations) and [§6.9](/en/referensi/spesifikasi/model/#69-path-resolution).
 
 ## Check the result
 
-In the tutorial model, change the POST label to the operation name from your code and recheck the file. The count should stay at three relations. If it grows, check whether you added a second arrow for the same interaction.
+Change `op write` in `saveOrder` to `op read`, then run `dim check`. The message is `E406`, because `data push` doesn't fit `read`. Change it back, then point the relation at `shop.web`, which has the `app` role, and confirm the message becomes `E405`: `write` can only target storage.

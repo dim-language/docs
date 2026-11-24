@@ -1,74 +1,85 @@
 ---
-title: Separate the caller from data direction
-description: How dim records who initiates an interaction and which way the data flows.
+title: Separate the caller from the data direction
+description: Why an arrow in dim means who starts the interaction, and how the direction of data is recorded separately with push and pull.
 ---
 
 import DidoNote from '../../../../components/DidoNote.astro';
 
-Web needs an order ID after checkout. Find the POST call in the Web code and record what it sends and which value it reads from the response.
+The Web app needs an order id after checkout. Look at the POST call in the Web code, then note what the Web app sends and what it uses from the response.
 
-A relation in dim answers two questions.
+Every relation in dim answers two different questions:
 
-1. **Who starts the interaction?** Follow the arrow `->`.
-2. **What data moves, and where does it go?** Read the `data` attribute.
+1. **Who starts?** Answered by the direction of the `->` arrow.
+2. **What data flows, and which way?** Answered by `data`.
 
-## Who starts the interaction
+## The arrow: who starts
 
-Write the arrow from the party that starts the interaction to its target.
+An arrow always points from whoever starts the interaction to its target.
 
 ```dim
-shop.api.orders.repo.find -> shop.db "SELECT orders" { op read }
+selectOrder: shop.api.orders.repo.find -> shop.db "SELECT orders" { op read; }
 ```
 
-`repo.find` queries the database, so the arrow starts at `repo.find`. It follows the dependency from `repo.find` to `db`.
+`repo.find` asks the database, so the arrow starts at `repo.find`. That's also the direction of the dependency: `repo.find` depends on `db`, not the other way around.
 
-## What data flows
+## `data`: what flows
 
-The direction of `data` is relative to the initiator.
+The direction of data is written from the initiator's point of view, followed by its type:
 
-| Direction | Meaning | Compared with the arrow |
+| Direction | Meaning | Relative to the arrow |
 |---|---|---|
-| `push` | The initiator sends data to the target | Same direction |
-| `pull` | The initiator receives data from the target | Opposite direction |
+| `push` | the initiator sends data to the target | with it |
+| `pull` | the initiator fetches data from the target | against it |
 
 ```dim
-shop.api.orders.repo.find -> shop.db "SELECT orders" { op read; data "Order" }
-```
-
-Here `op read` supplies the default direction, `pull`.
-
-### Default direction by operation
-
-| `op` | Default |
-|---|---|
-| `read`, `subscribe` | `pull` |
-| `write`, `publish` | `push` |
-| `call`, `use` | Specify the direction explicitly. |
-
-A call commonly sends a request and receives a response. Write one `data` attribute for each direction.
-
-```dim
-checkout_post: shop.web.checkout.button -> shop.api.checkout.handler "POST /checkout" {
-  op call;
-  data push "CheckoutRequest";
-  data pull "OrderId";
+selectOrder: shop.api.orders.repo.find -> shop.db "SELECT orders" {
+  op read;
+  data pull shop.api.orders.order;
 }
 ```
 
-If an explicit direction conflicts with the operation, as in `op read; data push`, dim accepts the model and reports warning `W003`.
+The direction is **always written**, and it must fit the `op`:
 
-## Why keep the directions separate?
+| `op` | Allowed directions |
+|---|---|
+| `read`, `subscribe` | `pull` |
+| `write`, `publish` | `push` |
+| `call`, `use` | `push`, `pull`, or both |
 
-- A call can move data both ways, while an arrow has one direction.
-- If arrows followed the data, a read would appear as `db → api`. The dependency runs from `api` to `db` at every zoom level.
-- `push` and `pull` make the data direction readable without additional arrow symbols.
+A single call usually moves data both ways: a request goes out, a response comes back. So `data` can be written more than once:
 
-## What happens when you zoom out
+```dim
+runCheckout: shop.api.checkout.route -> shop.api.checkout.service.run "Run checkout" {
+  op call;
+  data push shop.api.orders.cart;
+  data pull shop.api.orders.orderId;
+}
+```
 
-The data flows lift with the relation. In the [zoomable map](/en/konsep/peta-zoom/), `API → Postgres` carries `send Order · receive Order` because one function writes to the database and another reads from it. See [specification §6.3](/en/referensi/spesifikasi/model/#63-data-flow) for the full rules.
+The type in `data` is a dim type expression that refers to a named type, such as a `record` or an `alias`, by path, so the map can open the type's definition straight from the arrow. See [Record a function contract](/en/konsep/level-kode/).
+
+## Relations to endpoints don't write data
+
+When the target is an endpoint, the data is already in the endpoint's contract. The relation is just:
+
+```dim
+postCheckout: shop.web.checkout.button -> shop.api.checkout.post { op call; }
+```
+
+`push` comes from `body`, and `pull` from `returns`. Writing `data` on such a relation is `E406`, so the contract lives in one place only. See [Document an endpoint](/en/konsep/endpoint/).
+
+## Why not use the arrow for data?
+
+- A `call` moves data both ways, and one arrow has only one direction.
+- If the arrow followed the data, an `api` that reads a `db` would be drawn `db → api`, even though `api` depends on `db`. When zoomed out, the direction of dependency would mix with the direction of data.
+- `push` and `pull` read directly, without memorizing what symbols like `=>` or `<-` mean.
+
+## When zoomed out
+
+Data flows rise with their relations. On the [zoom map](/en/konsep/peta-zoom/), the `API → Postgres` arrow carries `push Order` and `pull Order`, because inside it one function writes and one reads. The full rules are in [specification §9.5](/en/referensi/spesifikasi/relasi/#95-data-flow).
 
 ## Check the result
 
 <DidoNote scene="missing-direction">If the API sends the response, do we need another arrow? Trace who started the request.</DidoNote>
 
-Read the checkout relation from left to right. Web starts the call and sends CheckoutRequest. Now read the pull from Web’s perspective. The value available after the call completes should be OrderId.
+Read the `runCheckout` relation from left to right. The route starts the call and sends a `Cart`. Now read the `pull` part from the route's point of view: the value it can use once the call finishes is an `OrderId`. Change `data pull` to `data push` in `selectOrder`, then run `dim check`: the message is `E406`.

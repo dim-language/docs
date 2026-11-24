@@ -105,7 +105,7 @@ submit: button -> handler "Kirim keranjang" {
 Aturan:
 
 - Arah **selalu ditulis**. Tidak ada arah default dari `op`, jadi setiap baris `data` bisa dibaca tanpa mengingat tabel.
-- Arah harus cocok dengan `op`. `read` dan `subscribe` hanya `pull`. `write` dan `publish` hanya `push`. `call` dan `use` boleh keduanya. Pelanggaran adalah `E406`.
+- Arah harus cocok dengan `op`. `read` dan `subscribe` hanya `pull`. `write` dan `publish` hanya `push`. `call` dan `use` boleh keduanya. Arah yang tidak ditulis atau tidak cocok adalah `E406`.
 - Relasi struktural tidak punya `data` (`E406`).
 - Relasi ke endpoint tidak menulis `data` (`E406`), karena datanya sudah ditentukan endpoint ([§10.8](/referensi/spesifikasi/endpoint/#108-relasi-ke-endpoint)).
 

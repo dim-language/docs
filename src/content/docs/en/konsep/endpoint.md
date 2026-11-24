@@ -1,94 +1,139 @@
 ---
-title: Document an HTTP endpoint
-description: Describe an HTTP route with its authentication, rate limits, inputs, and responses so client relations can inherit the contract.
+title: Document an endpoint
+description: Write an HTTP, gRPC, GraphQL, or event contract as an endpoint, with auth, rate limits, inputs, and responses, and let relations from callers use it.
 ---
 
-The login team is adding a route that exchanges an email and password for a session. Put the contract on the handler so callers can reference the same route.
+The sign-in team adds a route that exchanges an email and password for a session. Write its contract as an endpoint in the component that handles it, so every caller refers to the same route.
 
-Write an HTTP route as a `code` element with `form endpoint`. Its contract records the method and path, who can call it, its rate limits, the input it accepts, and its possible responses. Write that contract once on the endpoint. Client relations can derive their labels and data from it.
+An endpoint is a component's **interface**. It stands on its own, separate from the code that handles it, so an API contract can be written before its code exists, or without modeling the code level at all. The contract is written once. Relations from callers take their label and data from it.
 
 ```dim
 system app "App" {
   container web "Web App" {
-    ui;
+    role app;
+    paradigm functional;
+
     component login "Login Page" {
-      code submit "LoginForm.submit()" {
-        form function;
-        description "Mengirim email dan password ke API.";
+      description "The sign-in form.";
+
+      function submit "LoginForm.submit()" {
+        description "Sends the email and password to the API.";
+        async;
+        effects;
       }
     }
   }
 
   container api "API" {
-    tech "NestJS";
+    role service;
+    tech nestjs;
     prefix "/v1";
     auth bearer;
-    rate ip "100/1m";
+    rate ip 100 per 1m;
 
     component auth "AuthController" {
+      description "Sign-in and token refresh.";
       prefix "/auth";
 
-      code login "login()" {
-        form endpoint;
-        http POST "/login";
+      record credentials "LoginRequest" {
+        description "An email and password.";
+        field email: string;
+        field password: string;
+      }
+
+      record session "AuthSession" {
+        description "An access token and when it expires.";
+        field accessToken: string;
+        field expiresAt: datetime;
+      }
+
+      record invalidCredentials "InvalidCredentials" {
+        description "The email or password is wrong.";
+        field attemptsLeft: int;
+      }
+
+      endpoint login "Sign in" {
+        description "Signs in with an email and password.";
+        http post "/login";
         auth none;
-        rate ip "5/1m";
-        description "Masuk dengan email dan password.";
-        body "LoginRequest" "email dan password";
-        returns "AuthSession" "access token dan masa berlakunya";
+        rate ip 5 per 1m;
+        body credentials;
+        returns 200 session;
+        throws 401 invalidCredentials;
         sets cookie "refreshToken" "httpOnly";
-        throws 401 "Email atau password salah";
       }
     }
   }
 
-  login_post: web.login.submit -> api.auth.login;
+  loginPost: web.login.submit -> api.auth.login { op call; }
 }
 ```
 
-## The endpoint contract
+## The protocol line
 
-| Attribute | Value |
+Every endpoint has **exactly one protocol line** that states its protocol and address, the way a route is written in code:
+
+| Protocol | Protocol line |
 |---|---|
-| `http` | Required method (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`) and path |
-| `param` | Path parameter, such as `param id "UUID"` for `"/{id}"` |
-| `query`, `header`, `cookie` | Name, type, and description of another request input |
-| `body` | Request body type |
-| `status` | Success status, with `200` as the default |
-| `returns` | Success response body type |
-| `throws` | Error status and when it occurs, as in `throws 404 "Order tidak ditemukan"` |
-| `sets` | Cookie or header set in the response |
+| HTTP | `http post "/orders";` |
+| gRPC | `grpc "OrderService" "GetOrder";` |
+| GraphQL | `graphql query "order";` |
+| Event | `event "OrderPlaced" on ::shop.events;` |
 
-Each placeholder in the path, such as `{id}`, needs a `param` with the same name, and each `param` needs a corresponding placeholder. Write a type as a name such as `"LoginRequest"`. Keep field schemas and request examples in API documentation such as OpenAPI.
+The rest of the contract depends on the protocol:
 
-## Inherited settings
+| Protocol | Contents |
+|---|---|
+| HTTP | `param` (path), `query`, `header`, `cookie`, `body`, `returns <status> [<type>]` (required), `throws <status> <type>`, `sets` |
+| gRPC | `request`, `returns` (both required), `stream`, `throws <code> <type>` |
+| GraphQL | `param` (arguments), `returns` (required), `throws <type>` |
+| Event | `payload` (required) |
 
-Set `prefix`, `auth`, and `rate` on a container, component, or controller class to apply them to the endpoints inside it.
+Every placeholder in an HTTP path (`{id}`) must have a `param` with the same id, and the other way around. Types are dim type expressions, as at the [code level](/en/konsep/level-kode/). Per-field schemas and example requests stay in API documents such as OpenAPI.
 
-- **Full path.** Join each `prefix` from the outside in, then append the `http` path. The example joins `/v1`, `/auth`, and `/login`.
-- **`auth`.** The nearest declaration wins. `login` sets `auth none` to allow unauthenticated access even though its container sets `auth bearer`.
-- **`rate`.** The nearest declaration wins for each key. `rate ip "5/1m"` on `login` overrides the container's `ip` limit. Limits under other keys still apply.
+## Inherited from above
+
+`prefix`, `auth`, and `rate` can be written on a container or component. They apply to every endpoint below:
+
+- **The full path** is every `prefix` from the outside in, followed by the endpoint's path. In the example above: `/v1` + `/auth` + `/login`.
+- **`auth`** comes from the nearest element that writes it. `login` writes `auth none`, so it's public even though its container is `auth bearer`.
+- **`rate`** is taken per key. `login` writes `rate ip 5 per 1m`, which replaces the container's `ip` limit.
 
 | Endpoint | Route | `auth` | `rate` |
 |---|---|---|---|
-| `login` | `POST /v1/auth/login` | `none` | ip 5/1m |
+| `login` | `POST /v1/auth/login` | `none` | ip 5 per 1m |
 
-Supported authentication schemes are `none`, `bearer`, `cookie`, `basic`, and `apikey`. Put extra requirements after the scheme, as in `auth bearer "members:manage"`. Supported rate keys are `ip`, `session`, `user`, `account`, and `key`. A limit uses the format `"<count>/<window>"`, as in `"5/1m"` or `"1000/1d"`.
+Known `auth` schemes: `none`, `bearer`, `cookie`, `basic`, `apiKey`. Requested scopes refer to `scope` declarations in [dim.config](/en/menulis/konfigurasi/), for example `auth bearer ordersWrite;`. Known `rate` keys: `ip`, `user`, `session`, `apiKey`.
 
-## Relations to an endpoint
+## Who handles it
 
-The `login_post` relation gets its omitted attributes from the endpoint.
+`handler` points to the `function` or `method` that implements the endpoint, in the same container:
 
-| Part | Derived value |
+```dim
+endpoint post "Checkout" {
+  description "Takes a cart from the web app and returns the new order's id.";
+  http post "/checkout";
+  handler route;
+  body orders.cart;
+  returns 201 orders.orderId;
+}
+```
+
+`handler` is optional. An endpoint is valid without the code level.
+
+## Relations to endpoints
+
+The `loginPost` relation in the first example writes neither a label nor `data`. Both come from the endpoint:
+
+| Part | Taken from the endpoint |
 |---|---|
-| `op` | `call` |
-| Label | `"POST /v1/auth/login"` |
-| `data` | `push "LoginRequest"` from `body` and `pull "AuthSession"` from `returns` |
+| label | `POST /v1/auth/login` |
+| `data` | `push LoginRequest` from `body`, and `pull AuthSession` from `returns` |
 
-Values written on the relation take precedence. When several clients call the same endpoint, keep the method, path, and data types on the endpoint so the relations pick up changes to the contract.
+Relations to HTTP, gRPC, and GraphQL endpoints use `op call`. Relations to event endpoints use `op publish` (the sender) or `op subscribe` (a receiver). Writing `data` on a relation to an endpoint is an error, because the contract must live in one place only. That way relations from several callers don't repeat the method, path, and data types, and can't go stale when the endpoint changes.
 
-See [specification §13](/en/referensi/spesifikasi/endpoint-http/#13-http-endpoints) for the full rules.
+The full rules are in [specification §10](/en/referensi/spesifikasi/endpoint/#10-endpoints).
 
 ## Check the result
 
-Follow login_post to the endpoint. Combine the prefixes and path, then compare POST /v1/auth/login, LoginRequest and AuthSession with the route test. If the response changes, update returns on the handler.
+Follow `loginPost` to its endpoint. Join the prefixes and the path, then match `POST /v1/auth/login`, the `LoginRequest` body, and the `AuthSession` response against the route's test. Then change the path to `"/login/{attempt}"` without adding a `param`, and run `dim check`: the message is `E503`.

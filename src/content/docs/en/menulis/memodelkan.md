@@ -1,135 +1,145 @@
 ---
 title: Map an existing system
-description: Build a dim model of an existing system, starting with context and adding detail where you need it.
+description: Steps for writing a dim model of a system that already exists, from the big picture down to only the detail you need.
 ---
 
-Pick a PR that touches two services. Open the changed handler, identify its caller, then follow its first outgoing call. Use those three facts to decide which part of the system to draw.
+Take one PR that touches two services. Open the handler that changed, find its caller, then follow the first call that leaves the service. Use those three facts to choose the part of the system to draw.
 
-You can build the model in stages. Each step leaves you with a valid model you can use and extend later.
+A dim model doesn't have to be written all at once. Each step below produces a valid, useful model, so you can stop at any step and add detail when you need it.
 
-## 1. Start with the system context
+## 1. Set up the config
 
-List who uses your system and which other systems it interacts with. Mark systems owned by others as `external`.
+Create a `dim.config` in the model's folder and declare the technologies you already know. See [Set up dim.config](/en/menulis/konfigurasi/).
 
 ```dim
-person customer "Customer";
-person admin "Admin Toko";
+// dim.config
+dim "0.6";
 
-system shop "Online Shop";
+tech nextjs "Next.js";
+tech rust "Rust";
+tech postgres "PostgreSQL";
+tech sqs "Amazon SQS";
+tech https "HTTPS";
+```
+
+## 2. Start from the outside
+
+Write who uses your system and which other systems it talks to. Mark systems owned by someone else with `external`.
+
+```dim
+// main.dim
+dim "0.6";
+
+person customer "Customer" { description "Shops online."; }
+person admin "Store Admin" { description "Manages products and prices."; }
+
+system shop "Online Shop" { description "An online store for shoppers in Indonesia."; }
 
 system payment "Payment Gateway" {
+  description "A third-party gateway for cards and e-wallets.";
   external;
-  description "Gateway pihak ketiga untuk kartu dan e-wallet.";
 }
 
-customer -> shop "Belanja";
-admin -> shop "Mengelola produk";
-shop -> payment "Menagih pembayaran" { op call; data push "ChargeRequest"; data pull "ChargeResult" }
+shopping: customer -> shop "Shops" { op use; }
+managing: admin -> shop "Manages products" { op use; }
+charging: shop -> payment "Charges payments" { op call; }
 ```
 
-This corresponds to a C4 system context diagram and is often enough for people outside the team.
+This matches a C4 *system context* diagram, and it's usually enough for people outside the team. Every relation has an id (`shopping:`) and an `op`, so flows and derived models can refer to it later.
 
-## 2. Identify the containers
+## 3. Break your system into containers
 
-A container is a part you run or deploy separately, such as a web app, mobile app, API, worker, database, or queue. A repo can contain several containers, and a container can span repos. Group containers by how the software runs.
+A container is a part that's run or deployed on its own: a web app, an API, a worker, a database, a queue. What matters is how the part runs, not where its code lives. Every container must state its role with `role`.
 
 ```dim
 system shop "Online Shop" {
-  container web "Web App" { tech "Next.js"; ui }
-  container api "API" { tech "Rust/axum" }
-  container worker "Worker" { tech "Rust" }
-  container db "Postgres" { tech "PostgreSQL"; shape database }
-  container queue "Antrian Email" { tech "SQS"; shape queue }
+  description "An online store for shoppers in Indonesia.";
+
+  container web "Web App" { role app; tech nextjs; }
+  container api "API" { role service; tech rust; }
+  container worker "Worker" { role service; tech rust; }
+  container db "Postgres" { role database; tech postgres; }
+  container queue "Email Queue" { role queue; tech sqs; }
 }
 ```
 
-- Use `tech` to record the technology the container actually uses, since readers often look for it first.
-- Mark parts people interact with directly as `ui`.
-- Set `shape` on databases and queues so they are easy to spot on the map.
+The role decides which relations make sense: `read` and `write` only to storage, `publish` and `subscribe` only to queues, and people only use `app` containers. The role also decides the appearance, through styles in `dim.config`.
 
-## 3. Write the relations you know
+## 4. Write the relations you know
 
-Replace the system-level relations with relations between their actual endpoints at the container level. Start with the interactions you can confirm.
+Now replace the system-level relations with container-level ones. Write only what you're sure of.
 
 ```dim
-customer -> shop.web "Belanja";
-admin -> shop.web "Mengelola produk";
-shop.web -> shop.api "REST" { op call; tech "HTTPS/JSON"; data push "Request"; data pull "Response" }
-shop.api -> shop.db "Simpan dan baca order" { op write; data "Order" }
-shop.api -> shop.queue "Kirim tugas email" { op publish; data "EmailJob" }
-shop.worker -> shop.queue "Ambil tugas email" { op subscribe; data "EmailJob" }
-shop.api -> payment "Menagih pembayaran" { op call; data push "ChargeRequest"; data pull "ChargeResult" }
+shopping: customer -> shop.web "Shops" { op use; }
+managing: admin -> shop.web "Manages products" { op use; }
+saveOrder: shop.api -> shop.db "Save order" { op write; }
+queueEmail: shop.api -> shop.queue "Queue email job" { op publish; }
+takeEmail: shop.worker -> shop.queue "Take email job" { op subscribe; }
+charging: shop.api -> payment "Charges payments" { op call; tech https; }
 ```
 
-Remove `customer -> shop` from step 1. The more detailed `customer -> shop.web` lifts to `customer → shop` when the shop is closed. Write each relation once at the most detailed level you know so higher levels have a single source.
+The `customer -> shop` relation from step 2 is gone, because `customer -> shop.web` already shows as `customer → shop` when `shop` is closed. **Don't keep the same relation at two levels.** Higher-level relations are always computed from more detailed ones, so writing them again only creates two sources that can disagree.
 
-To choose the arrow direction, ask who starts the interaction. A worker initiates its subscription, so write `worker -> queue` with `op subscribe`. The queue sends the data back to the worker.
+To pick the direction of an arrow, ask who starts the interaction. The `worker` takes from the queue, so the arrow is `worker -> queue` with `op subscribe`, even though the data flows out of the queue.
 
-## 4. Move relations down when detail matters
+## 5. Move relations down when the detail matters
 
-Open the containers you get questions about, are changing, or need to understand in detail. As you add components and code, **move** each relation to the appropriate endpoint.
+Not every container needs to be opened. Open the ones that are asked about often, that are changing, or that carry the most important flow. When you write components inside, **move** the relations to the most precise element:
 
 ```dim
-system shop "Online Shop" {
-  // web, worker, db, dan queue tetap seperti di langkah 2
-  container api "API" {
-    tech "Rust/axum";
-    component checkout "Checkout" {
-      code run "checkout()";
-    }
-    component orders "Orders" {
-      code save "save_order()";
-    }
+container api "API" {
+  role service;
+  tech rust;
+
+  component checkout "Checkout" { description "Runs checkout until the order is saved."; }
+  component orders "Orders" { description "Stores and looks up orders."; }
+}
+
+saveOrder: shop.api.orders -> shop.db "INSERT orders" { op write; }
+charging: shop.api.checkout -> payment "Charges payments" { op call; tech https; }
+```
+
+The container-level map stays the same, but now every arrow can be traced to the component that makes it.
+
+If a unit is called from many places, write its contract at the [code level](/en/konsep/level-kode/), with types, parameters, and errors. For an API, write each route as an [endpoint](/en/konsep/endpoint/), so a relation from a client is just `placeOrder: web.checkout -> api.orders.createOrder { op call; }`, and its label and data come from the endpoint.
+
+## 6. Mark the important flows
+
+For journeys people often discuss (checkout, sign-up, refunds), arrange the relation ids as a [flow](/en/konsep/alur/). A flow can be highlighted at every zoom level, and it can branch for failure paths:
+
+```dim
+flow checkout "Checkout" {
+  description "From the shopper clicking pay to the order being saved.";
+  step shopping;
+  step charging "Charge first";
+  alt {
+    case paid "Payment succeeded" { step saveOrder; }
+    case declined "Payment declined" { step showError; }
   }
 }
-
-shop.api.orders.save -> shop.db "INSERT orders" { op write; data "Order" }
-shop.api.checkout.run -> payment "Menagih pembayaran" { op call; data push "ChargeRequest"; data pull "ChargeResult" }
 ```
 
-Remove `shop.api -> shop.db` and `shop.api -> payment` from step 3. The same arrows appear at the container level, and now you can trace them down to the functions that create them.
+## 7. Split files and record where things run
 
-If several callers use a unit, describe its contract at the [code level](/en/konsep/level-kode/) using `param`, `returns`, `throws`, and `description`. For HTTP APIs, describe each route as an [endpoint](/en/konsep/endpoint/). Then the relation `button -> api.orders.create` can get its label and data from the endpoint.
+- One file per system or team, joined with `import` from one main file.
+- Other teams can add details without changing the original file, with `extend`.
+- Planned architecture changes are written as a derived model with `amends`, so *as-is* and *to-be* can be compared.
+- Where each container runs is written as an [environment](/en/konsep/deployment/).
 
-## 5. Mark key flows
+Examples are in [File composition](/en/konsep/komposisi/).
 
-Record common user journeys such as checkout, signup, or refunds as [flows](/en/konsep/alur/). You can highlight a flow at every zoom level. Give each relation in the flow an explicit ID with `<id>:`.
+## 8. Keep it correct
 
-```dim
-belanja: customer -> shop.web "Belanja";
-pesan: shop.web -> shop.api "REST" { op call; tech "HTTPS/JSON"; data push "Request"; data pull "Response" }
-charge: shop.api.checkout.run -> payment "Menagih pembayaran" { op call; data push "ChargeRequest"; data pull "ChargeResult" }
-save_order: shop.api.orders.save -> shop.db "INSERT orders" { op write; data "Order" }
+- Run `dim check` in CI, so paths that no longer exist and mistyped properties are caught right away. Every violation is an error, so a model that passes is consistent.
+- Change the model in the same pull request as the code.
+- Run `dim fmt`, so every file always has the same order and layout.
 
-flow checkout "Checkout" {
-  step belanja;
-  step pesan;
-  step charge "Tagih dulu";
-  step save_order;
-}
-```
+## Habits that help
 
-## 6. Split the file as the model grows
-
-- Use one file per system or team and `import` them from a main file.
-- Other teams can add detail with `extend` in their own files.
-- Describe a proposed architecture with `amends` to compare it with the current one.
-
-See [File composition](/en/konsep/komposisi/) for examples.
-
-## 7. Keep the model accurate
-
-- Validate models with the SDK in CI to catch missing paths and mistyped attributes. See the [SDK reference](/en/referensi/cli/).
-- Update the model in the same pull request as the code.
-- When you remove a function, remove its relations too. The map updates at every level.
-
-## Naming and descriptions
-
-- Use short lowercase IDs with underscores, such as `order_repo` and `checkout`. Names can be longer and have any format, such as `"OrderRepository"` or `"save_order()"`.
-- Label a relation with what the initiator does, such as `"INSERT orders"` or `"Charge payment"`.
-- Use code type names for data, such as `"Order"` and `"ChargeRequest"`, so the same data has the same name in each relation.
-- Use `description` to explain why the element exists.
+- **Ids** are short camelCase: `orderRepo`, `checkout`, `httpClient`. **Names** can take any form: `"OrderRepository"`, `"save_order()"`.
+- **Relation labels** say what the initiator does: `"INSERT orders"`, `"Charges payments"`, not `"relation to db"`. Relations to endpoints don't need a label.
+- **`description`** answers *why* the element exists, not its name again.
 
 ## Check the result
 
-Compare the arrows with one request from a log or test. A reviewer should be able to trace the caller, the destination service and the operation using the model paths.
+Compare the model's arrows with one real request from a log or a test. A reader should be able to trace the caller, the target service, and the operation by following paths in the model. Run `dim check main.dim`; a correct model produces no messages at all.

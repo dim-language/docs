@@ -28,15 +28,16 @@ Exit code `1` means the model failed to compile. Diagnostics include the file, l
 
 ## Compile a project with imports
 
-`compileProject` takes an entry filename and the contents of all project files. Use relative paths with `/` separators.
+`compileProject` takes an entry filename and the contents of all project files, including `dim.config`. Use relative paths with `/` separators.
 
 ```ts
 import { compileProject, formatFile, initDim } from '@dim/sdk';
 
 await initDim();
 const files = {
-  'main.dim': 'dim "0.5"; import "shop.dim"; person buyer; buyer -> shop;',
-  'shop.dim': 'system shop "Shop";',
+  'dim.config': 'dim "0.6";',
+  'main.dim': 'dim "0.6"; import "shop.dim"; person buyer "Buyer"; shopping: buyer -> shop { op use; }',
+  'shop.dim': 'dim "0.6"; system shop "Store";',
 };
 
 const { model, diagnostics } = compileProject('main.dim', files);

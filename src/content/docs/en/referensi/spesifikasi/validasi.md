@@ -77,7 +77,7 @@ Codes are grouped by chapter: `E0xx` lexical and grammar, `E1xx` configuration, 
 | `E403` | a relation to itself other than a recursive `call` from a `function` or `method` |
 | `E404` | a relation between an element and its ancestor or descendant |
 | `E405` | relation ends that break the `op` rules ([§9.4](/en/referensi/spesifikasi/relasi/#94-relation-end-rules)) |
-| `E406` | a `data` direction that doesn't fit the `op`, or `data` on a structural relation or a relation to an endpoint |
+| `E406` | a `data` direction that's missing or doesn't fit the `op`, or `data` on a structural relation or a relation to an endpoint |
 | `E407` | a structural relation outside the table in [§7.5](/en/referensi/spesifikasi/level-kode/#75-relations-at-the-code-level) |
 
 ### 15.6 Endpoints

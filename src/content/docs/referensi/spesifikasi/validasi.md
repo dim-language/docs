@@ -77,7 +77,7 @@ Kode dikelompokkan per bab: `E0xx` leksikal dan grammar, `E1xx` konfigurasi, `E2
 | `E403` | relasi ke diri sendiri selain `call` rekursif dari `function` atau `method` |
 | `E404` | relasi antara elemen dan leluhur atau keturunannya |
 | `E405` | ujung relasi melanggar aturan `op` ([§9.4](/referensi/spesifikasi/relasi/#94-aturan-ujung-relasi)) |
-| `E406` | arah `data` tidak cocok dengan `op`, atau `data` di relasi struktural maupun relasi ke endpoint |
+| `E406` | arah `data` tidak ditulis atau tidak cocok dengan `op`, atau `data` di relasi struktural maupun relasi ke endpoint |
 | `E407` | relasi struktural di luar tabel [§7.5](/referensi/spesifikasi/level-kode/#75-relasi-di-level-kode) |
 
 ### 15.6 Endpoint

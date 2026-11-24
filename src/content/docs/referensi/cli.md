@@ -28,15 +28,16 @@ Kode keluar `1` berarti model gagal dikompilasi. Diagnostik memuat lokasi file, 
 
 ## Kompilasi proyek dengan import
 
-`compileProject` menerima nama file utama dan isi semua file proyek. Pakai path relatif dengan pemisah `/`.
+`compileProject` menerima nama file utama dan isi semua file proyek, termasuk `dim.config`. Pakai path relatif dengan pemisah `/`.
 
 ```ts
 import { compileProject, formatFile, initDim } from '@dim/sdk';
 
 await initDim();
 const files = {
-  'main.dim': 'dim "0.5"; import "shop.dim"; person buyer; buyer -> shop;',
-  'shop.dim': 'system shop "Toko";',
+  'dim.config': 'dim "0.6";',
+  'main.dim': 'dim "0.6"; import "shop.dim"; person buyer "Pembeli"; shopping: buyer -> shop { op use; }',
+  'shop.dim': 'dim "0.6"; system shop "Toko";',
 };
 
 const { model, diagnostics } = compileProject('main.dim', files);

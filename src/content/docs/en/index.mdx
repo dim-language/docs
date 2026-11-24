@@ -46,14 +46,13 @@ import shop from '../../../data/shop.json';
 <img class="dim-scene" src="/dido/order-id.webp" width="640" height="374" alt="" loading="lazy" />
 <div class="dim-example-body">
 
-This time Dido asks. His architect shakes her head. “Just the ID.” They pull up **Web App → API** and write that down. Now Dido can give his agent a file that says exactly what goes out (`CheckoutRequest`) and what comes back (`OrderId`).
+This time Dido asks. His architect shakes her head. “Just the ID.” They pull up **Web App → API** and write that down. Now Dido can give his agent a file that says exactly what goes out (`Cart`) and what comes back (`OrderId`).
 
 ```dim title="shop.dim"
-checkout_post: web.checkout.button -> api.checkout.route "POST /checkout" {
+sendCart: web.checkout -> api.checkout "Send cart" {
   op call;
-  tech "HTTPS/JSON";
-  data push "CheckoutRequest";
-  data pull "OrderId";
+  data push api.orders.cart;
+  data pull api.orders.orderId;
 }
 ```
 
@@ -71,11 +70,11 @@ checkout_post: web.checkout.button -> api.checkout.route "POST /checkout" {
 <img class="dim-scene" src="/dido/missing-direction.webp" width="640" height="330" alt="" loading="lazy" />
 <div class="dim-example-body">
 
-Dido wrote down the request type. He left out who sends it. CI flags the missing direction with `E035`. The web app sends the request, so Dido adds `push`.
+Dido wrote down the request type. He left out who sends it. CI flags the missing direction with `E406`. The web app sends the request, so Dido adds `push`.
 
 ```diff
-- data "CheckoutRequest";
-+ data push "CheckoutRequest";
+- data api.orders.cart;
++ data push api.orders.cart;
 ```
 
 <LinkButton href="/en/referensi/cli/" icon="right-arrow">Check a model with the SDK</LinkButton>
