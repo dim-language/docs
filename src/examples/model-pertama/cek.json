@@ -3,5 +3,5 @@
 	"checkout": "ok: 7 elemen, 3 relasi, 0 flow",
 	"container": "ok: 8 elemen, 3 relasi, 0 flow",
 	"kode": "ok: 9 elemen, 3 relasi, 0 flow",
-	"tanpaArah": "error[E406]: arah `data` tidak ditulis; `op call` perlu `push` atau `pull` di setiap `data`"
+	"tanpaArah": "error[E406]: arah data wajib ditulis: `data push <tipe>;` atau `data pull <tipe>;`"
 }
