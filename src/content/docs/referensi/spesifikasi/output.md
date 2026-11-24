@@ -3,102 +3,126 @@ title: Format output JSON
 description: Struktur model JSON yang dihasilkan parser dim.
 ---
 
-## 9. Format output (JSON)
+## 16. Format output (JSON)
 
-Parser menghasilkan satu dokumen JSON:
+Parser menghasilkan satu dokumen JSON. Bentuknya didefinisikan oleh JSON Schema yang dibuat dari meta-skema bahasa, dan tipe TypeScript di `@dim/sdk` dibuat dari JSON Schema yang sama. Bagian ini menjelaskan isinya. Kalau ada perbedaan, JSON Schema yang berlaku.
 
 ```json
 {
-  "version": "0.5",
-  "nodes": [
-    {
-      "id": "shop.api.orders.repo.find",
-      "kind": "code",
-      "name": "find_by_id()",
-      "parent": "shop.api.orders.repo",
-      "description": "Mengambil satu order beserta item-itemnya.",
-      "tech": null,
-      "shape": "box",
-      "tags": [],
-      "external": false,
-      "ui": false,
-      "source": { "path": "services/api/src/orders/repo.rs", "line": 42, "url": null },
-      "httpDefaults": null,
-      "code": {
-        "form": "method",
-        "visibility": null,
-        "static": false,
-        "abstract": false,
-        "async": true,
-        "type": null,
-        "typeRefs": [],
-        "params": [
-          { "name": "id", "type": "OrderId", "description": null, "refs": [] }
-        ],
-        "returns": {
-          "type": "Option<Order>",
-          "description": "None kalau order tidak ada",
-          "refs": ["shop.api.orders.order"]
-        },
-        "throws": [],
-        "http": null
-      },
-      "span": { "file": "shop.dim", "line": 101, "col": 9, "endLine": 107, "endCol": 10 }
-    }
+  "version": "0.6",
+  "config": {
+    "techs": [{ "id": "postgres", "name": "PostgreSQL", "version": "16" }],
+    "tags": [{ "id": "pci", "name": "Menyimpan data kartu" }],
+    "scopes": [],
+    "roots": [],
+    "styles": [{ "selector": { "role": "database" }, "icon": "database", "background": "neutral" }]
+  },
+  "elements": [
+    { "kind": "system", "id": "shop", "name": "Online Shop" },
+    { "kind": "container", "id": "shop.api", "parent": "shop", "name": "API",
+      "role": "service", "paradigms": ["oop"], "techs": ["kotlin"] },
+    { "kind": "component", "id": "shop.api.orders", "parent": "shop.api", "name": "Orders",
+      "description": "Membuat dan menyimpan order." },
+    { "kind": "code", "form": "record", "id": "shop.api.orders.order", "parent": "shop.api.orders",
+      "name": "Order", "description": "Order yang sudah dibuat.",
+      "fields": [
+        { "id": "id", "type": { "primitive": "uuid" } },
+        { "id": "total", "type": { "primitive": "decimal" }, "description": "Total setelah diskon" }
+      ] },
+    { "kind": "endpoint", "protocol": "http", "id": "shop.api.orders.createOrder", "parent": "shop.api.orders",
+      "name": "Buat order", "description": "Membuat order dari keranjang.",
+      "verb": "post", "path": "/orders", "fullPath": "/orders",
+      "body": { "ref": "shop.api.orders.cart" },
+      "returns": { "status": 201, "type": { "ref": "shop.api.orders.order" } } }
   ],
-  "edges": [
-    {
-      "id": "insert_order",
-      "from": "shop.api.orders.repo.save",
-      "to": "shop.db",
-      "label": "INSERT orders",
-      "op": "write",
-      "category": "interaction",
-      "data": [
-        { "dir": "push", "payload": ["Order"], "refs": ["shop.api.orders.order"] }
-      ],
-      "tech": null,
-      "description": null,
-      "tags": [],
-      "span": { "file": "shop.dim", "line": 150, "col": 3, "endLine": 150, "endCol": 86 }
-    }
+  "relations": [
+    { "id": "saveOrder", "from": "shop.api.orders", "to": "shop.db", "op": "write", "category": "interaction",
+      "label": "Simpan order",
+      "data": [{ "dir": "push", "type": { "ref": "shop.api.orders.order" } }] }
   ],
   "flows": [
-    {
-      "id": "checkout",
-      "name": "Checkout",
-      "description": "Dari pembeli menekan bayar sampai order tersimpan.",
-      "tags": [],
+    { "id": "checkout", "name": "Checkout",
       "steps": [
-        { "edge": "checkout_click", "label": null },
-        { "edge": "charge", "label": "Tagih dulu" }
-      ],
-      "span": { "file": "main.dim", "line": 25, "col": 1, "endLine": 34, "endCol": 2 }
-    }
-  ]
+        { "kind": "step", "relation": "openCheckout", "number": "1" },
+        { "kind": "alt", "number": "2", "branches": [
+          { "id": "paid", "label": "Pembayaran berhasil", "letter": "a",
+            "steps": [{ "kind": "step", "relation": "saveOrder", "number": "2a.1" }] }
+        ] }
+      ] }
+  ],
+  "environments": [],
+  "spans": {
+    "elements": { "shop.api": { "file": "main.dim", "line": 12, "col": 3, "endLine": 30, "endCol": 4 } },
+    "relations": {},
+    "flows": {},
+    "environments": {},
+    "config": {}
+  }
 }
 ```
 
-Aturan:
-- `nodes` berurutan sesuai urutan kemunculan di sumber (pre-order), dengan file yang di-import atau di-amends lebih dulu ([§11.4](/referensi/spesifikasi/komposisi-dan-flow/#114-urutan-penerapan)). Parent selalu muncul sebelum anaknya. Anak yang ditambahkan lewat `extend` muncul di posisi `extend`-nya.
-- `parent` bernilai `null` untuk elemen top-level.
-- `from`/`to` selalu path lengkap ke elemen yang ditulis, **tidak pernah** di-lift oleh parser.
-- `code` selalu berupa objek untuk `kind: "code"` (semua field ada, nilai default `null`/`false`/`[]`), dan `null` untuk jenis elemen lain. Isinya mengikuti [§6.4](/referensi/spesifikasi/model/#64-detail-kode).
-- `source` bernilai `null` kalau tidak ditulis. Kalau ditulis, berupa objek `{ "path", "line", "url" }`: untuk URL, `url` terisi dan dua lainnya `null`; untuk path, `path` relatif terhadap folder file utama ([§6.5](/referensi/spesifikasi/model/#65-lokasi-implementasi-source)), dan `line` bernilai `null` kalau tidak ditulis.
-- `refs` berisi id elemen tipe yang dirujuk string tipe di objek yang sama ([§6.6](/referensi/spesifikasi/model/#66-rujukan-tipe)), dan `[]` kalau tidak ada. Field ini ada di setiap entri `data`, `code.params`, `code.returns`, `code.throws`, serta `body`, `query`, `headers`, dan `cookies` di `code.http`. Untuk `code.type`, yang berupa string, rujukannya ada di `code.typeRefs`.
-- `code.http` berisi kontrak endpoint yang sudah diwariskan ([§13.6](/referensi/spesifikasi/endpoint-http/#136-output)) untuk `form endpoint`, dan `null` untuk form lain.
-- `httpDefaults` berisi `prefix`, `auth`, dan `rate` yang ditulis di elemen itu sendiri ([§13.6](/referensi/spesifikasi/endpoint-http/#136-output)), dan `null` kalau tidak ada atau elemennya endpoint.
-- `op` selalu terisi: `"call"` kalau tidak ditulis dan targetnya endpoint ([§13.5](/referensi/spesifikasi/endpoint-http/#135-relasi-ke-endpoint)), selain itu `"use"`.
-- `category` bernilai `"structure"` untuk `extends`, `implements`, `owns`, `refers`, dan `"interaction"` untuk sisanya, termasuk `op` tak dikenal.
-- `data` berisi satu entri per atribut `data`, dengan `dir` yang sudah diisi (dari tulisan atau default `op`). Kalau tidak ada atribut `data` dan targetnya endpoint, `data` diambil dari kontrak endpoint ([§13.5](/referensi/spesifikasi/endpoint-http/#135-relasi-ke-endpoint)). Kalau tidak ada atribut `data` tapi `op` punya arah default, `data` berisi satu entri dengan `payload: []`. Kalau semuanya tidak ada, `data` bernilai `[]`.
-- `label` bernilai `null` kalau tidak ditulis, kecuali targetnya endpoint ([§13.5](/referensi/spesifikasi/endpoint-http/#135-relasi-ke-endpoint)).
-- `from`/`to` ditulis tanpa `::`, meskipun di sumber ditulis sebagai path absolut.
-- `edges[].id`:
-  - Kalau relasi punya id eksplisit (`checkout_post: a -> b`), itu id-nya.
-  - Kalau tidak, id default adalah `<from>-><to>#<k>`, dengan `k` urutan kemunculan (mulai 0) di antara **semua** relasi yang punya pasangan `from`/`to` sama, termasuk yang punya id eksplisit.
-  - Id default stabil terhadap penambahan, penghapusan, atau pemindahan relasi lain. Id baru berubah kalau ujung relasinya sendiri berubah, atau kalau urutan relasi dengan pasangan `from`/`to` yang sama berubah.
-  - Id default selalu mengandung `->`, jadi tidak pernah bentrok dengan id eksplisit (yang berupa IDENT).
-- `span.file` adalah path file sumber, relatif terhadap folder file utama yang diberikan ke parser.
-- `flows` berurutan sesuai kemunculan. `steps[].edge` selalu id eksplisit sebuah edge yang ada di `edges`. `name` sama dengan `id` kalau tidak ditulis.
-- Elemen, relasi, dan flow yang dihapus dengan `remove` tidak muncul sama sekali.
-- Field opsional yang tidak diisi bernilai `null` (string) atau `[]` (list), bukan dihilangkan.
+### 16.1 Prinsip
+
+- **Tidak ada `null`.** Properti opsional yang tidak ditulis tidak muncul di output. List kosong juga tidak muncul, kecuali di tingkat teratas dokumen.
+- **Satu bentuk per kind.** Setiap objek di `elements` hanya membawa field yang berlaku untuk kind-nya, dan untuk unit kode juga untuk `form`-nya. Konsumen membedakannya lewat `kind` dan `form`.
+- **Semua rujukan sudah di-resolve** menjadi path lengkap atau id. `this` dan path relatif tidak pernah muncul di output.
+- **Nilai turunan ikut ditulis kalau mahal dihitung ulang**, misalnya `fullPath` endpoint HTTP setelah `prefix` digabung, dan `auth` serta `rate` yang berlaku setelah pewarisan.
+- **Urutan** mengikuti [§11.4](/referensi/spesifikasi/komposisi-dan-flow/#114-urutan-penerapan). Parent selalu muncul sebelum anaknya.
+
+### 16.2 `elements`
+
+Field yang ada di setiap elemen: `kind`, `id` (path lengkap), `name`, dan, kecuali untuk top-level, `parent`. Field opsional umum: `description`, `tags`, `source`, `meta`.
+
+| `kind` | Field tambahan |
+|---|---|
+| `person` | — |
+| `system` | `external` |
+| `container` | `role`, `paradigms`, `techs`, `external`, `prefix`, `auth`, `rates` |
+| `component` | `paradigms`, `techs`, `prefix`, `auth`, `rates` |
+| `endpoint` | `protocol`, `handler`, `auth`, `rates` (yang berlaku), lalu field per protokol: `verb`, `path`, `fullPath`, `params`, `queries`, `headers`, `cookies`, `body`, `returns`, `throws`, `sets` untuk `http`; `service`, `rpc`, `request`, `returns`, `stream`, `throws` untuk `grpc`; `operation`, `field`, `params`, `returns`, `throws` untuk `graphql`; `event`, `channel`, `payload` untuk `event` |
+| `code` | `form`, lalu field per form: `async`, `pure`, `effects`, `visibility`, `static`, `abstract`, `fields`, `variants`, `params`, `returns`, `throws`, `type` sesuai [§7.3](/referensi/spesifikasi/level-kode/#73-properti-unit-kode)–[§7.4](/referensi/spesifikasi/level-kode/#74-member) |
+
+`source` berbentuk `{ "root": "<id>", "path": "<path>", "line": <n> }`, dengan `root` yang sudah diwariskan.
+
+### 16.3 Tipe
+
+Ekspresi tipe ([§8](/referensi/spesifikasi/tipe/#8-tipe)) ditulis sebagai objek dengan tepat satu key:
+
+| Ekspresi | JSON |
+|---|---|
+| `uuid` | `{ "primitive": "uuid" }` |
+| `orders.order` | `{ "ref": "shop.api.orders.order" }` |
+| `T[]` | `{ "list": T }` |
+| `T?` | `{ "optional": T }` |
+| `map<K, V>` | `{ "map": { "key": K, "value": V } }` |
+
+### 16.4 `relations`
+
+`id`, `from`, `to`, `op`, dan `category` (`"interaction"` atau `"structure"`) selalu ada. Field opsional: `label` (hanya kalau ditulis; label turunan dihitung konsumen), `data`, `techs`, `description`, `tags`, `meta`.
+
+Setiap entri `data` berbentuk `{ "dir": "push" | "pull", "type": <tipe> }`. Untuk relasi ke endpoint, `data` diisi dari endpoint dan diberi `"derived": true`.
+
+### 16.5 `flows`
+
+`id`, `name`, dan `steps` selalu ada. Setiap langkah adalah salah satu dari:
+
+| `kind` | Field |
+|---|---|
+| `step` | `relation`, `number`, `note` |
+| `opt` | `number`, `branch` (satu cabang) |
+| `alt` | `number`, `branches` |
+| `par` | `number`, `branches` |
+
+Cabang berbentuk `{ "id", "label", "letter", "steps" }`. `number` adalah nomor di model penuh ([§12.3](/referensi/spesifikasi/komposisi-dan-flow/#123-penomoran)). Nomor di level zoom tertentu dihitung konsumen.
+
+### 16.6 `environments`
+
+Setiap environment berbentuk `{ "id", "name", "description", "elements", "relations", "omitted" }`:
+
+- `elements`: node, infra, dan deploy dalam bentuk datar dengan `kind`, `id` (path di dalam environment), dan `parent`. `deploy` membawa `container` dan `replicas`. `infra` membawa `role`.
+- `relations`: relasi infra ([§13.5](/referensi/spesifikasi/deployment/#135-relasi-di-environment)).
+- `omitted`: path container yang di-`omit`.
+
+### 16.7 `spans`
+
+Lokasi sumber dipisah dari model ke `spans`, dikelompokkan per namespace dan dikunci dengan id. Setiap span berbentuk `{ "file", "line", "col", "endLine", "endCol" }`, dengan baris dan kolom mulai dari 1. `spans` hanya ditulis kalau diminta (`dim parse --spans`), karena hanya editor dan alat sejenis yang membutuhkannya.

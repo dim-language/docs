@@ -6,10 +6,10 @@ description: Struktur leksikal dan grammar bahasa dim.
 ## 3. Struktur leksikal
 
 ### 3.1 Encoding
-File `.dim` di-encode sebagai UTF-8. Identifier dibatasi ke ASCII. String boleh berisi Unicode apa pun.
+File `.dim` dan `dim.config` di-encode sebagai UTF-8 tanpa BOM. Identifier dibatasi ke ASCII. Prosa boleh berisi Unicode apa pun.
 
 ### 3.2 Whitespace
-Spasi, tab, dan baris baru (`\n`, `\r\n`) diabaikan, kecuali sebagai pemisah token. Baris baru **tidak** bermakna: akhir statement ditandai `;` atau `}` (lihat [§4.1](#41-ebnf)). Jadi satu statement boleh dipecah ke beberapa baris, dan beberapa statement boleh ditulis dalam satu baris.
+Spasi, tab, dan baris baru (`\n`, `\r\n`) diabaikan, kecuali sebagai pemisah token. Baris baru **tidak** bermakna: akhir statement ditandai `;` atau `}`.
 
 ### 3.3 Komentar
 ```dim
@@ -19,33 +19,53 @@ Spasi, tab, dan baris baru (`\n`, `\r\n`) diabaikan, kecuali sebagai pemisah tok
 ```
 
 ### 3.4 Identifier
+
+```text
+IDENT = [a-z][a-zA-Z0-9]*
 ```
-IDENT = [A-Za-z_][A-Za-z0-9_]*
-```
-Case-sensitive. Tanda `-` tidak diizinkan supaya tidak bentrok dengan `->`.
+
+Identifier ditulis dalam **camelCase**:
+
+- Diawali huruf kecil, lalu huruf atau angka. Tanpa `_`, `-`, atau tanda lain.
+- Tidak boleh ada dua huruf besar berturut-turut. Singkatan ditulis seperti kata biasa: `httpClient`, `parseUrl`, `apiKey`, bukan `HTTPClient` atau `parseURL`.
+
+Identifier yang tidak memenuhi aturan ini adalah `E005`. Pesannya menyarankan bentuk camelCase yang benar.
+
+Aturan yang sama berlaku untuk semua id: elemen, relasi, flow, cabang flow, member (`field`, `variant`, `param`), dan semua deklarasi di `dim.config`. Key di `meta` juga mengikuti aturan ini ([§6.8](/referensi/spesifikasi/model/#68-meta)).
+
+Nama yang ditampilkan ke manusia bukan identifier. Nama itu prosa, jadi bebas: `function saveOrder "save_order()"`.
 
 ### 3.5 Keyword
-Keyword berikut **reserved** dan tidak boleh dipakai sebagai identifier elemen:
 
-| Keyword | Status |
+Semua keyword ditulis dengan huruf kecil dan **reserved**: tidak boleh dipakai sebagai identifier (`E003`).
+
+| Kelompok | Keyword |
 |---|---|
-| `person`, `system`, `container`, `component`, `code` | dipakai (jenis elemen) |
-| `import`, `amends`, `extend`, `remove` | dipakai (komposisi file, [§11](/referensi/spesifikasi/komposisi-dan-flow/#11-komposisi-file)) |
-| `flow` | dipakai ([§12](/referensi/spesifikasi/komposisi-dan-flow/#12-flow)) |
-| `dim` | dipakai (deklarasi versi, [§4.6](#46-deklarasi-versi)) |
-| `this` | dipakai (awal path, [§7.1](/referensi/spesifikasi/model/#71-this)) |
-| `unset` | dipakai (menghapus atribut di file `amends`, [§11.3](/referensi/spesifikasi/komposisi-dan-flow/#113-amends-dan-remove)) |
+| Kind elemen | `person`, `system`, `container`, `component`, `endpoint` |
+| Kind level kode | `module`, `function`, `class`, `interface`, `method`, `constructor`, `record`, `enum`, `union`, `alias` |
+| Deployment | `environment`, `node`, `infra`, `deploy`, `omit` |
+| Member | `field`, `variant`, `param`, `returns`, `throws`, `query`, `header`, `cookie`, `body`, `sets` |
+| Komposisi dan flow | `dim`, `import`, `amends`, `extend`, `remove`, `unset`, `flow`, `step`, `opt`, `alt`, `case`, `par`, `lane` |
+| Konfigurasi | `tech`, `tag`, `scope`, `root`, `style` |
+| Properti | `description`, `tags`, `role`, `paradigm`, `external`, `source`, `path`, `line`, `repo`, `branch`, `version`, `url`, `meta`, `op`, `data`, `push`, `pull`, `protocol`, `handler`, `verb`, `status`, `auth`, `rate`, `per`, `prefix`, `service`, `rpc`, `request`, `stream`, `operation`, `channel`, `event`, `payload`, `replicas`, `icon`, `background`, `kind`, `type`, `async`, `pure`, `effects`, `static`, `abstract`, `visibility` |
+| Tipe | `string`, `int`, `float`, `decimal`, `bool`, `bytes`, `date`, `datetime`, `duration`, `uuid`, `url`, `map` |
+| Lainnya | `this` |
 
-Nama atribut (`tech`, `description`, dst.) **bukan** keyword. Elemen boleh bernama `tech`; parser membedakannya dari konteks ([§4.3](#43-membedakan-statement)).
+Nilai enum, seperti nama `op` (`call`, `read`), peran (`database`), atau nama icon, **bukan** keyword. Nilai itu hanya dikenali di posisi properti yang memakainya, jadi elemen boleh bernama `call` atau `database`. Sebaliknya, keyword boleh muncul sebagai nilai enum, misalnya `protocol event` atau `type url`.
 
-### 3.6 String
+### 3.6 Prosa
+
 ```dim
 "teks biasa"
 "dengan \"kutip\" dan \\ backslash"
 ```
-Escape yang didukung: `\"`, `\\`, `\n`, `\t`. Escape lain adalah error. String biasa tidak boleh mengandung baris baru literal; untuk teks panjang, pakai string multi-baris.
 
-### 3.7 String multi-baris
+String hanya dipakai untuk prosa dan literal bertipe ([§3.9](#39-literal-bertipe)). Escape yang didukung: `\"`, `\\`, `\n`, `\t`. Escape lain, string yang tidak ditutup, atau string biasa yang berisi baris baru literal adalah `E002`.
+
+Prosa tidak boleh kosong atau hanya berisi spasi (`E002`).
+
+### 3.7 Prosa multi-baris
+
 ```dim
 container api "API" {
   description """
@@ -54,147 +74,148 @@ container api "API" {
     """;
 }
 ```
-Nilai string di atas adalah `"Backend utama.\nMenangani checkout dan order."`.
 
-Aturan:
-1. `"""` pembuka harus langsung diikuti baris baru. Baris itu tidak ikut jadi isi.
-2. `"""` penutup harus berada di barisnya sendiri, hanya didahului spasi/tab. Baris baru sebelum penutup tidak ikut jadi isi.
-3. Indentasi di depan `"""` penutup dibuang dari **setiap** baris isi. Setiap baris isi yang tidak kosong harus diawali indentasi yang persis sama; kalau tidak, error `E004`.
+Nilai prosa di atas adalah `"Backend utama.\nMenangani checkout dan order."`.
+
+1. `"""` pembuka harus langsung diikuti baris baru (`E002`). Baris itu tidak ikut jadi isi.
+2. `"""` penutup harus berada di barisnya sendiri, hanya didahului spasi atau tab. Baris baru sebelum penutup tidak ikut jadi isi.
+3. Indentasi di depan `"""` penutup dibuang dari setiap baris isi. Setiap baris isi yang tidak kosong harus diawali indentasi yang persis sama (`E004`).
 4. Escape sama dengan string biasa. `"` tunggal di dalam isi tidak perlu di-escape.
 
-Di semua tempat yang menerima STRING, string biasa dan multi-baris setara.
+Prosa multi-baris hanya boleh dipakai untuk `description`.
 
-### 3.8 Simbol
-`{` `}` `->` `.` `::` `:` `;`
+### 3.8 Bilangan dan durasi
 
-Lexer memakai *maximal munch*: `::` selalu dibaca sebagai satu token. Jadi `a:::shop` dibaca `a` `::` `:` `shop` (error); tulis `a: ::shop` dengan spasi.
-
-### 3.9 Bilangan bulat
+```text
+INT      = "0" | [1-9][0-9]*
+DURATION = INT ( "ms" | "s" | "m" | "h" | "d" )
 ```
-INT = [0-9]+
-```
-Bilangan hanya dipakai sebagai nilai atribut, mis. status HTTP ([§13](/referensi/spesifikasi/endpoint-http/#13-endpoint-http)). Tidak ada tanda minus, pecahan, atau pemisah ribuan. Bilangan yang langsung diikuti huruf atau `_` (mis. `60s`) adalah error `E001`; nilai seperti itu ditulis sebagai string (`"5/60s"`).
 
-Identifier tidak boleh diawali angka ([§3.4](#34-identifier)), jadi bilangan tidak pernah bentrok dengan id.
+- `INT` adalah bilangan bulat non-negatif tanpa nol di depan. Tanda minus, pecahan, dan pemisah ribuan tidak ada.
+- `DURATION` adalah bilangan diikuti satuan tanpa spasi: `500ms`, `30s`, `1m`, `6h`, `7d`.
+- Bilangan yang langsung diikuti huruf lain, atau nol di depan, adalah `E008`.
+
+Bilangan pecahan hanya ada di dalam `meta`, yang memakai aturan JSON ([§6.8](/referensi/spesifikasi/model/#68-meta)).
+
+### 3.9 Literal bertipe
+
+Beberapa properti menerima string yang isinya **diperiksa formatnya**. String seperti itu bukan prosa. Isi yang tidak sesuai format adalah `E007`, dan pesannya menyebut format yang diharapkan.
+
+| Format | Aturan | Dipakai di |
+|---|---|---|
+| `url` | URL absolut berskema `https` atau `http` | `repo`, `url` di tech |
+| `filePath` | relatif, pemisah `/`, tanpa `\`, tanpa `/` di akhir, tanpa segmen kosong; `.` berarti root itu sendiri; `..` tidak boleh | `path` di `source` |
+| `httpPath` | diawali `/`, tidak diakhiri `/` kecuali `"/"`; parameter ditulis `{nama}` dengan nama berupa IDENT | `path` dan `prefix` endpoint HTTP |
+| `version` | huruf, angka, `.`, `+`, `-`; diawali huruf atau angka | `version` di tech |
+| `branch` | nama ref git yang valid, tanpa spasi | `branch` di root |
+| `externalName` | `[A-Za-z_][A-Za-z0-9_]*` | nama service dan RPC gRPC, field GraphQL, nama event |
+| `headerName` | huruf, angka, dan `-`; tanpa membedakan huruf besar-kecil | `header`, `sets header` |
+| `cookieName` | karakter token HTTP (RFC 9110) | `cookie`, `sets cookie` |
+| `scopeValue` | huruf, angka, dan `:._-` | nilai `scope` di config |
+
+### 3.10 Simbol
+
+```text
+{  }  ->  .  ::  :  ;  [  ]  ?  <  >  ,
+```
+
+Lexer memakai *maximal munch*: `::` dan `->` selalu dibaca sebagai satu token, dan `[]` boleh ditulis dengan atau tanpa spasi di antaranya.
 
 ---
 
 ## 4. Grammar
 
-### 4.1 EBNF
+### 4.1 Bentuk umum
 
 ```text
-file          = { item } [ simple ] EOF ;
-block         = "{" { item } [ simple ] "}" ;
+file         = version { statement } EOF ;
+version      = "dim" STRING ";" ;
 
-item          = simple ";"
-              | compound
-              | ";" ;
+statement    = head ";"
+             | head block ;
+block        = "{" { statement } "}" ;
 
-simple        = element_head
-              | relation_head
-              | attribute
-              | "dim" STRING
-              | "import" STRING
-              | "amends" STRING
-              | "remove" path
-              | "unset" IDENT { value } ;
-compound      = element_head block
-              | relation_head block
-              | "extend" path block
-              | "flow" IDENT [ STRING ] block ;
+element      = KIND IDENT STRING ;
+relation     = IDENT ":" path "->" path [ STRING ] ;
+property     = PROPERTY { value } ;
+member       = MEMBER { value } [ ":" type ] [ STRING ] ;
 
-element_head  = KIND IDENT [ STRING ] ;
-relation_head = [ IDENT ":" ] path "->" path [ STRING ] ;
-attribute     = IDENT { value } ;
-
-path          = [ "::" ] IDENT { "." IDENT }
-              | "this" { "." IDENT } ;
-value         = STRING | IDENT | INT ;
-
-KIND          = "person" | "system" | "container" | "component" | "code" ;
+path         = "::" IDENT { "." IDENT }
+             | "this" { "." IDENT }
+             | IDENT { "." IDENT } ;
+type         = base { "[" "]" | "?" } ;
+base         = PRIMITIVE | path | "map" "<" type "," type ">" ;
+value        = IDENT | path | type | STRING | INT | DURATION ;
 ```
 
-Aturan `;` dalam bahasa sehari-hari:
+`head` adalah bagian statement sebelum `;` atau blok: kepala elemen, kepala relasi, properti, member, atau statement komposisi. Bentuk lengkap setiap statement ada di bab yang membahasnya.
 
-1. Statement **tanpa blok** diakhiri `;`: `tech "Next.js";`, `container gateway "Gateway API";`, `a -> b "label";`.
+Aturan `;`:
+
+1. Setiap statement **tanpa blok** diakhiri `;`, termasuk statement terakhir sebelum `}`. `;` yang hilang adalah `E001`.
 2. Statement **dengan blok** berakhir di `}`, tanpa `;` setelahnya.
-3. `;` pada statement terakhir sebelum `}` (atau sebelum akhir file) **boleh dihilangkan**, jadi `{ op call }` dan `{ op call; tech "HTTPS" }` valid.
-4. `;` berlebih (mis. `;;` atau `};`) diabaikan.
+3. `;` berlebih (`;;`, `};`) adalah `E001`.
 
 ```dim
 container api "API" {
-  tech "Rust/axum";      // ✅ diakhiri ;
-  component orders;      // ✅ elemen tanpa blok
-}                        // ✅ tidak perlu ; setelah }
-
-container api "API"
-{                        // ✅ baris baru tidak bermakna
-  tech "Rust/axum"
-  ui                     // ❌ E032: dibaca sebagai tech "Rust/axum" ui (dua nilai)
+  role service;          // ✅
+  tech kotlin            // ❌ E001: ; hilang
 }
 ```
 
 ### 4.2 Elemen
+
 ```dim
-<kind> <id> ["<nama>"] [{ ... }]
+<kind> <id> "<nama>" [{ ... }]
 ```
-- `id` dipakai untuk referensi (path). `nama` adalah label untuk manusia.
-- Kalau `nama` tidak ditulis, nilainya sama dengan `id`.
-- Blok elemen boleh berisi atribut, elemen anak, dan relasi.
+
+- `id` dipakai untuk rujukan (path). `nama` adalah prosa untuk manusia.
+- Nama **wajib** untuk setiap elemen (`E203`).
+- Elemen yang punya properti wajib (misalnya `role` di container) harus ditulis dengan blok.
 
 ### 4.3 Membedakan statement
-Parser cukup melihat paling banyak dua token ke depan:
 
-| Token pertama | Token kedua | Statement |
-|---|---|---|
-| `KIND` | apa pun | element |
-| `dim` | apa pun | deklarasi versi ([§4.6](#46-deklarasi-versi)) |
-| `import`, `amends`, `extend`, `remove`, `unset` | apa pun | komposisi ([§11](/referensi/spesifikasi/komposisi-dan-flow/#11-komposisi-file)) |
-| `flow` | apa pun | flow ([§12](/referensi/spesifikasi/komposisi-dan-flow/#12-flow)) |
-| `::`, `this` | apa pun | relation |
-| `IDENT` | `.`, `->`, atau `:` | relation |
-| `IDENT` | lainnya | attribute |
+Setiap statement bisa dikenali dari token pertamanya:
 
-Contoh: `tech "Next.js"` adalah atribut, sedangkan `tech -> db` adalah relasi dari elemen bernama `tech`.
+| Token pertama | Statement |
+|---|---|
+| kind elemen | elemen ([§6](/referensi/spesifikasi/model/#6-elemen), [§7](/referensi/spesifikasi/level-kode/#7-level-kode), [§13](/referensi/spesifikasi/deployment/#13-deployment)) |
+| keyword member | member ([§7.4](/referensi/spesifikasi/level-kode/#74-member)) |
+| keyword properti | properti |
+| keyword komposisi, flow, atau konfigurasi | statement itu |
+| `IDENT` | relasi; token kedua harus `:` |
+
+Karena semua nama properti adalah keyword, tidak ada statement yang ambigu.
 
 ### 4.4 Relasi
-```dim
-[<id>:] <path> -> <path> ["<label>"] [{ ... }]
-```
-Blok relasi hanya boleh berisi atribut.
-
-`<id>:` opsional, untuk memberi relasi nama yang stabil supaya bisa dirujuk oleh `step` di `flow` ([§12](/referensi/spesifikasi/komposisi-dan-flow/#12-flow)) dan oleh `remove` ([§11.3](/referensi/spesifikasi/komposisi-dan-flow/#113-amends-dan-remove)). Lihat [§9](/referensi/spesifikasi/output/#9-format-output-json) untuk id default kalau tidak ditulis.
 
 ```dim
-checkout_post: button -> handler "POST /checkout" { op call }
+<id>: <path> -> <path> ["<label>"] { op <op>; ... }
+<id>: <path> -> <path> ["<label>"] { op <op>; }
 ```
 
-**Rekursi.** Relasi dari sebuah elemen ke dirinya sendiri hanya boleh untuk rekursi langsung: kedua ujungnya elemen `code` yang sama dan `op`-nya `call`. Selain itu error `E021`. Rekursi tidak langsung (`a → b → a`) cukup ditulis sebagai relasi biasa; konsumen bisa mendeteksinya sebagai siklus.
+Id relasi dan `op` wajib. Detailnya ada di [§9](/referensi/spesifikasi/relasi/#9-relasi).
+
+### 4.5 Properti
 
 ```dim
-walk -> walk "telusuri anak berikutnya" { op call }
+<properti> <nilai> ...;
+<properti> { ... }
 ```
 
-**Arah panah = siapa yang memulai interaksi**, bukan arah aliran data. `api -> db { op read }` berarti `api` yang membaca dari `db`; datanya mengalir dari `db` ke `api`, tapi panahnya tetap `api -> db`. Arah data dinyatakan lewat atribut `data` ([§6.3](/referensi/spesifikasi/model/#63-aliran-data)).
+Properti adalah keyword dengan nol atau lebih nilai. Properti tanpa nilai disebut *flag* (misalnya `external`). Properti `source` dan `meta` memakai blok.
 
-### 4.5 Atribut
-```dim
-<key> [value ...]
-```
-Atribut adalah pasangan key dengan nol atau lebih nilai. Atribut tanpa nilai disebut *flag* (misalnya `external`). Atribut yang dikenal dan tipenya ada di [§6](/referensi/spesifikasi/model/#6-atribut-yang-dikenal). Atribut di top-level file adalah error.
+- Setiap properti hanya berlaku untuk kind tertentu. Properti yang tidak berlaku di tempat itu adalah `E204`.
+- Setiap properti paling banyak muncul sekali per elemen, kecuali yang disebut boleh berulang. Duplikat adalah `E206`.
+- Jumlah atau jenis nilai yang salah adalah `E207`.
+- Properti di top-level file adalah `E001`.
 
 ### 4.6 Deklarasi versi
+
 ```dim
-dim "0.5";
-amends "main.dim";
+dim "0.6";
 ```
 
-`dim "<MAJOR>.<MINOR>";` menyatakan versi bahasa yang dipakai untuk menulis file ini.
-
-- Opsional. File tanpa deklarasi dibaca dengan versi terbaru yang didukung parser.
-- Kalau ditulis, harus menjadi statement pertama di file (sebelum `amends`), hanya sekali, dan hanya di top-level (`E005`).
-- Nilainya dua bilangan bulat dipisah `.`, tanpa nol di depan (`"0.5"`, `"1.0"`). Format lain, atau versi yang lebih baru dari yang didukung parser, adalah `E006`. Pesannya menyebut versi yang didukung.
-- Versi yang lebih lama dari parser tetap dibaca dengan aturan parser. Selama masih 0.x, versi minor boleh tidak kompatibel dengan sebelumnya, jadi diagnostik untuk file seperti itu boleh menyebut versi yang ditulisnya.
-- Setiap file punya deklarasinya sendiri. File yang di-`import` atau di-`amends` boleh menulis versi yang berbeda dengan file yang memuatnya.
-- `version` di output JSON ([§9](/referensi/spesifikasi/output/#9-format-output-json)) adalah versi format output parser, bukan versi yang ditulis di file.
+- **Wajib** sebagai statement pertama di setiap file `.dim` dan di `dim.config`, tepat sekali, di top-level (`E006`).
+- Nilainya `"<MAJOR>.<MINOR>"`. Versi yang tidak didukung parser adalah `E006`; pesannya menyebut versi yang didukung.
+- Semua file dalam satu proyek harus menulis versi yang sama (`E006`).
