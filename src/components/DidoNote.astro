@@ -1,6 +1,6 @@
 ---
 interface Props {
-	scene: 'order-id' | 'review' | 'your-turn' | 'missing-direction';
+	scene: 'order-id' | 'architect' | 'your-turn' | 'missing-direction';
 }
 ---
 <aside class="dido-note">
@@ -16,6 +16,6 @@ interface Props {
 		border-inline-start: .2rem solid var(--sl-color-accent);
 		background: var(--sl-color-gray-6);
 	}
-	.dido-note img { width: clamp(4rem, 18%, 8rem); height: 5.5rem; object-fit: contain; }
+	.dido-note img { width: clamp(4rem, 18%, 8rem); height: 5.5rem; object-fit: contain; filter: var(--dim-photo-ink); }
 	.dido-note p, .dido-note div { margin: 0; }
 </style>

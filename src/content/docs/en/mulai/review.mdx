@@ -9,6 +9,8 @@ import DidoNote from '../../../../components/DidoNote.astro';
 
 Before approving the PR, the system architect stops at API → Postgres. “If an order gets written twice, which function do we inspect first?” The backend team points to `simpan_pesanan()` in the orders component. The architect asks Dido to record who owns the INSERT so the on-call engineer can find it on the map.
 
+<DidoNote scene="architect">I’ll move the INSERT arrow to the function the on-call engineer needs to inspect.</DidoNote>
+
 Add the component and function inside `api`, then move the source of the INSERT arrow to that function. Compare your file with the final `toko.dim` below.
 
 ```dim contoh-tutorial="kode.dim" ins={10-12} ins="toko.api.pesanan.simpan"
