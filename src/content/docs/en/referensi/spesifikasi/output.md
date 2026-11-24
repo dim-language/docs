@@ -1,103 +1,128 @@
 ---
 title: JSON output format
-description: The JSON model structure produced by the dim parser.
+description: The structure of the JSON model produced by the dim parser.
 ---
 
-## 9. JSON output format
+## 16. JSON output format
 
-The parser emits one JSON document.
+The parser produces one JSON document. Its shape is defined by a JSON Schema generated from the language's meta-schema, and the TypeScript types in `@dim/sdk` are generated from the same JSON Schema. This section describes the content. If anything differs, the JSON Schema wins.
 
 ```json
 {
-  "version": "0.5",
-  "nodes": [
-    {
-      "id": "shop.api.orders.repo.find",
-      "kind": "code",
-      "name": "find_by_id()",
-      "parent": "shop.api.orders.repo",
-      "description": "Mengambil satu order beserta item-itemnya.",
-      "tech": null,
-      "shape": "box",
-      "tags": [],
-      "external": false,
-      "ui": false,
-      "source": { "path": "services/api/src/orders/repo.rs", "line": 42, "url": null },
-      "httpDefaults": null,
-      "code": {
-        "form": "method",
-        "visibility": null,
-        "static": false,
-        "abstract": false,
-        "async": true,
-        "type": null,
-        "typeRefs": [],
-        "params": [
-          { "name": "id", "type": "OrderId", "description": null, "refs": [] }
-        ],
-        "returns": {
-          "type": "Option<Order>",
-          "description": "None kalau order tidak ada",
-          "refs": ["shop.api.orders.order"]
-        },
-        "throws": [],
-        "http": null
-      },
-      "span": { "file": "shop.dim", "line": 101, "col": 9, "endLine": 107, "endCol": 10 }
-    }
+  "version": "0.6",
+  "config": {
+    "techs": [{ "id": "postgres", "name": "PostgreSQL", "version": "16" }],
+    "tags": [{ "id": "pci", "name": "Stores card data" }],
+    "scopes": [],
+    "roots": [],
+    "styles": [{ "selector": { "role": "database" }, "icon": "database", "background": "neutral" }]
+  },
+  "elements": [
+    { "kind": "system", "id": "shop", "name": "Online Shop" },
+    { "kind": "container", "id": "shop.api", "parent": "shop", "name": "API",
+      "role": "service", "paradigms": ["oop"], "techs": ["kotlin"] },
+    { "kind": "component", "id": "shop.api.orders", "parent": "shop.api", "name": "Orders",
+      "description": "Creates and stores orders." },
+    { "kind": "code", "form": "record", "id": "shop.api.orders.order", "parent": "shop.api.orders",
+      "name": "Order", "description": "An order that has been created.",
+      "fields": [
+        { "id": "id", "type": { "primitive": "uuid" } },
+        { "id": "total", "type": { "primitive": "decimal" }, "description": "Total after discounts" }
+      ] },
+    { "kind": "endpoint", "protocol": "http", "id": "shop.api.orders.createOrder", "parent": "shop.api.orders",
+      "name": "Create order", "description": "Creates an order from a cart.",
+      "method": "post", "path": "/orders", "fullPath": "/orders",
+      "body": { "ref": "shop.api.orders.cart" },
+      "returns": { "status": 201, "type": { "ref": "shop.api.orders.order" } } }
   ],
-  "edges": [
-    {
-      "id": "insert_order",
-      "from": "shop.api.orders.repo.save",
-      "to": "shop.db",
-      "label": "INSERT orders",
-      "op": "write",
-      "category": "interaction",
-      "data": [
-        { "dir": "push", "payload": ["Order"], "refs": ["shop.api.orders.order"] }
-      ],
-      "tech": null,
-      "description": null,
-      "tags": [],
-      "span": { "file": "shop.dim", "line": 150, "col": 3, "endLine": 150, "endCol": 86 }
-    }
+  "relations": [
+    { "id": "saveOrder", "from": "shop.api.orders", "to": "shop.db", "op": "write", "category": "interaction",
+      "label": "Save order",
+      "data": [{ "dir": "push", "type": { "ref": "shop.api.orders.order" } }] }
   ],
   "flows": [
-    {
-      "id": "checkout",
-      "name": "Checkout",
-      "description": "Dari pembeli menekan bayar sampai order tersimpan.",
-      "tags": [],
+    { "id": "checkout", "name": "Checkout",
       "steps": [
-        { "edge": "checkout_click", "label": null },
-        { "edge": "charge", "label": "Tagih dulu" }
-      ],
-      "span": { "file": "main.dim", "line": 25, "col": 1, "endLine": 34, "endCol": 2 }
-    }
-  ]
+        { "kind": "step", "relation": "openCheckout", "number": "1" },
+        { "kind": "alt", "number": "2", "branches": [
+          { "id": "paid", "label": "Payment succeeded", "letter": "a",
+            "steps": [{ "kind": "step", "relation": "saveOrder", "number": "2a.1" }] }
+        ] }
+      ] }
+  ],
+  "environments": [],
+  "spans": {
+    "elements": { "shop.api": { "file": "main.dim", "line": 12, "col": 3, "endLine": 30, "endCol": 4 } },
+    "relations": {},
+    "flows": {},
+    "environments": {},
+    "config": {}
+  }
 }
 ```
 
-- `nodes` follows source order in preorder, with imported and amended files first ([§11.4](/en/referensi/spesifikasi/komposisi-dan-flow/#114-application-order)). A parent always precedes its children. Children added by `extend` appear at the position of that statement.
-- `parent` is `null` on top-level elements.
-- `from` and `to` are full paths to the elements named in the relation. The parser leaves them at their original level.
-- `code` is an object for `kind: "code"` with all fields present and defaults of `null`, `false`, or `[]`. It is `null` on other element kinds. See [§6.4](/en/referensi/spesifikasi/model/#64-code-details).
-- `source` is `null` unless declared. Otherwise it is an object with `path`, `line`, and `url`. A URL fills `url` and leaves the other two `null`. A file fills `path` relative to the main file directory ([§6.5](/en/referensi/spesifikasi/model/#65-implementation-location-source)), with `line` set to `null` if omitted.
-- `refs` contains the IDs of the type elements referenced by the type string on the same object ([§6.6](/en/referensi/spesifikasi/model/#66-type-references)). It is `[]` if there are no references. It occurs in each `data`, `code.params`, `code.returns`, and `code.throws` entry, and on `body`, `query`, `headers`, and `cookies` in `code.http`. References for the string `code.type` go in `code.typeRefs`.
-- `code.http` contains the endpoint contract after inheritance ([§13.6](/en/referensi/spesifikasi/endpoint-http/#136-output)) on `form endpoint` and is `null` on other forms.
-- `httpDefaults` contains the `prefix`, `auth`, and `rate` written directly on the element ([§13.6](/en/referensi/spesifikasi/endpoint-http/#136-output)). It is `null` on endpoints and when none are declared.
-- `op` is always present. If omitted, it defaults to `"call"` for a relation targeting an endpoint ([§13.5](/en/referensi/spesifikasi/endpoint-http/#135-relations-to-endpoints)), and `"use"` otherwise.
-- `category` is `"structure"` for `extends`, `implements`, `owns`, and `refers`. All other operations, including unknown ones, use `"interaction"`.
-- `data` contains one entry per `data` attribute and its explicit or default `dir`. If the relation declares no `data` and targets an endpoint, dim derives it from the endpoint contract ([§13.5](/en/referensi/spesifikasi/endpoint-http/#135-relations-to-endpoints)). Otherwise, if the operation supplies a default direction, dim emits an entry with `payload: []`. Without any of these, `data` is `[]`.
-- `label` is `null` if omitted, except when the target is an endpoint ([§13.5](/en/referensi/spesifikasi/endpoint-http/#135-relations-to-endpoints)).
-- `from` and `to` omit `::` even if the source used an absolute path.
-- To assign `edges[].id`:
-  - Use an explicit ID such as `checkout_post` if present.
-  - Otherwise use `<from>-><to>#<k>`. `k` is the zero-based occurrence index among **all** relations with the same ordered endpoint pair, including explicitly named ones.
-  - A default ID is stable under additions, removals, or moves of unrelated relations. It changes when the edge's own endpoints change or the order of relations with those endpoints changes.
-  - A default ID contains `->`, which makes it distinct from an explicit IDENT.
-- `span.file` is the source file path relative to the directory of the main file passed to the parser.
-- `flows` follows source order. Each `steps[].edge` refers to the explicit ID of an entry in `edges`. If omitted, `name` defaults to `id`.
-- Omit elements, relations, and flows deleted by `remove`.
-- Preserve optional fields with `null` for unset strings and `[]` for unset lists.
+### 16.1 Principles
+
+- **No `null`.** An optional property that isn't written doesn't appear in the output. Empty lists don't appear either, except at the top level of the document.
+- **One shape per kind.** Each object in `elements` carries only the fields that apply to its kind, and for code units also to its `form`. Consumers tell them apart by `kind` and `form`.
+- **Every reference is resolved** to a full path or id. `this` and relative paths never appear in the output.
+- **Derived values are included when they're costly to recompute**, such as an HTTP endpoint's `fullPath` after joining `prefix`, and the `auth` and `rate` that apply after inheritance.
+- **Order** follows [§11.4](/en/referensi/spesifikasi/komposisi-dan-flow/#114-order-of-application). A parent always comes before its children.
+
+### 16.2 `elements`
+
+Fields on every element: `kind`, `id` (the full path), `name`, and, except at the top level, `parent`. Common optional fields: `description`, `tags`, `source`, `meta`.
+
+| `kind` | Additional fields |
+|---|---|
+| `person` | — |
+| `system` | `external` |
+| `container` | `role`, `paradigms`, `techs`, `external`, `prefix`, `auth`, `rates` |
+| `component` | `paradigms`, `techs`, `prefix`, `auth`, `rates` |
+| `endpoint` | `protocol` (`http`, `grpc`, `graphql`, or `event`, from its protocol line), `handler`, `auth`, `rates` (as applied), then per-protocol fields: `method`, `path`, `fullPath`, `params`, `queries`, `headers`, `cookies`, `body`, `returns`, `throws`, `sets` for HTTP; `service`, `rpc`, `request`, `returns`, `stream`, `throws` for gRPC; `operation`, `field`, `params`, `returns`, `throws` for GraphQL; `event`, `queue`, `payload` for events |
+| `code` | `form`, then per-form fields: `async`, `pure`, `effects`, `visibility`, `static`, `abstract`, `fields`, `variants`, `params`, `returns`, `throws`, `type` per [§7.3](/en/referensi/spesifikasi/level-kode/#73-code-unit-properties)–[§7.4](/en/referensi/spesifikasi/level-kode/#74-members) |
+
+`source` has the shape `{ "root": "<id>", "path": "<path>", "line": <n> }`, with `root` already inherited.
+
+### 16.3 Types
+
+A type expression ([§8](/en/referensi/spesifikasi/tipe/#8-types)) is written as an object with exactly one key:
+
+| Expression | JSON |
+|---|---|
+| `uuid` | `{ "primitive": "uuid" }` |
+| `orders.order` | `{ "ref": "shop.api.orders.order" }` |
+| `T[]` | `{ "list": T }` |
+| `T?` | `{ "optional": T }` |
+| `map<K, V>` | `{ "map": { "key": K, "value": V } }` |
+
+### 16.4 `relations`
+
+`id`, `from`, `to`, `op`, and `category` (`"interaction"` or `"structure"`) are always present. Optional fields: `label` (only when written; derived labels are computed by consumers), `data`, `techs`, `description`, `tags`, `meta`.
+
+Each `data` entry has the shape `{ "dir": "push" | "pull", "type": <type> }`. For a relation to an endpoint, `data` is filled from the endpoint and marked `"derived": true`.
+
+### 16.5 `flows`
+
+`id`, `name`, and `steps` are always present. Each step is one of:
+
+| `kind` | Fields |
+|---|---|
+| `step` | `relation`, `number`, `note` |
+| `opt` | `number`, `branch` (one branch) |
+| `alt` | `number`, `branches` |
+| `par` | `number`, `branches` |
+
+A branch has the shape `{ "id", "label", "letter", "steps" }`. `number` is the number in the full model ([§12.3](/en/referensi/spesifikasi/komposisi-dan-flow/#123-numbering)). Numbers at a particular zoom level are computed by consumers.
+
+### 16.6 `environments`
+
+Each environment has the shape `{ "id", "name", "description", "elements", "relations", "omitted" }`:
+
+- `elements`: nodes, infra, and deploys as a flat list with `kind`, `id` (the path within the environment), and `parent`. A `deploy` carries `container` and `replicas`. An `infra` carries `role`.
+- `relations`: infra relations ([§13.5](/en/referensi/spesifikasi/deployment/#135-relations-in-an-environment)).
+- `omitted`: the paths of omitted containers.
+
+### 16.7 `spans`
+
+Source locations are kept apart from the model in `spans`, grouped by namespace and keyed by id. Each span has the shape `{ "file", "line", "col", "endLine", "endCol" }`, with lines and columns starting at 1. `spans` is written only on request (`dim parse --spans`), because only editors and similar tools need it.

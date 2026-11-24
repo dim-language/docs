@@ -1,30 +1,130 @@
 ---
 title: Language specification
-description: The normative specification for dim v0.5 covering syntax, models, zoom, file composition, HTTP endpoints, and canonical formatting.
+description: The normative specification for dim v0.6, from lexical structure to project configuration, the code level, types, relations, endpoints, flows, deployment, zoom semantics, and canonical form.
 ---
 
-**Version 0.5** · File extension `.dim`
+**Version 0.6 (draft)** · File extension `.dim` · Project configuration `dim.config`
 
-The SDK compiler and editor support DIM v0.5. The `compileProject` function produces a v0.5 JSON model. The viewer can also open v0.4 JSON models.
-
-:::note[Changes since 0.4]
-- Declare a version with `dim "0.5";` at the start of a file ([§4.6](/en/referensi/spesifikasi/sintaks/#46-version-declaration)).
-- Start a path with `this` to refer to the element whose block contains it ([§7.1](/en/referensi/spesifikasi/model/#71-this)).
-- Record an implementation location as a path or URL using `source` ([§6.5](/en/referensi/spesifikasi/model/#65-implementation-location-source)).
-- Resolve names in type strings such as `data`, `param`, and `returns` to type-form `code` elements. Type element names must be unique across the model ([§6.6](/en/referensi/spesifikasi/model/#66-type-references)).
-- Use `unset` in an `amends` file to remove an attribute or turn off a flag ([§11.3](/en/referensi/spesifikasi/komposisi-dan-flow/#113-amends-and-remove)).
-- Formatters and editors must produce canonical `.dim` text ([§14](/en/referensi/spesifikasi/bentuk-kanonik/#14-canonical-form)).
-- `dim`, `this`, and `unset` become reserved keywords and are invalid as element IDs.
-- JSON adds `source` to nodes, `refs` to entries with type strings, and `code.typeRefs` ([§9](/en/referensi/spesifikasi/output/#9-json-output-format)).
+:::caution[Draft]
+Version 0.6 is a redesign and is **not implemented yet**. The compiler, SDK, and editor still use v0.5. A v0.6 parser can't read v0.5 models, and there is no automatic migration.
 :::
 
-### Migrating a v0.4 model
+`dim` describes software architecture as **one zoomable, hierarchical model**. It takes its concepts from the [C4 model](https://c4model.com), with two main differences:
 
-Run `compileProject` on the main file and each independently used derived model. Rename IDs that use keywords such as `dim` or `unset` and update their paths. For `E025`, give distinct types distinct names such as `ShopConfig` and `PaymentConfig`, then update their type strings. If both declarations describe one shared contract, define that type once and use its name in each reference.
+1. All levels (system, container, component, code) live in **one model**, not in separate diagrams.
+2. Relations can connect elements at **any level**. Relations at higher levels aren't written; they're **derived** from more detailed ones ([§14](/en/referensi/spesifikasi/semantik-zoom/#14-zoom-semantics-lifting)).
 
-Files without a version declaration follow the latest rules. A declaration applies to its own file, so adding `dim "0.5";` to the main file declares its version only.
+---
 
-`dim` describes software architecture as **one zoomable, hierarchical model**. It uses the levels of the [C4 model](https://c4model.com). Systems, containers, components, and code live in the same model. Relations can connect elements at any level. A consumer derives higher-level arrows from detailed relations using [zoom semantics](/en/referensi/spesifikasi/semantik-zoom/#10-zoom-semantics-lifting).
+## 1. Design principles
+
+**A zoomable model**
+
+1. **Write each relation at the most detailed level you know.** If you know the function, write it from the function. If you only know the container, write it from the container. Both are valid.
+2. **Higher levels are derived, not written.** `system → system` appears automatically from the relations below it, so a high-level diagram can't go stale or contradict its details.
+3. **Zooming out summarizes; it doesn't discard.** A lifted relation keeps the list of relations it came from.
+4. **The parser knows nothing about layout.** It only produces the model. Zoom, lifting, aggregation, and layout are the consumer's job.
+
+**Order**
+
+5. **Every value has a clear kind.** A value in dim is exactly one of three things:
+   - **prose** for people to read: element names, `description`, relation labels, flow branch labels, and notes;
+   - a **reference** to something declared: an element, type, relation, tech, tag, scope, or root;
+   - a **typed literal** whose format is checked: numbers, durations, URLs, file paths, HTTP paths, and so on ([§3.9](/en/referensi/spesifikasi/sintaks/#39-typed-literals)).
+
+   There are no free-form strings outside prose.
+6. **Declare once, reference everywhere.** Techs, tags, scopes, source roots, and styles are declared in [`dim.config`](/en/referensi/spesifikasi/konfigurasi/#5-project-configuration). Models only reference them.
+7. **One thing, one way to write it.** Every concept has exactly one syntactic form, and every keyword has exactly one meaning.
+8. **No warnings.** Every violation is an error, and a model with errors produces no output ([§15](/en/referensi/spesifikasi/validasi/#15-validation)).
+9. **Independent of programming languages, faithful to paradigms.** The code level uses the concepts of programming paradigms (procedural, functional, object-oriented) and dim's own type system, not the syntax of a particular language ([§7](/en/referensi/spesifikasi/level-kode/#7-code-level), [§8](/en/referensi/spesifikasi/tipe/#8-types)).
+
+---
+
+## 2. Short example
+
+A dim project consists of `dim.config` and one or more `.dim` files:
+
+```dim
+// dim.config
+dim "0.6";
+
+tech nextjs "Next.js";
+tech kotlin "Kotlin" { version "2.1"; }
+tech postgres "PostgreSQL" { version "16"; }
+
+tag pci "Stores card data";
+
+style role database { icon database; background neutral; }
+style tag pci { background warning; }
+```
+
+```dim
+// main.dim
+dim "0.6";
+
+person customer "Customer" {
+  description "Shops online.";
+}
+
+system shop "Online Shop" {
+  container web "Web App" {
+    role app;
+    tech nextjs;
+
+    component checkout "Checkout Page" {
+      description "Cart summary and the pay button.";
+    }
+  }
+
+  container api "API" {
+    role service;
+    paradigm oop;
+    tech kotlin;
+
+    component orders "Orders" {
+      description "Creates and stores orders.";
+
+      record cart "Cart" {
+        description "Items about to be paid for.";
+        field productIds: uuid[];
+      }
+
+      record order "Order" {
+        description "An order that has been created.";
+        field id: uuid;
+        field total: decimal "Total after discounts";
+      }
+
+      endpoint createOrder "Create order" {
+        description "Creates an order from a cart.";
+        http post "/orders";
+        body cart;
+        returns 201 order;
+      }
+    }
+  }
+
+  container db "Orders DB" {
+    role database;
+    tech postgres;
+    tags pci;
+  }
+
+  placeOrder: web.checkout -> api.orders.createOrder { op call; }
+  saveOrder: api.orders -> db "Save order" { op write; data push api.orders.order; }
+}
+
+openCheckout: customer -> shop.web.checkout "Click pay" { op use; }
+
+flow checkout "Checkout" {
+  description "From the shopper clicking pay to the order being saved.";
+  step openCheckout;
+  step placeOrder;
+  step saveOrder;
+}
+```
+
+`placeOrder` writes neither a label nor `data`. Both come from the `createOrder` endpoint: the label `POST /orders`, the data `push cart`, and `pull order` ([§10](/en/referensi/spesifikasi/endpoint/#10-endpoints)).
 
 ---
 
@@ -32,83 +132,42 @@ Files without a version declaration follow the latest rules. A declaration appli
 
 - [§3 Lexical structure](/en/referensi/spesifikasi/sintaks/#3-lexical-structure)
 - [§4 Grammar](/en/referensi/spesifikasi/sintaks/#4-grammar)
-- [§5 Element model](/en/referensi/spesifikasi/model/#5-element-model)
-- [§6 Recognized attributes](/en/referensi/spesifikasi/model/#6-recognized-attributes)
-- [§7 Path resolution](/en/referensi/spesifikasi/model/#7-path-resolution)
-- [§8 Validation](/en/referensi/spesifikasi/validasi/#8-validation)
-- [§9 JSON output format](/en/referensi/spesifikasi/output/#9-json-output-format)
-- [§10 Zoom semantics](/en/referensi/spesifikasi/semantik-zoom/#10-zoom-semantics-lifting)
+- [§5 Project configuration](/en/referensi/spesifikasi/konfigurasi/#5-project-configuration)
+- [§6 Elements](/en/referensi/spesifikasi/model/#6-elements)
+- [§7 Code level](/en/referensi/spesifikasi/level-kode/#7-code-level)
+- [§8 Types](/en/referensi/spesifikasi/tipe/#8-types)
+- [§9 Relations](/en/referensi/spesifikasi/relasi/#9-relations)
+- [§10 Endpoints](/en/referensi/spesifikasi/endpoint/#10-endpoints)
 - [§11 File composition](/en/referensi/spesifikasi/komposisi-dan-flow/#11-file-composition)
 - [§12 Flows](/en/referensi/spesifikasi/komposisi-dan-flow/#12-flows)
-- [§13 HTTP endpoints](/en/referensi/spesifikasi/endpoint-http/#13-http-endpoints)
-- [§14 Canonical form](/en/referensi/spesifikasi/bentuk-kanonik/#14-canonical-form)
-- [§15 Plans for future versions](/en/referensi/spesifikasi/bentuk-kanonik/#15-plans-for-future-versions)
+- [§13 Deployment](/en/referensi/spesifikasi/deployment/#13-deployment)
+- [§14 Zoom semantics](/en/referensi/spesifikasi/semantik-zoom/#14-zoom-semantics-lifting)
+- [§15 Validation](/en/referensi/spesifikasi/validasi/#15-validation)
+- [§16 JSON output format](/en/referensi/spesifikasi/output/#16-json-output-format)
+- [§17 Canonical form](/en/referensi/spesifikasi/bentuk-kanonik/#17-canonical-form)
 
 ---
 
-## 1. Design principles
+## Changes from 0.5
 
-1. **Write relations at the most detailed level you know.** Start at the function if you know it, or the container if that is what you know. Both are valid.
-2. **Derive higher levels from detailed relations.** A `system → system` arrow is generated from the relations below it, so it stays consistent with them.
-3. **Keep original relations when zooming out.** A lifted relation retains the list of relations it represents.
-4. **Keep the model independent of its presentation.** The parser outputs nodes and edges. The consumer handles zoom, lifting, aggregation, and layout.
+Version 0.6 isn't compatible with 0.5. In summary:
 
----
-
-## 2. Short example
-
-```dim
-person customer "Customer" {
-  description "Belanja online";
-}
-
-system shop "Online Shop" {
-  container web "Web App" {
-    tech "Next.js";
-    ui;
-    component checkout "Checkout Page" {
-      code button "CheckoutButton.onClick()";
-    }
-  }
-
-  container api "API" {
-    tech "Rust/axum";
-    component checkout "Checkout" {
-      code handler "handle_checkout()";
-    }
-    component orders "Orders" {
-      code repo "OrderRepository" {
-        code find "find_by_id()";
-        code save "save()";
-      }
-    }
-  }
-
-  container db "Postgres" {
-    tech "PostgreSQL";
-    shape database;
-  }
-}
-
-system payment "Payment Gateway" {
-  external;
-  container gateway "Gateway API";
-}
-
-customer -> shop.web.checkout.button "Klik checkout";
-shop.web.checkout.button -> shop.api.checkout.handler "POST /checkout" {
-  op call;
-  tech "HTTPS/JSON";
-  data push "CheckoutRequest";
-  data pull "OrderId";
-}
-shop.api.checkout.handler -> shop.api.orders.repo.save "Simpan order" { op call; data push "Order" }
-shop.api.orders.repo.save -> shop.db "INSERT orders" { op write; data "Order" }
-shop.api.orders.repo.find -> shop.db "SELECT orders" { op read; data "Order" }
-shop.api.checkout.handler -> payment.gateway "Charge" {
-  op call;
-  tech "HTTPS";
-  data push "ChargeRequest";
-  data pull "ChargeResult";
-}
-```
+| Topic | 0.5 | 0.6 |
+|---|---|---|
+| Version declaration | optional | required in every file ([§4.6](/en/referensi/spesifikasi/sintaks/#46-version-declaration)) |
+| Ids | `snake_case` | camelCase, with acronyms written `httpClient` ([§3.4](/en/referensi/spesifikasi/sintaks/#34-identifiers)) |
+| `;` | could be omitted before `}` | required |
+| Configuration | none | `dim.config` for techs, tags, scopes, roots, and styles ([§5](/en/referensi/spesifikasi/konfigurasi/#5-project-configuration)) |
+| `tech`, `tags` | free strings | references to `dim.config` |
+| `shape`, `ui` | present | removed; containers must have a `role`, and appearance comes from styles ([§6.5](/en/referensi/spesifikasi/model/#65-container-roles)) |
+| `source` | one string | `source { root …; path "…"; line …; }` ([§6.7](/en/referensi/spesifikasi/model/#67-implementation-location-source)) |
+| Extension | `tags` | `meta` holds JSON for experimental properties ([§6.8](/en/referensi/spesifikasi/model/#68-meta)) |
+| Code level | `code` + free-form `form` | one kind per concept (`function`, `class`, `record`, …), limited by `paradigm` ([§7](/en/referensi/spesifikasi/level-kode/#7-code-level)) |
+| Types | strings split into words | type expressions with dim primitives and references by path ([§8](/en/referensi/spesifikasi/tipe/#8-types)) |
+| Relations | optional id and `op` | required id and `op`; end rules per `op` ([§9](/en/referensi/spesifikasi/relasi/#9-relations)) |
+| Inheritance | `op extends` | `op inherits` |
+| Endpoints | `code` with `form endpoint`, HTTP only | `endpoint` kind with one protocol line: `http`, `grpc`, `graphql`, or `event` ([§10](/en/referensi/spesifikasi/endpoint/#10-endpoints)) |
+| Flows | a straight sequence | `alt`, `opt`, and `par` branches ([§12](/en/referensi/spesifikasi/komposisi-dan-flow/#12-flows)) |
+| Deployment | none | `environment`, `node`, `infra`, `deploy` ([§13](/en/referensi/spesifikasi/deployment/#13-deployment)) |
+| Warnings | present | none; every violation is an error |
+| Output | `nodes`/`edges` with `null` fields | `elements`/`relations` per kind, no `null`, separate `spans` ([§16](/en/referensi/spesifikasi/output/#16-json-output-format)) |

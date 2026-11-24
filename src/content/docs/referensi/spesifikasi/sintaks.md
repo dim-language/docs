@@ -182,7 +182,7 @@ Setiap statement bisa dikenali dari token pertamanya:
 |---|---|
 | kind elemen | elemen ([§6](/referensi/spesifikasi/model/#6-elemen), [§7](/referensi/spesifikasi/level-kode/#7-level-kode), [§13](/referensi/spesifikasi/deployment/#13-deployment)) |
 | keyword member | member ([§7.4](/referensi/spesifikasi/level-kode/#74-member)) |
-| keyword properti | properti |
+| keyword properti atau baris protokol | properti |
 | keyword komposisi, flow, atau konfigurasi | statement itu |
 | `IDENT` | relasi; token kedua harus `:` |
 

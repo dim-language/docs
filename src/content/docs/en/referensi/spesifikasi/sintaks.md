@@ -1,220 +1,221 @@
 ---
 title: Syntax
-description: The lexical structure and grammar of dim.
+description: Lexical structure and grammar of the dim language.
 ---
 
 ## 3. Lexical structure
 
 ### 3.1 Encoding
-
-Encode `.dim` files as UTF-8. Identifiers use ASCII. Strings can contain any Unicode text.
+`.dim` files and `dim.config` are UTF-8 without a BOM. Identifiers are limited to ASCII. Prose can contain any Unicode.
 
 ### 3.2 Whitespace
-
-Whitespace (spaces, tabs, `\n`, and `\r\n`) separates tokens. Statements end with `;` or `}` as specified in [§4.1](#41-ebnf). You can split a statement across lines or write several on one line.
+Spaces, tabs, and line breaks (`\n`, `\r\n`) are ignored except as token separators. Line breaks have **no** meaning: a statement ends with `;` or `}`.
 
 ### 3.3 Comments
-
 ```dim
-// komentar sampai akhir baris
-/* komentar blok,
-   boleh lintas baris, tidak boleh nested */
+// comment to the end of the line
+/* block comment,
+   can span lines, cannot nest */
 ```
 
 ### 3.4 Identifiers
 
-```
-IDENT = [A-Za-z_][A-Za-z0-9_]*
+```text
+IDENT = [a-z][a-zA-Z0-9]*
 ```
 
-Identifiers are case-sensitive. They exclude `-`, which is part of the `->` token.
+Identifiers are written in **camelCase**:
+
+- They start with a lowercase letter, followed by letters or digits. No `_`, `-`, or other characters.
+- Two uppercase letters can't be adjacent. Acronyms are written like ordinary words: `httpClient`, `parseUrl`, `apiKey`, not `HTTPClient` or `parseURL`.
+
+An identifier that breaks these rules is `E005`. The message suggests the correct camelCase form.
+
+The same rules apply to every id: elements, relations, flows, flow branches, members (`field`, `variant`, `param`), and every declaration in `dim.config`. Top-level keys in `meta` follow them too ([§6.8](/en/referensi/spesifikasi/model/#68-meta)).
+
+Names shown to people aren't identifiers. They're prose, so they're free-form: `function saveOrder "save_order()"`.
 
 ### 3.5 Keywords
 
-These keywords are **reserved**. An element ID cannot use one of these words.
+All keywords are lowercase and **reserved**: they can't be used as identifiers (`E003`).
 
-| Keyword | Role |
+| Group | Keywords |
 |---|---|
-| `person`, `system`, `container`, `component`, `code` | Element kind |
-| `import`, `amends`, `extend`, `remove` | File composition ([§11](/en/referensi/spesifikasi/komposisi-dan-flow/#11-file-composition)) |
-| `flow` | Flow declaration ([§12](/en/referensi/spesifikasi/komposisi-dan-flow/#12-flows)) |
-| `dim` | Version declaration ([§4.6](#46-version-declaration)) |
-| `this` | Path prefix ([§7.1](/en/referensi/spesifikasi/model/#71-this)) |
-| `unset` | Attribute removal in an `amends` file ([§11.3](/en/referensi/spesifikasi/komposisi-dan-flow/#113-amends-and-remove)) |
+| Element kinds | `person`, `system`, `container`, `component`, `endpoint` |
+| Endpoint protocol lines | `http`, `grpc`, `graphql`, `event`, `on` |
+| Code-level kinds | `module`, `function`, `class`, `interface`, `method`, `constructor`, `record`, `enum`, `union`, `alias` |
+| Deployment | `environment`, `node`, `infra`, `deploy`, `omit` |
+| Members | `field`, `variant`, `param`, `returns`, `throws`, `query`, `header`, `cookie`, `body`, `sets` |
+| Composition and flows | `dim`, `import`, `amends`, `extend`, `remove`, `unset`, `flow`, `step`, `opt`, `alt`, `case`, `par`, `lane` |
+| Configuration | `tech`, `tag`, `scope`, `root`, `style` |
+| Properties | `description`, `tags`, `role`, `paradigm`, `external`, `source`, `path`, `line`, `repo`, `branch`, `version`, `url`, `meta`, `op`, `data`, `push`, `pull`, `handler`, `status`, `auth`, `rate`, `per`, `prefix`, `request`, `stream`, `payload`, `replicas`, `icon`, `background`, `kind`, `type`, `async`, `pure`, `effects`, `static`, `abstract`, `visibility` |
+| Types | `string`, `int`, `float`, `decimal`, `bool`, `bytes`, `date`, `datetime`, `duration`, `uuid`, `url`, `map` |
+| Other | `this` |
 
-Names like `tech` and `description` are valid element IDs. The parser recognizes attribute names from context ([§4.3](#43-distinguishing-statements)).
+Enum values, such as `op` names (`call`, `read`), roles (`database`), or icon names, are **not** keywords. They're only recognized in the property position that uses them, so an element can be called `call` or `database`. Conversely, a keyword can appear as an enum value, for example `graphql query` or `type url`.
 
-### 3.6 Strings
+### 3.6 Prose
 
 ```dim
-"teks biasa"
-"dengan \"kutip\" dan \\ backslash"
+"plain text"
+"with \"quotes\" and a \\ backslash"
 ```
 
-The accepted escapes are `\"`, `\\`, `\n`, and `\t`. Any other escape is an error. Ordinary strings cannot contain a literal newline. Use a multiline string for text that spans lines.
+Strings are used only for prose and typed literals ([§3.9](#39-typed-literals)). Supported escapes: `\"`, `\\`, `\n`, `\t`. Any other escape, an unterminated string, or a plain string containing a literal line break is `E002`.
 
-### 3.7 Multiline strings
+Prose can't be empty or contain only spaces (`E002`).
+
+### 3.7 Multiline prose
 
 ```dim
 container api "API" {
   description """
-    Backend utama.
-    Menangani checkout dan order.
+    The main backend.
+    Handles checkout and orders.
     """;
 }
 ```
 
-The example above has the value `"Backend utama.\nMenangani checkout dan order."`.
+The value above is `"The main backend.\nHandles checkout and orders."`.
 
-1. The opening `"""` must be immediately followed by a newline, which is excluded from the value.
-2. Put the closing `"""` on its own line with only spaces or tabs before it. The newline immediately before the closing delimiter is excluded from the value.
-3. Strip the exact indentation before the closing `"""` from **every** line of content. Each non-empty line must start with that indent. Otherwise report `E004`.
-4. The ordinary string escapes still work. A single double quote in the content needs no escape.
+1. The opening `"""` must be followed directly by a line break (`E002`). That line isn't part of the value.
+2. The closing `"""` must be on its own line, preceded only by spaces or tabs. The line break before it isn't part of the value.
+3. The indentation before the closing `"""` is removed from every content line. Every non-empty content line must start with exactly that indentation (`E004`).
+4. Escapes are the same as in plain strings. A single `"` inside the content doesn't need escaping.
 
-Ordinary and multiline strings are interchangeable wherever the grammar accepts STRING.
+Multiline prose is only allowed for `description`.
 
-### 3.8 Symbols
+### 3.8 Numbers and durations
 
-`{` `}` `->` `.` `::` `:` `;`
-
-The lexer uses *maximal munch*. It reads `::` as a single token. `a:::shop` becomes `a` `::` `:` `shop` and is invalid. Write `a: ::shop` with a space.
-
-### 3.9 Integers
-
-```
-INT = [0-9]+
+```text
+INT      = "0" | [1-9][0-9]*
+DURATION = INT ( "ms" | "s" | "m" | "h" | "d" )
 ```
 
-Numbers appear only in attribute values such as HTTP status codes ([§13](/en/referensi/spesifikasi/endpoint-http/#13-http-endpoints)). The grammar excludes minus signs, fractions, and thousands separators. A letter or `_` immediately after an integer produces `E001`, as in `60s`. Write such values as strings (`"5/60s"`).
+- `INT` is a non-negative integer without leading zeros. There's no minus sign, fraction, or thousands separator.
+- `DURATION` is a number followed directly by a unit: `500ms`, `30s`, `1m`, `6h`, `7d`.
+- A number followed directly by any other letter, or with a leading zero, is `E008`.
 
-An [identifier](#34-identifiers) cannot start with a digit, so an integer is unambiguous.
+Fractional numbers exist only inside `meta`, which follows JSON rules ([§6.8](/en/referensi/spesifikasi/model/#68-meta)).
+
+### 3.9 Typed literals
+
+Some properties take a string whose content is **checked against a format**. Such a string isn't prose. Content that doesn't match the format is `E007`, and the message names the expected format.
+
+| Format | Rules | Used in |
+|---|---|---|
+| `url` | absolute URL with the `https` or `http` scheme | `repo`, `url` in a tech |
+| `filePath` | relative, `/` separators, no `\`, no trailing `/`, no empty segments; `.` means the root itself; no `..` | `path` in `source` |
+| `httpPath` | starts with `/`, doesn't end with `/` except `"/"`; parameters are written `{name}` where the name is an IDENT | the path in an `http` line, and `prefix` |
+| `version` | letters, digits, `.`, `+`, `-`; starts with a letter or digit | `version` in a tech |
+| `branch` | a valid git ref name, without spaces | `branch` in a root |
+| `externalName` | `[A-Za-z_][A-Za-z0-9_]*` | service and rpc in a `grpc` line, the field in a `graphql` line, the name in an `event` line |
+| `headerName` | letters, digits, and `-`; case-insensitive | `header`, `sets header` |
+| `cookieName` | HTTP token characters (RFC 9110) | `cookie`, `sets cookie` |
+| `scopeValue` | letters, digits, and `:._-` | a `scope` value in the config |
+
+### 3.10 Symbols
+
+```text
+{  }  ->  .  ::  :  ;  [  ]  ?  <  >  ,
+```
+
+The lexer uses *maximal munch*: `::` and `->` are always read as one token, and `[]` can be written with or without a space between the brackets.
 
 ---
 
 ## 4. Grammar
 
-### 4.1 EBNF
+### 4.1 General form
 
 ```text
-file          = { item } [ simple ] EOF ;
-block         = "{" { item } [ simple ] "}" ;
+file         = version { statement } EOF ;
+version      = "dim" STRING ";" ;
 
-item          = simple ";"
-              | compound
-              | ";" ;
+statement    = head ";"
+             | head block ;
+block        = "{" { statement } "}" ;
 
-simple        = element_head
-              | relation_head
-              | attribute
-              | "dim" STRING
-              | "import" STRING
-              | "amends" STRING
-              | "remove" path
-              | "unset" IDENT { value } ;
-compound      = element_head block
-              | relation_head block
-              | "extend" path block
-              | "flow" IDENT [ STRING ] block ;
+element      = KIND IDENT STRING ;
+relation     = IDENT ":" path "->" path [ STRING ] ;
+property     = PROPERTY { value } ;
+member       = MEMBER { value } [ ":" type ] [ STRING ] ;
 
-element_head  = KIND IDENT [ STRING ] ;
-relation_head = [ IDENT ":" ] path "->" path [ STRING ] ;
-attribute     = IDENT { value } ;
-
-path          = [ "::" ] IDENT { "." IDENT }
-              | "this" { "." IDENT } ;
-value         = STRING | IDENT | INT ;
-
-KIND          = "person" | "system" | "container" | "component" | "code" ;
+path         = "::" IDENT { "." IDENT }
+             | "this" { "." IDENT }
+             | IDENT { "." IDENT } ;
+type         = base { "[" "]" | "?" } ;
+base         = PRIMITIVE | path | "map" "<" type "," type ">" ;
+value        = IDENT | path | type | STRING | INT | DURATION ;
 ```
 
-The semicolon rules in words:
+`head` is the part of a statement before `;` or a block: an element head, a relation head, a property, a member, or a composition statement. Each statement's full form is in the chapter that covers it.
 
-1. End a statement **without a block** with `;`, for example `tech "Next.js";`, `container gateway "Gateway API";`, or `a -> b "label";`.
-2. End a statement **with a block** at its closing `}`.
-3. The final statement before `}` or EOF may omit `;`. Both `{ op call }` and `{ op call; tech "HTTPS" }` are valid.
-4. The parser ignores extra semicolons, as in `;;` or `};`.
+Rules for `;`:
+
+1. Every statement **without a block** ends with `;`, including the last statement before `}`. A missing `;` is `E001`.
+2. A statement **with a block** ends at `}`, with no `;` after it.
+3. An extra `;` (`;;`, `};`) is `E001`.
 
 ```dim
 container api "API" {
-  tech "Rust/axum";      // ✅ diakhiri ;
-  component orders;      // ✅ elemen tanpa blok
-}                        // ✅ tidak perlu ; setelah }
-
-container api "API"
-{                        // ✅ baris baru tidak bermakna
-  tech "Rust/axum"
-  ui                     // ❌ E032: dibaca sebagai tech "Rust/axum" ui (dua nilai)
+  role service;          // ✅
+  tech kotlin            // ❌ E001: missing ;
 }
 ```
 
 ### 4.2 Elements
 
 ```dim
-<kind> <id> ["<nama>"] [{ ... }]
+<kind> <id> "<name>" [{ ... }]
 ```
 
-- Use the ID to refer to an element in paths. The name is a label for readers.
-- If omitted, the name defaults to the ID.
-- An element block may contain attributes, children, and relations.
+- The `id` is used in references (paths). The `name` is prose for people.
+- Every element **must** have a name (`E203`).
+- An element with required properties (such as `role` on a container) must be written with a block.
 
-### 4.3 Distinguishing statements
+### 4.3 Telling statements apart
 
-The parser needs at most two tokens of lookahead.
+Every statement can be identified by its first token:
 
-| First token | Second token | Statement |
-|---|---|---|
-| `KIND` | Any | Element |
-| `dim` | Any | Version declaration ([§4.6](#46-version-declaration)) |
-| `import`, `amends`, `extend`, `remove`, `unset` | Any | Composition ([§11](/en/referensi/spesifikasi/komposisi-dan-flow/#11-file-composition)) |
-| `flow` | Any | Flow ([§12](/en/referensi/spesifikasi/komposisi-dan-flow/#12-flows)) |
-| `::`, `this` | Any | Relation |
-| `IDENT` | `.`, `->`, or `:` | Relation |
-| `IDENT` | Anything else | Attribute |
+| First token | Statement |
+|---|---|
+| element kind | element ([§6](/en/referensi/spesifikasi/model/#6-elements), [§7](/en/referensi/spesifikasi/level-kode/#7-code-level), [§13](/en/referensi/spesifikasi/deployment/#13-deployment)) |
+| member keyword | member ([§7.4](/en/referensi/spesifikasi/level-kode/#74-members)) |
+| property keyword or protocol line | property |
+| composition, flow, or configuration keyword | that statement |
+| `IDENT` | relation; the second token must be `:` |
 
-`tech "Next.js"` is an attribute. `tech -> db` is a relation from the element named `tech`.
+Because every property name is a keyword, no statement is ambiguous.
 
 ### 4.4 Relations
 
 ```dim
-[<id>:] <path> -> <path> ["<label>"] [{ ... }]
+<id>: <path> -> <path> ["<label>"] { op <op>; ... }
 ```
 
-A relation block contains only attributes.
+A relation id and `op` are required. Details are in [§9](/en/referensi/spesifikasi/relasi/#9-relations).
 
-The optional `<id>:` gives the relation a stable name for `step` in a [flow](/en/referensi/spesifikasi/komposisi-dan-flow/#12-flows) or [`remove`](/en/referensi/spesifikasi/komposisi-dan-flow/#113-amends-and-remove). [§9](/en/referensi/spesifikasi/output/#9-json-output-format) specifies the ID generated when one is omitted.
+### 4.5 Properties
 
 ```dim
-checkout_post: button -> handler "POST /checkout" { op call }
+<property> <value> ...;
+<property> { ... }
 ```
 
-**Recursion.** A self-relation must be direct recursion with `op call` and the same `code` element on both ends. Other self-relations raise `E021`. Write indirect recursion (`a → b → a`) as ordinary relations. A consumer can identify the cycle.
+A property is a keyword with zero or more values. A property with no values is a *flag* (for example `external`). The `source` and `meta` properties take a block.
 
-```dim
-walk -> walk "telusuri anak berikutnya" { op call }
-```
-
-**Arrow direction follows the initiator.** In `api -> db { op read }`, the API starts the read and the data travels back from the database to the API. The `data` attribute records that direction ([§6.3](/en/referensi/spesifikasi/model/#63-data-flow)).
-
-### 4.5 Attributes
-
-```dim
-<key> [value ...]
-```
-
-An attribute consists of a key and zero or more values. An attribute without a value is a *flag*, such as `external`. [§6](/en/referensi/spesifikasi/model/#6-recognized-attributes) lists recognized keys and their types. Attributes at the top level are invalid.
+- Each property applies only to certain kinds. A property that doesn't apply where it's written is `E204`.
+- Each property appears at most once per element, unless stated to be repeatable. A duplicate is `E206`.
+- The wrong number or kind of values is `E207`.
+- A property at the top level of a file is `E001`.
 
 ### 4.6 Version declaration
 
 ```dim
-dim "0.5";
-amends "main.dim";
+dim "0.6";
 ```
 
-`dim "<MAJOR>.<MINOR>";` declares the language version used in the file.
-
-- The declaration is optional. Without it, the parser assumes the newest version it supports.
-- When present, it must be the first statement (before `amends`), once per file, at the top level (`E005`).
-- Use two integers separated by `.` with no leading zeroes, as in `"0.5"` or `"1.0"`. Invalid format or a newer version than the parser supports produces `E006`. The diagnostic states the supported version.
-- The parser applies its own rules to older versions. Minor versions in the 0.x series may introduce breaking changes, so a diagnostic can mention the version written in the file.
-- Each file has its own declaration. A file referenced by `import` or `amends` can declare a different version from the file that loads it.
-- The JSON `version` field ([§9](/en/referensi/spesifikasi/output/#9-json-output-format)) records the parser's output format version.
+- **Required** as the first statement of every `.dim` file and of `dim.config`, exactly once, at the top level (`E006`).
+- The value is `"<MAJOR>.<MINOR>"`. A version the parser doesn't support is `E006`; the message names the supported version.
+- All files in a project must declare the same version (`E006`).
