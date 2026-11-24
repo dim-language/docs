@@ -9,6 +9,8 @@ import DidoNote from '../../../components/DidoNote.astro';
 
 Sebelum menyetujui PR, arsitek sistem berhenti di panah API → Postgres. “Kalau ada pesanan tersimpan dua kali, fungsi mana yang kita periksa dulu?” Tim backend menunjuk `simpan_pesanan()` di komponen Pesanan. Arsitek meminta Dido mencatat pemilik operasi INSERT supaya tim piket bisa menemukannya lewat peta.
 
+<DidoNote scene="architect">Gue pindahin pangkal panah INSERT ke fungsi yang perlu dicek tim piket.</DidoNote>
+
 Tambahkan komponen dan fungsi di dalam `api`, lalu pindahkan asal panah INSERT ke fungsi itu. Bandingkan isi akhir `toko.dim` dengan filemu.
 
 ```dim contoh-tutorial="kode.dim" ins={10-12} ins="toko.api.pesanan.simpan"
