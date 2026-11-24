@@ -8,22 +8,49 @@ description: dim (Diagram In Markup) adalah bahasa teks untuk menulis arsitektur
 dim adalah bahasa teks untuk menulis arsitektur software. Kamu menulis siapa yang memakai sistemmu, sistem itu terdiri dari apa, dan bagian-bagiannya saling memanggil bagaimana. Hasilnya satu model yang bisa dilihat sebagai peta: tutup semuanya untuk melihat gambaran besar, buka satu kotak untuk melihat isinya, sampai ke fungsi di dalam kode.
 
 ```dim
+dim "0.6";
+
 person customer "Customer";
 
 system shop "Online Shop" {
-  container web "Web App" { tech "Next.js"; ui }
+  container web "Web App" { role app; tech nextjs; }
+
   container api "API" {
-    tech "Rust/axum";
+    role service;
+    paradigm procedural;
+    tech rust;
+
     component orders "Orders" {
-      code save "save_order()";
+      description "Menyimpan order.";
+
+      record order "Order" {
+        description "Isi pesanan.";
+        field items: string[];
+      }
+
+      function save "save_order()" {
+        description "Menulis order ke Postgres.";
+        param value: order;
+        returns uuid;
+      }
     }
   }
-  container db "Postgres" { shape database }
+
+  container db "Postgres" { role database; tech postgres; }
 }
 
-customer -> shop.web "Belanja";
-shop.web -> shop.api "POST /orders" { op call; data push "Order"; data pull "OrderId" }
-shop.api.orders.save -> shop.db "INSERT orders" { op write; data "Order" }
+shopping: customer -> shop.web "Belanja" { op use; }
+
+placeOrder: shop.web -> shop.api "POST /orders" {
+  op call;
+  data push shop.api.orders.order;
+  data pull uuid;
+}
+
+saveOrder: shop.api.orders.save -> shop.db "INSERT orders" {
+  op write;
+  data push shop.api.orders.order;
+}
 ```
 
 ## Masalah yang dijawab

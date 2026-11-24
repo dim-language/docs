@@ -8,22 +8,49 @@ description: dim (Diagram In Markup) is a text language for describing software 
 dim is a text language for describing software architecture. You specify who uses a system, what it contains, and how its parts interact. The result is one model you can explore as a map. Close its boxes to see the whole system, or open one at a time to reach the functions in the code.
 
 ```dim
+dim "0.6";
+
 person customer "Customer";
 
 system shop "Online Shop" {
-  container web "Web App" { tech "Next.js"; ui }
+  container web "Web App" { role app; tech nextjs; }
+
   container api "API" {
-    tech "Rust/axum";
+    role service;
+    paradigm procedural;
+    tech rust;
+
     component orders "Orders" {
-      code save "save_order()";
+      description "Stores orders.";
+
+      record order "Order" {
+        description "What an order contains.";
+        field items: string[];
+      }
+
+      function save "save_order()" {
+        description "Writes an order to Postgres.";
+        param value: order;
+        returns uuid;
+      }
     }
   }
-  container db "Postgres" { shape database }
+
+  container db "Postgres" { role database; tech postgres; }
 }
 
-customer -> shop.web "Belanja";
-shop.web -> shop.api "POST /orders" { op call; data push "Order"; data pull "OrderId" }
-shop.api.orders.save -> shop.db "INSERT orders" { op write; data "Order" }
+shopping: customer -> shop.web "Shops" { op use; }
+
+placeOrder: shop.web -> shop.api "POST /orders" {
+  op call;
+  data push shop.api.orders.order;
+  data pull uuid;
+}
+
+saveOrder: shop.api.orders.save -> shop.db "INSERT orders" {
+  op write;
+  data push shop.api.orders.order;
+}
 ```
 
 ## Why one model

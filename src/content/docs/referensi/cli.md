@@ -24,7 +24,7 @@ Simpan skrip ini sebagai `check.mjs` di proyek yang memasang SDK.
 node check.mjs toko.dim
 ```
 
-Kode keluar `1` berarti model gagal dikompilasi. Diagnostik memuat lokasi file, baris, dan kolom, beserta kode seperti `E040` untuk file yang tidak ditemukan.
+Kode keluar `1` berarti model gagal dikompilasi. Diagnostik memuat lokasi file, baris, dan kolom, beserta kode seperti `E601` untuk file yang tidak ditemukan.
 
 ## Kompilasi proyek dengan import
 

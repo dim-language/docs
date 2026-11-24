@@ -1,18 +1,42 @@
+dim "0.6";
+
 person pembeli "Pembeli";
 
 system toko "Toko Online" {
-  container web "Web" {
-    tech "Astro";
-    ui;
-  }
+  container web "Web" { role app; tech astro; }
+
   container api "API" {
-    tech "Rust";
+    role service;
+    tech rust;
+
+    component pesanan "Pesanan" {
+      description "Menerima pesanan dari Web dan menyimpannya.";
+
+      record dataPesanan "Pesanan" {
+        description "Isi pesanan yang dikirim Web.";
+        field barang: string[];
+        field alamat: string;
+      }
+
+      alias idPesanan "IdPesanan" {
+        description "Nomor pesanan yang tampil di layar konfirmasi.";
+        type uuid;
+      }
+    }
   }
-  container db "Postgres" {
-    shape database;
-  }
+
+  container db "Postgres" { role database; tech postgres; }
 }
 
-pembeli -> toko.web "Belanja";
-toko.web -> toko.api "POST /pesanan" { op call; data push "Pesanan"; data pull "IdPesanan" }
-toko.api -> toko.db "INSERT pesanan" { op write; data "Pesanan" }
+belanja: pembeli -> toko.web "Belanja" { op use; }
+
+kirimPesanan: toko.web -> toko.api "POST /pesanan" {
+  op call;
+  data push toko.api.pesanan.dataPesanan;
+  data pull toko.api.pesanan.idPesanan;
+}
+
+simpanPesanan: toko.api -> toko.db "INSERT pesanan" {
+  op write;
+  data push toko.api.pesanan.dataPesanan;
+}

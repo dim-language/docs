@@ -15,9 +15,14 @@ cd dim-checkout
 bun add https://github.com/dim-language/dim-sdk/releases/download/v0.2.0/dim-sdk-0.2.0.tgz
 ```
 
-Save this as `check.mjs` in that folder. It reads the file you give it, runs the compiler and prints the element and relation counts. The example uses Indonesian names: `toko` means shop and `pesanan` means order. Keep them as written so the paths match.
+Save this as `check.mjs` in that folder. It reads the file you give it and the `dim.config` next to it, runs the compiler and prints the element and relation counts. The example uses Indonesian names: `toko` means shop and `pesanan` means order. Keep them as written so the paths match.
 
 ```js contoh-tutorial="check.mjs"
+```
+
+Also save `dim.config` in the same folder. Here Dido declares the technologies the teams will use, once for the whole project.
+
+```dim contoh-tutorial="dim.config"
 ```
 
 ## A person and a system
@@ -27,7 +32,7 @@ Create `toko.dim` with this model.
 ```dim contoh-tutorial="sistem.dim"
 ```
 
-Each element has a kind (`person` or `system`), an ID used in code, and a name displayed on the map. The arrow `pembeli -> toko` shows that the customer starts the interaction. A declaration without a block ends with `;`.
+Every file starts with `dim "0.6";`. Each element has a kind (`person` or `system`), a camelCase ID used in paths, and a name displayed on the map. The `belanja` relation has an id and `op use`, and its arrow shows that the customer starts the interaction. Every statement without a block ends with `;`.
 
 ```bash
 node check.mjs toko.dim

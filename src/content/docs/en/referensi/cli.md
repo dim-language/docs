@@ -24,7 +24,7 @@ Save this script as `check.mjs` in the project where you installed the SDK.
 node check.mjs toko.dim
 ```
 
-Exit code `1` means the model failed to compile. Diagnostics include the file, line, and column, along with a code such as `E040` for missing files.
+Exit code `1` means the model failed to compile. Diagnostics include the file, line, and column, along with a code such as `E601` for missing files.
 
 ## Compile a project with imports
 

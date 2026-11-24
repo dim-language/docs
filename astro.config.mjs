@@ -63,7 +63,7 @@ export default defineConfig({
 							const example = codeBlock.metaOptions.getString('contoh-tutorial');
 							if (!example) return;
 
-							const source = (/^[a-z-]+\.(dim|mjs)$/.test(example) || example === 'ShopMap.astro')
+							const source = (/^[a-z-]+\.(dim|mjs)$/.test(example) || example === 'ShopMap.astro' || example === 'dim.config')
 								? readFileSync(new URL(example, tutorialDir), 'utf8')
 								: JSON.parse(readFileSync(new URL('cek.json', tutorialDir), 'utf8'))[example];
 							if (typeof source !== 'string') throw new Error(`Contoh tutorial tidak ditemukan: ${example}`);

@@ -9,11 +9,18 @@ Saat mencoba prototipe di ponsel, tim produk memutuskan untuk menampilkan nomor 
 
 <DidoNote scene="order-id">Kalau yang balik cuma ID, bagian mana dari panah POST yang mesti gue ubah?</DidoNote>
 
-Di `toko.dim`, edit relasi POST saja. Web masih mengirim pesanan lengkap dan API masih menyimpannya.
+Di `toko.dim`, tambahkan tipe untuk nomor pesanan di component Pesanan, lalu ubah bagian `pull` di relasi POST saja. Web masih mengirim pesanan lengkap dan API masih menyimpannya.
 
 ```diff
-- toko.web -> toko.api "POST /pesanan" { op call; data push "Pesanan"; data pull "Pesanan" }
-+ toko.web -> toko.api "POST /pesanan" { op call; data push "Pesanan"; data pull "IdPesanan" }
++      alias idPesanan "IdPesanan" {
++        description "Nomor pesanan yang tampil di layar konfirmasi.";
++        type uuid;
++      }
+```
+
+```diff
+-  data pull toko.api.pesanan.dataPesanan;
++  data pull toko.api.pesanan.idPesanan;
 ```
 
 ```sh
@@ -30,4 +37,4 @@ Jumlah panah tetap sama. Untuk melihat apa yang diperiksa compiler, coba hapus k
 ```text contoh-tutorial="tanpaArah"
 ```
 
-Untuk `op call`, setiap tipe data perlu arah. Kembalikan `push`, jalankan cek sampai muncul `ok`, lalu cocokkan `data pull "IdPesanan"` dengan respons yang disepakati tim API. Tipe yang dijanjikan ke Web tetap perlu diperiksa saat review.
+Setiap baris `data` perlu arah. Kembalikan `push`, jalankan cek sampai muncul `ok`, lalu cocokkan `data pull toko.api.pesanan.idPesanan` dengan respons yang disepakati tim API. Tipe yang dijanjikan ke Web tetap perlu diperiksa saat review.

@@ -17,21 +17,22 @@ function check(path) {
 
 test.each([
 	['sistem.dim', cek.sistem],
-	['checkout.dim', cek.container],
+	['checkout.dim', cek.checkout],
 	['container.dim', cek.container],
 	['kode.dim', cek.kode],
 ])('%s lolos dengan ringkasan yang tampil di tutorial', (file, expected) => {
 	expect(check(join(examples, file))).toEqual({ exitCode: 0, stdout: expected, stderr: '' });
 });
 
-test('menghapus push dari POST /pesanan menghasilkan E035', () => {
+test('menghapus push dari POST /pesanan menghasilkan E406', () => {
 	const model = readFileSync(join(examples, 'kode.dim'), 'utf8');
-	const salah = model.replace('data push "Pesanan"', 'data "Pesanan"');
+	const salah = model.replace('data push toko.api.pesanan.dataPesanan', 'data toko.api.pesanan.dataPesanan');
 	const temp = mkdtempSync(join(tmpdir(), 'dim-tutorial-'));
 
 	try {
 		const file = join(temp, 'toko.dim');
 		writeFileSync(file, salah);
+		writeFileSync(join(temp, 'dim.config'), readFileSync(join(examples, 'dim.config'), 'utf8'));
 
 		const { exitCode, stderr } = check(file);
 		expect(exitCode).toBe(1);

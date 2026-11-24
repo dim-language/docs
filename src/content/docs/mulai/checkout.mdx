@@ -7,7 +7,7 @@ Di rapat desain, tim Web menunjukkan layar struk. Setelah pembeli menekan Pesan,
 
 ## Buka kotak toko
 
-Ganti isi `toko.dim` dari bab pertama dengan rancangan tim. Di dalam `toko`, tandai antarmuka pembeli dengan `ui`. Pindahkan ujung panah Belanja ke `toko.web`.
+Ganti isi `toko.dim` dari bab pertama dengan rancangan tim. Beri setiap container perannya: `app` untuk Web, `service` untuk API, dan `database` untuk Postgres. Tim API menyebut isi pesanannya, jadi Dido mencatatnya sebagai `record` di component Pesanan, dan panah merujuknya lewat path. Pindahkan ujung panah Belanja ke `toko.web`.
 
 ```dim contoh-tutorial="checkout.dim"
 ```
@@ -16,7 +16,7 @@ Ganti isi `toko.dim` dari bab pertama dengan rancangan tim. Di dalam `toko`, tan
 node check.mjs toko.dim
 ```
 
-```text contoh-tutorial="container"
+```text contoh-tutorial="checkout"
 ```
 
 Ikuti panah POST dari sisi Web. `push` membawa pesanan ke API. Setelah penulisan ke database, `pull` membawa pesanan lengkap kembali ke layar struk. Dido meminta kedua tim membaca panah itu sebelum mereka mulai mengerjakan bagiannya.

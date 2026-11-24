@@ -11,9 +11,9 @@ Before approving the PR, the system architect stops at API → Postgres. “If a
 
 <DidoNote scene="architect">I’ll move the INSERT arrow to the function the on-call engineer needs to inspect.</DidoNote>
 
-Add the component and function inside `api`, then move the source of the INSERT arrow to that function. Compare your file with the final `toko.dim` below.
+Add the `simpan` function to the Pesanan component and write `paradigm procedural;` on `api`, because that container now holds code. Then move the source of the INSERT arrow to that function. Compare your file with the final `toko.dim` below.
 
-```dim contoh-tutorial="kode.dim" ins={10-12} ins="toko.api.pesanan.simpan"
+```dim contoh-tutorial="kode.dim" ins={10,27-31} ins="toko.api.pesanan.simpan"
 ```
 
 ```bash

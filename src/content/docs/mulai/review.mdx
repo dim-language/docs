@@ -11,9 +11,9 @@ Sebelum menyetujui PR, arsitek sistem berhenti di panah API → Postgres. “Kal
 
 <DidoNote scene="architect">Gue pindahin pangkal panah INSERT ke fungsi yang perlu dicek tim piket.</DidoNote>
 
-Tambahkan komponen dan fungsi di dalam `api`, lalu pindahkan asal panah INSERT ke fungsi itu. Bandingkan isi akhir `toko.dim` dengan filemu.
+Tambahkan fungsi `simpan` ke component Pesanan dan tulis `paradigm procedural;` di `api`, karena container itu sekarang berisi kode. Lalu pindahkan asal panah INSERT ke fungsi itu. Bandingkan isi akhir `toko.dim` dengan filemu.
 
-```dim contoh-tutorial="kode.dim" ins={10-12} ins="toko.api.pesanan.simpan"
+```dim contoh-tutorial="kode.dim" ins={10,27-31} ins="toko.api.pesanan.simpan"
 ```
 
 ```bash

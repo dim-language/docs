@@ -15,9 +15,14 @@ cd dim-checkout
 bun add https://github.com/dim-language/dim-sdk/releases/download/v0.2.0/dim-sdk-0.2.0.tgz
 ```
 
-Simpan kode berikut sebagai `check.mjs` di folder itu. Skrip ini membaca file yang kamu berikan, menjalankan compiler, lalu mencetak jumlah elemen dan relasinya.
+Simpan kode berikut sebagai `check.mjs` di folder itu. Skrip ini membaca file yang kamu berikan beserta `dim.config` di folder yang sama, menjalankan compiler, lalu mencetak jumlah elemen dan relasinya.
 
 ```js contoh-tutorial="check.mjs"
+```
+
+Simpan juga `dim.config` di folder yang sama. Di file ini Dido mendeklarasikan teknologi yang akan dipakai tim, sekali untuk seluruh proyek.
+
+```dim contoh-tutorial="dim.config"
 ```
 
 ## Orang dan sistem
@@ -27,7 +32,7 @@ Buat file `toko.dim` dan isi dengan model berikut.
 ```dim contoh-tutorial="sistem.dim"
 ```
 
-Setiap elemen punya jenis (`person` atau `system`), ID yang dipakai dalam kode, dan nama yang tampil di peta. Panah `pembeli -> toko` menunjukkan bahwa pembeli yang memulai interaksi. Deklarasi tanpa blok diakhiri dengan `;`.
+Setiap file diawali `dim "0.6";`. Setiap elemen punya jenis (`person` atau `system`), ID camelCase yang dipakai dalam path, dan nama yang tampil di peta. Relasi `belanja` punya id dan `op use`, dan panahnya menunjukkan bahwa pembeli yang memulai interaksi. Setiap statement tanpa blok diakhiri `;`.
 
 ```bash
 node check.mjs toko.dim
