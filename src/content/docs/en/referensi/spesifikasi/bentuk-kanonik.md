@@ -24,10 +24,11 @@ The formatter only works on valid text. Text with errors isn't formatted.
    - the line, including indentation, is at most 100 characters.
 6. **Empty blocks** on elements and relations aren't written: `container db "Orders DB";` is only valid if the element has no required properties. `extend`, `flow`, `environment`, and flow branches always use a block.
 7. **Spaces within a line.** Tokens are separated by one space, except: no spaces around `.`, after a leading `::`, before `;`, `,`, a member's `:`, and `[]`; no spaces inside `<` `>`; a relation id's `:` sticks to the id; one space after `,`.
-8. **Blank lines.** One blank line between groups of statements ([§17.2](#172-order-within-blocks)) and between top-level statements that use a block. Other blank lines are removed.
+8. **Blank lines.** One blank line is required between groups of statements ([§17.2](#172-order-within-blocks)), and around elements, relations, or `extend`s written with a multiline block. Elsewhere, blank lines written by the author are kept, at most one in a row. There are no blank lines at the start of a file, right after `{`, or right before `}`.
 9. **Comments.** Their content isn't changed. A comment belongs to the statement below it and moves with it. A trailing comment stays on its line, separated by one space.
 10. **Multiline prose.** The opening `"""` ends its property's line. Content lines and the closing `"""` are indented one level deeper than the property.
 11. **`meta`.** Its content is written as JSON with two-space indentation, with keys in the order written.
+12. **Long lines.** Apart from rule 5, the formatter doesn't break long lines.
 
 ### 17.2 Order within blocks
 

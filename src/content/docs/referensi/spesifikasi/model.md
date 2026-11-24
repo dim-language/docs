@@ -39,7 +39,7 @@ Nesting yang melanggar tabel ini adalah `E201`.
 | `tags` | ≥1 rujukan tag | semua | |
 | `tech` | ≥1 rujukan tech | `container`, `component` | |
 | `role` | peran ([§6.5](#65-peran-container)) | `container` | ya |
-| `paradigm` | ≥1 paradigma ([§6.6](#66-paradigma)) | `container`, `component` | container yang berisi level kode |
+| `paradigm` | ≥1 paradigma ([§6.6](#66-paradigma)) | `container`, `component` | container yang berisi unit kode selain tipe data |
 | `external` | flag | `system`, `container` | |
 | `source` | blok ([§6.7](#67-lokasi-implementasi-source)) | semua kecuali `person` | |
 | `meta` | objek JSON ([§6.8](#68-meta)) | semua | |
@@ -52,7 +52,7 @@ Properti wajib yang tidak ditulis adalah `E205`. Properti yang tidak berlaku unt
 
 - Semua isi system `external` ikut eksternal. Menulis `external` di container di dalam system eksternal adalah `E212`.
 - Container eksternal di dalam system milik kita juga boleh, misalnya layanan SaaS yang dipakai satu system saja.
-- Elemen eksternal tidak di-deploy ([§13](/referensi/spesifikasi/deployment/#13-deployment)) dan tidak boleh berisi level kode (`E201`).
+- Elemen eksternal tidak di-deploy ([§13](/referensi/spesifikasi/deployment/#13-deployment)). Di level kode, elemen eksternal hanya boleh berisi tipe data (`record`, `enum`, `union`, `alias`), supaya kontrak API pihak ketiga tetap bisa ditulis (`E201`).
 
 ### 6.5 Peran container
 
@@ -80,7 +80,7 @@ container api "API" {
 
 `paradigm` menyatakan gaya kode di dalam container: `procedural`, `functional`, dan/atau `oop`. Paradigma menentukan kind level kode yang boleh dipakai ([§7.1](/referensi/spesifikasi/level-kode/#71-paradigma)).
 
-- Wajib di setiap container yang berisi level kode (`E213`). Container tanpa level kode boleh menulisnya untuk menyatakan rencana.
+- Wajib di setiap container yang berisi unit kode selain tipe data (`E213`). Tipe data boleh dipakai di paradigma mana pun, jadi container yang hanya berisi tipe data tidak perlu `paradigm`. Container lain boleh menulisnya untuk menyatakan rencana.
 - Component boleh menulis `paradigm` untuk **mempersempit** paradigma yang berlaku. Paradigma yang tidak dimiliki container atau component leluhurnya adalah `E213`.
 - **Paradigma efektif** sebuah elemen adalah `paradigm` dari component atau container terdekat di atasnya yang menuliskannya.
 - Satu paradigma tidak boleh ditulis dua kali (`E207`).

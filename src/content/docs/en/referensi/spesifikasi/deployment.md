@@ -106,4 +106,4 @@ Relations written inside an environment are only for infra elements, which don't
 - `amends` creates **architecture variants**, such as *as-is* and *to-be*.
 - `environment` states **where the software runs** for one architecture variant.
 
-An `amends` file can add environments, change them with `extend`, or remove them with `remove`.
+An `amends` file can add environments, change them with `extend`, or remove them with `remove`. An `extend` target can be an environment or a node inside one, for example `extend production.jakarta { … }`: the first segment of the path is looked up as an environment id if no top-level element has that id. If both exist, `E607`.

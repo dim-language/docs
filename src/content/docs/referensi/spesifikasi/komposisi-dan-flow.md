@@ -69,7 +69,7 @@ extend payment {
   - `extend` boleh **menimpa** properti. Member dengan id yang sudah ada menggantikan yang lama.
   - `unset <properti>;` di dalam blok `extend` menghapus properti, termasuk mematikan flag.
   - `unset <member> <id>;` menghapus satu member, misalnya `unset param order;` atau `unset field total;`.
-  - `remove <target>;` menghapus elemen beserta semua turunannya dan semua relasi yang menyentuhnya, relasi lewat id-nya, flow lewat id-nya, cabang flow lewat `<flow>.<cabang>`, atau environment lewat id-nya.
+  - `remove <target>;` menghapus elemen beserta semua turunannya, semua relasi yang menyentuhnya, dan semua `deploy` serta `omit` yang merujuknya, relasi lewat id-nya, flow lewat id-nya, cabang flow lewat `<flow>.<cabang>`, atau environment lewat id-nya.
 - `remove` dan `unset` di file biasa adalah `E606`.
 - `unset` yang tidak langsung di dalam blok `extend`, atau yang menghapus sesuatu yang tidak ada, adalah `E608`. Properti wajib tidak bisa di-`unset`; untuk mengganti nilainya, tulis ulang propertinya.
 - Target `remove` satu segmen tanpa `::` bisa berarti elemen top-level, id relasi, id flow, atau id environment. Kalau lebih dari satu cocok, `E607`. Tulis `remove ::nama` untuk elemen.

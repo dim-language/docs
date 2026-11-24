@@ -55,7 +55,7 @@ base      = PRIMITIVE
 
 ### 8.4 Named types
 
-Named types are the code units `record`, `enum`, `union`, and `alias` ([§7.2](/en/referensi/spesifikasi/level-kode/#72-code-level-kinds)). A named type is referenced by **path**, which resolves like any other path from the scope where the expression is written ([§6.9](/en/referensi/spesifikasi/model/#69-path-resolution)).
+Named types are the code units `record`, `enum`, `union`, `alias`, `class`, and `interface` ([§7.2](/en/referensi/spesifikasi/level-kode/#72-code-level-kinds)). `class` and `interface` exist only under the `oop` paradigm, but they can be referenced as types from anywhere. A named type is referenced by **path**, which resolves like any other path from the scope where the expression is written ([§6.9](/en/referensi/spesifikasi/model/#69-path-resolution)).
 
 ```dim
 component orders "Orders" {
@@ -82,7 +82,7 @@ component orders "Orders" {
 }
 ```
 
-- A path that doesn't point to a `record`, `enum`, `union`, or `alias` is `E306`.
+- A path that doesn't point to a named type is `E306`.
 - Type names **don't** have to be unique across the model. Two components can both have a `record config`, because references go through paths.
 - Types from another component, container, or system can be referenced. That's how shared contracts are written: a type is defined once, where it belongs, and referenced from anywhere.
 

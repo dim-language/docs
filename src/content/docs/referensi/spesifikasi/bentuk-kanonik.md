@@ -24,10 +24,11 @@ Formatter hanya bekerja pada teks yang valid. Teks dengan error tidak diformat.
    - barisnya, termasuk indentasi, paling panjang 100 karakter.
 6. **Blok kosong** pada elemen atau relasi tidak ditulis: `container db "Orders DB";` hanya valid kalau elemen itu tidak punya properti wajib. `extend`, `flow`, `environment`, dan cabang flow selalu memakai blok.
 7. **Spasi dalam baris.** Token dipisah satu spasi, kecuali: tanpa spasi di sekitar `.`, setelah `::` di awal path, sebelum `;`, `,`, `:` member, dan `[]`; tanpa spasi di dalam `<` `>`; `:` id relasi menempel ke id-nya; satu spasi setelah `,`.
-8. **Baris kosong.** Satu baris kosong di antara kelompok statement ([§17.2](#172-urutan-isi-blok)) dan di antara statement top-level yang memakai blok. Baris kosong lain dibuang.
+8. **Baris kosong.** Satu baris kosong wajib ada di antara kelompok statement ([§17.2](#172-urutan-isi-blok)), dan di sekitar elemen, relasi, atau `extend` yang ditulis dengan blok banyak baris. Di tempat lain, baris kosong yang ditulis penulis dipertahankan, paling banyak satu berturut-turut. Tidak ada baris kosong di awal file, tepat setelah `{`, atau tepat sebelum `}`.
 9. **Komentar.** Isinya tidak diubah. Komentar menempel ke statement di bawahnya dan ikut berpindah bersamanya. Komentar di akhir baris tetap di baris itu, dipisah satu spasi.
 10. **Prosa multi-baris.** `"""` pembuka di akhir baris propertinya. Baris isi dan `"""` penutup diindentasi satu tingkat lebih dalam dari propertinya.
 11. **`meta`.** Isinya ditulis sebagai JSON dengan indentasi dua spasi, key dalam urutan tulisan.
+12. **Baris panjang.** Selain aturan 5, formatter tidak memecah baris yang panjang.
 
 ### 17.2 Urutan isi blok
 

@@ -39,7 +39,7 @@ Codes are grouped by chapter: `E0xx` lexical and grammar, `E1xx` configuration, 
 
 | Code | Condition |
 |---|---|
-| `E201` | nesting that breaks [§6.1](/en/referensi/spesifikasi/model/#61-element-kinds-and-nesting) or [§7.2](/en/referensi/spesifikasi/level-kode/#72-code-level-kinds), including code-level elements in external elements |
+| `E201` | nesting that breaks [§6.1](/en/referensi/spesifikasi/model/#61-element-kinds-and-nesting) or [§7.2](/en/referensi/spesifikasi/level-kode/#72-code-level-kinds), including code units other than data types in external elements |
 | `E202` | a duplicate id among siblings, including the same top-level element in two files; the message suggests `extend` |
 | `E203` | a missing element name |
 | `E204` | a property that doesn't apply to this kind |
@@ -51,7 +51,7 @@ Codes are grouped by chapter: `E0xx` lexical and grammar, `E1xx` configuration, 
 | `E210` | `this` at the top level, or not at the start of a path |
 | `E211` | a `source` without a `root` on itself or any ancestor |
 | `E212` | `external` on a container that's already external through its system |
-| `E213` | a container with code-level elements but no `paradigm`, or a component that lists a paradigm its ancestors don't have |
+| `E213` | a container with code units other than data types but no `paradigm`, or a component that lists a paradigm its ancestors don't have |
 
 ### 15.4 Code level and types
 
@@ -62,8 +62,8 @@ Codes are grouped by chapter: `E0xx` lexical and grammar, `E1xx` configuration, 
 | `E303` | a duplicate member id within a code unit or endpoint, including `header` and `cookie` names |
 | `E304` | a `function` under the `functional` paradigm without exactly one of `pure` or `effects`, or either one outside `functional` |
 | `E305` | `visibility`, `static`, or `abstract` outside the `oop` paradigm, or an `abstract` `method` outside an `abstract` `class` |
-| `E306` | a type reference that doesn't point to a `record`, `enum`, `union`, or `alias` |
-| `E307` | a code-level `throws` type that isn't a `record`, `enum`, or `union` |
+| `E306` | a type reference that doesn't point to a `record`, `enum`, `union`, `alias`, `class`, or `interface` |
+| `E307` | a code-level `throws` type that isn't a `record`, `enum`, `union`, or `class` |
 | `E308` | a `map` key that isn't `string`, `int`, `uuid`, or an `enum` |
 | `E309` | a record that refers to itself without `[]`, `?`, or `map` |
 | `E310` | an `alias` that refers to itself |

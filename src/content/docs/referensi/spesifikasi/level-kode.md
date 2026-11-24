@@ -130,7 +130,7 @@ throws <tipe> ["<keterangan>"];
 | `variant` dengan tipe | `union` | boleh berulang, minimal dua; varian tanpa tipe juga boleh |
 | `param` | `function`, `method`, `constructor` | boleh berulang, urutan adalah urutan parameter |
 | `returns` | `function`, `method` | paling banyak satu; tidak ditulis berarti tidak mengembalikan nilai |
-| `throws` | `function`, `method`, `constructor` | boleh berulang; tipenya harus `record`, `enum`, atau `union` (`E307`) |
+| `throws` | `function`, `method`, `constructor` | boleh berulang; tipenya harus `record`, `enum`, `union`, atau `class` (`E307`) |
 
 - Member yang tidak berlaku untuk kind itu adalah `E302`.
 - Id member unik di dalam unit kodenya, per jenis member (`E303`). `field` dan `variant` boleh memakai id yang sama dengan elemen lain, karena member tidak ikut resolusi path.
@@ -147,7 +147,7 @@ Relasi **struktural** menggambarkan bentuk kode, bukan kejadian saat berjalan:
 | `inherits` | `class` | `class` | `oop` |
 | `inherits` | `interface` | `interface` | `oop` |
 | `implements` | `class` | `interface` | `oop` |
-| `owns` | `class`, `record` | `class`, `record`, `enum`, `union`, `alias` | semua |
-| `refers` | `class`, `record` | `class`, `record`, `enum`, `union`, `alias` | semua |
+| `owns` | `class`, `record` | `class`, `interface`, `record`, `enum`, `union`, `alias` | semua |
+| `refers` | `class`, `record` | `class`, `interface`, `record`, `enum`, `union`, `alias` | semua |
 
 `owns` adalah komposisi: target hidup dan mati bersama pemiliknya. `refers` adalah asosiasi: pemilik menyimpan rujukan tanpa memiliki. Pasangan di luar tabel ini, atau paradigma yang tidak cocok di salah satu ujung, adalah `E407`.

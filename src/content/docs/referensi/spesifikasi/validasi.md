@@ -39,7 +39,7 @@ Kode dikelompokkan per bab: `E0xx` leksikal dan grammar, `E1xx` konfigurasi, `E2
 
 | Kode | Kondisi |
 |---|---|
-| `E201` | nesting melanggar [§6.1](/referensi/spesifikasi/model/#61-jenis-elemen-dan-nesting) atau [§7.2](/referensi/spesifikasi/level-kode/#72-kind-level-kode), termasuk level kode di elemen eksternal |
+| `E201` | nesting melanggar [§6.1](/referensi/spesifikasi/model/#61-jenis-elemen-dan-nesting) atau [§7.2](/referensi/spesifikasi/level-kode/#72-kind-level-kode), termasuk unit kode selain tipe data di elemen eksternal |
 | `E202` | id duplikat di antara saudara, termasuk elemen top-level yang sama di dua file; pesannya menyarankan `extend` |
 | `E203` | nama elemen tidak ditulis |
 | `E204` | properti tidak berlaku untuk kind ini |
@@ -51,7 +51,7 @@ Kode dikelompokkan per bab: `E0xx` leksikal dan grammar, `E1xx` konfigurasi, `E2
 | `E210` | `this` di top-level, atau bukan di awal path |
 | `E211` | `source` tanpa `root` di dirinya maupun leluhurnya |
 | `E212` | `external` di container yang sudah eksternal karena system-nya |
-| `E213` | container berisi level kode tanpa `paradigm`, atau component menulis paradigma yang tidak dimiliki leluhurnya |
+| `E213` | container berisi unit kode selain tipe data tanpa `paradigm`, atau component menulis paradigma yang tidak dimiliki leluhurnya |
 
 ### 15.4 Level kode dan tipe
 
@@ -62,8 +62,8 @@ Kode dikelompokkan per bab: `E0xx` leksikal dan grammar, `E1xx` konfigurasi, `E2
 | `E303` | id member duplikat dalam satu unit kode atau endpoint, termasuk nama `header` dan `cookie` |
 | `E304` | `function` di paradigma `functional` tanpa tepat satu dari `pure` atau `effects`, atau salah satunya di luar `functional` |
 | `E305` | `visibility`, `static`, atau `abstract` di luar paradigma `oop`, atau `method` `abstract` di luar `class` `abstract` |
-| `E306` | rujukan tipe tidak menunjuk `record`, `enum`, `union`, atau `alias` |
-| `E307` | tipe di `throws` level kode bukan `record`, `enum`, atau `union` |
+| `E306` | rujukan tipe tidak menunjuk `record`, `enum`, `union`, `alias`, `class`, atau `interface` |
+| `E307` | tipe di `throws` level kode bukan `record`, `enum`, `union`, atau `class` |
 | `E308` | kunci `map` bukan `string`, `int`, `uuid`, atau `enum` |
 | `E309` | record merujuk dirinya sendiri tanpa `[]`, `?`, atau `map` |
 | `E310` | `alias` yang merujuk dirinya sendiri |

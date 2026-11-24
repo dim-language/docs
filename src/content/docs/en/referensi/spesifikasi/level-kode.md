@@ -130,7 +130,7 @@ throws <type> ["<note>"];
 | `variant` with a type | `union` | repeatable, at least two; variants without a type are allowed too |
 | `param` | `function`, `method`, `constructor` | repeatable, order is the parameter order |
 | `returns` | `function`, `method` | at most one; without it, nothing is returned |
-| `throws` | `function`, `method`, `constructor` | repeatable; the type must be a `record`, `enum`, or `union` (`E307`) |
+| `throws` | `function`, `method`, `constructor` | repeatable; the type must be a `record`, `enum`, `union`, or `class` (`E307`) |
 
 - A member that doesn't apply to the kind is `E302`.
 - A member id is unique within its code unit, per kind of member (`E303`). A `field` or `variant` can share an id with another element, because members aren't part of path resolution.
@@ -147,7 +147,7 @@ Interaction relations (`call`, `use`, and so on) can connect code units with ele
 | `inherits` | `class` | `class` | `oop` |
 | `inherits` | `interface` | `interface` | `oop` |
 | `implements` | `class` | `interface` | `oop` |
-| `owns` | `class`, `record` | `class`, `record`, `enum`, `union`, `alias` | all |
-| `refers` | `class`, `record` | `class`, `record`, `enum`, `union`, `alias` | all |
+| `owns` | `class`, `record` | `class`, `interface`, `record`, `enum`, `union`, `alias` | all |
+| `refers` | `class`, `record` | `class`, `interface`, `record`, `enum`, `union`, `alias` | all |
 
 `owns` is composition: the target lives and dies with its owner. `refers` is association: the owner keeps a reference without owning it. Any pair outside this table, or a paradigm mismatch at either end, is `E407`.

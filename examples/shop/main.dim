@@ -1,59 +1,80 @@
-// Model lengkap toko online, dipecah ke beberapa file (dim v0.3).
-// Jalankan: dim check examples/shop/main.dim
+dim "0.6";
 
-import "shop.dim";
+// Model lengkap toko online, dipecah ke beberapa file.
+// Cek dengan: dim check examples/shop/main.dim
+
 import "payment.dim";
+import "shop.dim";
 
-person customer "Customer" {
-  description "Belanja online";
-}
-
-checkout_click: customer -> shop.web.checkout.button "Klik bayar";
-charge_gateway: shop.api.payments.client.charge -> payment.gateway "POST /charges" {
-  op call;
-  tech "HTTPS";
-  data push "ChargeRequest";
-  data pull "ChargeResult";
-}
-
-open_detail: customer -> shop.web.detail "Buka detail pesanan";
-request_refund: customer -> shop.web.detail "Ajukan refund";
-refund_gateway: shop.api.orders.refund -> payment.gateway "POST /refunds" {
-  op call;
-  tech "HTTPS";
-  data push "RefundRequest";
-  data pull "RefundId";
-}
+person customer "Customer" { description "Belanja online."; }
 
 // Tim ops menambah keterangan tanpa mengubah shop.dim.
-extend shop.db {
-  description "Satu instance primer dengan satu replika baca.";
-  tags "ops";
+extend shop.db { description "Satu instance primer dengan satu replika baca."; tags ops; }
+
+clickPay: customer -> shop.web.checkout.button "Klik bayar" { op use; }
+
+chargeGateway: shop.api.payments.client.charge -> payment.gateway.charges.charge {
+  op call;
+  tech https;
 }
+
+openDetail: customer -> shop.web.detail "Buka detail pesanan" { op use; }
+requestRefund: customer -> shop.web.detail "Ajukan refund" { op use; }
+refundGateway: shop.api.orders.refund -> payment.gateway.charges.refund { op call; tech https; }
 
 flow checkout "Checkout" {
   description "Dari pembeli menekan bayar sampai order tersimpan.";
-  step checkout_click;
-  step checkout_post;
-  step run_checkout;
+  step clickPay;
+  step postCheckout;
+  step runCheckout;
+  step computeTotal;
   step charge "Tagih dulu";
-  step charge_gateway;
-  step save_order "Simpan setelah tertagih";
-  step insert_order;
+  step chargeGateway;
+  alt {
+    case paid "Pembayaran berhasil" { step saveOrder "Simpan setelah tertagih"; step insertOrder; }
+    case declined "Pembayaran ditolak" { step showDeclined; }
+  }
 }
 
-flow order_detail "Detail pesanan" {
+flow orderDetail "Detail pesanan" {
   description "Pembeli membuka pesanan yang sudah dibuat untuk melihat rincian barang dan totalnya.";
-  step open_detail "Pembeli memilih pesanan";
-  step detail_get "Web meminta rincian untuk ID yang dipilih";
-  step find_order "API mencari pesanan lewat repository";
-  step select_order "Repository membaca pesanan dari Postgres untuk ditampilkan di Web";
+  step openDetail "Pembeli memilih pesanan";
+  step getDetail "Web meminta rincian untuk id yang dipilih";
+  step findOrder "API mencari pesanan lewat repository";
+  step selectOrder "Repository membaca pesanan dari Postgres";
 }
 
 flow refund "Refund" {
   description "Pembeli mengajukan pengembalian dana untuk pesanan yang sudah dibayar.";
-  step request_refund "Pembeli menekan tombol refund di detail pesanan";
-  step refund_post "Web mengirim ID pesanan ke API";
-  step refund_gateway "Gateway memproses permintaan dan mengembalikan ID refund";
-  step record_refund "API mencatat ID refund pada pesanan di Postgres";
+  step requestRefund "Pembeli menekan tombol refund di detail pesanan";
+  step postRefund "Web mengirim id pesanan ke API";
+  step refundGateway "Gateway memproses permintaan dan mengembalikan nomor refund";
+  step recordRefund "API mencatat nomor refund pada pesanan di Postgres";
+}
+
+environment production "Production" {
+  description "Satu region AWS, dengan database terkelola.";
+
+  node aws "AWS Jakarta" {
+    tech aws;
+
+    infra cdn "CloudFront" { role cdn; tech cloudfront; }
+
+    node cluster "EKS" {
+      tech kubernetes;
+      deploy webPods shop.web { replicas 2; }
+      deploy apiPods shop.api { replicas 3; }
+    }
+
+    node rds "RDS" {
+      tech postgres;
+      deploy primary shop.db { replicas 1; }
+    }
+
+    node legacy "VM laporan" {
+      deploy reportsVm shop.reports { replicas 1; }
+    }
+  }
+
+  serveWeb: aws.cdn -> aws.cluster.webPods { op use; }
 }

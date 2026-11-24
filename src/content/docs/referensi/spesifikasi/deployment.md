@@ -106,4 +106,4 @@ Relasi yang ditulis di dalam environment hanya untuk elemen infra, yang tidak ad
 - `amends` membuat **varian arsitektur**, misalnya *as-is* dan *to-be*.
 - `environment` menyatakan **tempat software berjalan** untuk satu varian arsitektur.
 
-File `amends` boleh menambah environment, mengubahnya lewat `extend`, atau menghapusnya lewat `remove`.
+File `amends` boleh menambah environment, mengubahnya lewat `extend`, atau menghapusnya lewat `remove`. Target `extend` boleh berupa environment atau node di dalamnya, misalnya `extend production.jakarta { … }`: segmen pertama path dicari sebagai id environment kalau tidak ada elemen top-level dengan id itu. Kalau keduanya ada, `E607`.

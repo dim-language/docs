@@ -55,7 +55,7 @@ base      = PRIMITIVE
 
 ### 8.4 Tipe bernama
 
-Tipe bernama adalah unit kode `record`, `enum`, `union`, atau `alias` ([§7.2](/referensi/spesifikasi/level-kode/#72-kind-level-kode)). Tipe bernama dirujuk lewat **path**, yang di-resolve seperti path lain dari scope tempat ekspresi itu ditulis ([§6.9](/referensi/spesifikasi/model/#69-resolusi-path)).
+Tipe bernama adalah unit kode `record`, `enum`, `union`, `alias`, `class`, atau `interface` ([§7.2](/referensi/spesifikasi/level-kode/#72-kind-level-kode)). `class` dan `interface` hanya ada di paradigma `oop`, tapi boleh dirujuk sebagai tipe dari mana pun. Tipe bernama dirujuk lewat **path**, yang di-resolve seperti path lain dari scope tempat ekspresi itu ditulis ([§6.9](/referensi/spesifikasi/model/#69-resolusi-path)).
 
 ```dim
 component orders "Orders" {
@@ -82,7 +82,7 @@ component orders "Orders" {
 }
 ```
 
-- Path yang tidak menunjuk `record`, `enum`, `union`, atau `alias` adalah `E306`.
+- Path yang tidak menunjuk tipe bernama adalah `E306`.
 - Nama tipe **tidak** harus unik di seluruh model. Dua component boleh sama-sama punya `record config`, karena rujukannya lewat path.
 - Tipe dari component lain, container lain, atau system lain boleh dirujuk. Itulah cara menulis kontrak bersama: tipe didefinisikan sekali di tempat pemiliknya, lalu dirujuk dari mana pun.
 

@@ -69,7 +69,7 @@ extend payment {
   - `extend` can **override** properties. A member with an existing id replaces the old one.
   - `unset <property>;` inside an `extend` block removes a property, including turning off a flag.
   - `unset <member> <id>;` removes one member, for example `unset param order;` or `unset field total;`.
-  - `remove <target>;` removes an element along with all its descendants and every relation touching them, a relation by its id, a flow by its id, a flow branch by `<flow>.<branch>`, or an environment by its id.
+  - `remove <target>;` removes an element along with all its descendants, every relation touching them, and every `deploy` and `omit` that refers to them, a relation by its id, a flow by its id, a flow branch by `<flow>.<branch>`, or an environment by its id.
 - `remove` and `unset` in an ordinary file are `E606`.
 - An `unset` not directly inside an `extend` block, or one that removes something that doesn't exist, is `E608`. Required properties can't be `unset`; to change their value, write the property again.
 - A one-segment `remove` target without `::` can mean a top-level element, a relation id, a flow id, or an environment id. If more than one matches, `E607`. Write `remove ::name` for an element.

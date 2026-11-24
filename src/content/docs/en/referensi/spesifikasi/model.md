@@ -39,7 +39,7 @@ Nesting that breaks this table is `E201`.
 | `tags` | ≥1 tag reference | all | |
 | `tech` | ≥1 tech reference | `container`, `component` | |
 | `role` | a role ([§6.5](#65-container-roles)) | `container` | yes |
-| `paradigm` | ≥1 paradigm ([§6.6](#66-paradigms)) | `container`, `component` | containers with code-level elements |
+| `paradigm` | ≥1 paradigm ([§6.6](#66-paradigms)) | `container`, `component` | containers with code units other than data types |
 | `external` | flag | `system`, `container` | |
 | `source` | block ([§6.7](#67-implementation-location-source)) | all except `person` | |
 | `meta` | JSON object ([§6.8](#68-meta)) | all | |
@@ -52,7 +52,7 @@ A missing required property is `E205`. A property that doesn't apply to the kind
 
 - Everything inside an `external` system is external too. Writing `external` on a container inside an external system is `E212`.
 - An external container inside a system we own is also allowed, for example a SaaS product used by only one system.
-- External elements aren't deployed ([§13](/en/referensi/spesifikasi/deployment/#13-deployment)) and can't contain code-level elements (`E201`).
+- External elements aren't deployed ([§13](/en/referensi/spesifikasi/deployment/#13-deployment)). At the code level, an external element can contain only data types (`record`, `enum`, `union`, `alias`), so a third party's API contract can still be written (`E201`).
 
 ### 6.5 Container roles
 
@@ -80,7 +80,7 @@ container api "API" {
 
 `paradigm` states the style of code in the container: `procedural`, `functional`, and/or `oop`. Paradigms decide which code-level kinds can be used ([§7.1](/en/referensi/spesifikasi/level-kode/#71-paradigms)).
 
-- Required on every container that contains code-level elements (`E213`). A container without code-level elements can write it to state its intent.
+- Required on every container that contains code units other than data types (`E213`). Data types can be used under any paradigm, so a container with only data types doesn't need `paradigm`. Other containers can write it to state their intent.
 - A component can write `paradigm` to **narrow** the paradigms that apply. A paradigm its containing container or component doesn't have is `E213`.
 - An element's **effective paradigms** are the `paradigm` of the nearest component or container above it that writes one.
 - A paradigm can't be listed twice (`E207`).

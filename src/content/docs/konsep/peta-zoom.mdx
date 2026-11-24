@@ -25,7 +25,7 @@ Kumpulan semua tempat yang sedang terlihat disebut **frontier**. Saat semua sist
 
 ## Lifting
 
-Relasi selalu disimpan dengan ujung aslinya, misalnya dari `find_by_id()` ke `Postgres`. Untuk menggambarnya, setiap ujung dinaikkan ke leluhur terdekatnya yang ada di frontier:
+Relasi selalu disimpan dengan ujung aslinya, misalnya `selectOrder` dari `find_by_id()` ke `Postgres`. Untuk menggambarnya, setiap ujung dinaikkan ke leluhur terdekatnya yang ada di frontier:
 
 | Terbuka | `find_by_id()` naik ke | `Postgres` naik ke | Hasil |
 |---|---|---|---|
@@ -36,28 +36,26 @@ Relasi selalu disimpan dengan ujung aslinya, misalnya dari `find_by_id()` ke `Po
 
 Baris pertama penting: kalau kedua ujung naik ke tempat yang sama, relasinya **internal** dan tidak digambar. Itu sebabnya saat `Online Shop` tertutup, relasi di dalamnya tidak menjadi panah dari `Online Shop` ke dirinya sendiri.
 
-Karena itu juga dim melarang relasi antara elemen dan leluhurnya sendiri (error `E022`): relasi seperti itu pasti hilang di setiap level zoom.
+Karena itu juga dim melarang relasi antara elemen dan leluhurnya sendiri (error `E404`): relasi seperti itu pasti hilang di setiap level zoom.
 
 ## Aggregasi
 
-Beberapa relasi bisa naik ke pasangan tempat yang sama. Saat `API` dan `Postgres` terlihat sebagai kotak, `repo.save → db` dan `repo.find → db` bisa sama-sama tampil sebagai `API → Postgres`. Keduanya digabung jadi satu panah yang tetap membawa:
+Beberapa relasi bisa naik ke pasangan tempat yang sama. Saat `API` dan `Postgres` terlihat sebagai kotak, `insertOrder`, `selectOrder`, dan `recordRefund` sama-sama tampil sebagai `API → Postgres`. Ketiganya digabung jadi satu panah yang tetap membawa:
 
-- daftar relasi asalnya, supaya bisa ditelusuri balik;
+- daftar id relasi asalnya, supaya bisa ditelusuri balik;
 - semua `op` yang terlibat (`write, read`);
-- aliran data per arah (`kirim Order · ambil Order`).
+- aliran data per arah (`push Order, RefundId` dan `pull Order`).
 
 Arah tetap dihormati: `a → b` dan `b → a` adalah dua panah berbeda.
 
 Buka **Relasi di tampilan ini** di bawah peta untuk melihat hasil aggregasi. Pilih satu relasi untuk menyorot panahnya dan melihat operasi serta data yang mengalir.
 
-Di editor Exact, pilih panah dari API ke Postgres. Di bagian **Tipe terkait** pada relasi `INSERT orders`, pilih `Order` untuk membuka definisi tipenya pada peta. Panel detail elemen juga menampilkan lokasi implementasi bila model mencantumkan `source`.
-
 ## Apa yang dikerjakan siapa
 
-Parser **tidak** melakukan lifting. Model dari `compileProject` selalu berisi relasi dengan ujung aslinya, dan tampilan yang menghitung frontier, lifting, dan aggregasi. Dengan begitu, satu file JSON cukup untuk semua level zoom, dan semua tampilan menghasilkan diagram yang sama dari model yang sama.
+Parser **tidak** melakukan lifting. Model hasil parse selalu berisi relasi dengan ujung aslinya, dan tampilan yang menghitung frontier, lifting, dan aggregasi. Dengan begitu, satu file JSON cukup untuk semua level zoom, dan semua tampilan menghasilkan diagram yang sama dari model yang sama.
 
-Aturan normatifnya ada di [spesifikasi §10](/referensi/spesifikasi/semantik-zoom/#10-semantik-zoom-lifting).
+Aturan normatifnya ada di [spesifikasi §14](/referensi/spesifikasi/semantik-zoom/#14-semantik-zoom-lifting). View deployment, yang memakai aturan yang sama di hierarki node, dibahas di [Petakan tempat software berjalan](/konsep/deployment/).
 
 ## Cek hasilnya
 
-Pilih relasi INSERT saat API dan Postgres terlihat. Perbesar API sampai sumber relasinya muncul. Cocokkan label INSERT di kedua level untuk memastikan kamu mengikuti operasi yang sama.
+Pilih panah dari API ke Postgres saat keduanya terlihat sebagai kotak. Perbesar API sampai `find_by_id()` muncul. Pastikan panah `selectOrder` sekarang berangkat dari `find_by_id()`, dengan label `SELECT orders` yang sama.

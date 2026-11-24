@@ -101,10 +101,11 @@ export default defineConfig({
 				{
 					label: 'Panduan', translations: { en: 'Guide' },
 					items: [
-						{ slug: 'panduan' }, { slug: 'menulis/memodelkan' }, { slug: 'menulis/elemen' },
-						{ slug: 'menulis/relasi' }, { slug: 'konsep/aliran-data' }, { slug: 'konsep/peta-zoom' },
-						{ slug: 'konsep/level-kode' }, { slug: 'konsep/endpoint' }, { slug: 'konsep/alur' },
-						{ slug: 'konsep/komposisi' }, { slug: 'ekosistem/peta-web' },
+						{ slug: 'panduan' }, { slug: 'menulis/memodelkan' }, { slug: 'menulis/konfigurasi' },
+						{ slug: 'menulis/elemen' }, { slug: 'menulis/relasi' }, { slug: 'konsep/aliran-data' },
+						{ slug: 'konsep/endpoint' }, { slug: 'konsep/level-kode' }, { slug: 'konsep/alur' },
+						{ slug: 'konsep/komposisi' }, { slug: 'konsep/deployment' }, { slug: 'konsep/peta-zoom' },
+						{ slug: 'ekosistem/peta-web' },
 					],
 				},
 				{
