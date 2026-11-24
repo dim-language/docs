@@ -1,55 +1,91 @@
 ---
 title: Trace a flow
-description: Mark a sequence of relations as a user journey you can highlight at every zoom level.
+description: Mark a sequence of relations as a user journey, with alternative, optional, and parallel branches, that you can highlight at every zoom level.
 ---
 
 import ZoomMap from '../../../../components/zoom-map/ZoomMap.astro';
 import shop from '../../../../data/shop.json';
 
-A reviewer wants to know when payment is charged before the order is saved. Give the checkout relations IDs and order those IDs as flow steps.
+A reviewer wants to know when payment is charged before the order is saved, and what happens if the charge is declined. Arrange the checkout relation ids as flow steps, then separate the success path from the failure path.
 
-Arrows show which elements interact. To see what happens after a customer clicks Pay, follow a **sequence** of relations. A `flow` records that sequence in the model.
+Arrows on the map answer "who talks to whom". The next question is usually "what happens when the shopper clicks pay?". The answer is a **sequence** of relations, and a `flow` stores that sequence in the model.
 
 ```dim
 flow checkout "Checkout" {
-  description "Dari pembeli menekan bayar sampai order tersimpan.";
-  step checkout_click;
-  step checkout_post;
-  step run_checkout;
-  step charge "Tagih dulu";
-  step charge_gateway;
-  step save_order "Simpan setelah tertagih";
-  step insert_order;
+  description "From the shopper clicking pay to the order being saved.";
+  step clickPay;
+  step postCheckout;
+  step runCheckout;
+  step computeTotal;
+  step charge "Charge first";
+  step chargeGateway;
+  alt {
+    case paid "Payment succeeded" {
+      step saveOrder "Save once charged";
+      step insertOrder;
+    }
+    case declined "Payment declined" {
+      step showDeclined;
+    }
+  }
 }
 ```
 
-Each `step` names a relation by its explicit ID, as in `charge: a -> b`. Give any relation used in a flow an explicit ID. An automatically generated ID such as `a->b#0` changes when the endpoints change. A step can specify its own label or use the relation's label.
+Each `step` refers to a relation by its id. A step's note is optional; without one, the relation's label is used.
+
+## Branches
+
+Real journeys branch. A flow has three kinds of branch, and every branch must have an id and a label:
+
+| Block | Meaning | Example |
+|---|---|---|
+| `alt` | exactly one of several paths | payment succeeds or is declined |
+| `opt` | steps that may be skipped | using a coupon |
+| `par` | paths that run at the same time | sending a receipt and writing an audit log |
+
+```dim
+opt coupon "Use a coupon" {
+  step validateCoupon;
+}
+
+par {
+  lane receipt "Send receipt" { step sendReceipt; }
+  lane audit "Write audit log" { step writeAudit; }
+}
+```
+
+`alt` and `par` need at least two branches, and every branch needs at least one step. Branches can nest.
+
+## Numbering
+
+Steps are numbered so they're easy to refer to in discussion. The main path is numbered 1, 2, 3, …. A branch block takes one number, and each of its branches gets a letter. In the checkout flow above, `chargeGateway` is step 6, `insertOrder` is 7a.2, and `showDeclined` is 7b.1.
 
 ## Flows at each zoom level
 
-Write a flow using relations at their most detailed level. When you zoom out, dim lifts each step with its relation.
+A flow is written at the most detailed level, like relations. When zoomed out, each step is lifted too, per sequence and never across branch boundaries:
 
-1. Hide a step when both ends of its relation are inside the same closed element.
-2. Merge successive steps that map to the same arrow.
-3. Renumber the remaining steps for that level.
+1. A step whose relation becomes internal (both ends inside one closed element) is hidden.
+2. Consecutive steps in the same sequence that land on the same arrow merge.
+3. A branch whose steps are all hidden becomes empty, and a block whose branches are all empty disappears.
+4. The remaining steps are renumbered for that level.
 
 <ZoomMap
   model={shop}
   uid="alur"
   flow="checkout"
-  caption="Zoom in to follow the Checkout flow. Steps inside a box appear when its contents are large enough to read."
+  caption="Zoom in to follow the Checkout flow. Steps inside a box appear once its content is large enough to read."
 />
 
-When `Checkout` and `Payments` are visible as boxes, `charge`, the call from `checkout()` to `PaymentClient.charge()`, appears as `Checkout → Payments`. The map hides `run_checkout` because both ends are in the `Checkout` component.
+When the `Checkout` and `Payments` components are visible as boxes, `charge` (the `checkout()` method calling `PaymentClient.charge()`) shows as a `Checkout → Payments` arrow. The map hides `runCheckout` and `computeTotal`, because both of their ends are in the `Checkout` component. At the container level, the `declined` branch disappears too: `showDeclined` happens entirely inside the Web App.
 
-## When to model a flow
+## When to use a flow
 
-- Trace a journey people often ask about when they join the team, such as checkout, login, or refunds.
-- Mark a critical path the team needs to preserve during a refactor.
-- Give each branch its own flow so that each one describes a single sequence.
+- For journeys newcomers often ask about: checkout, sign-in, refunds.
+- To mark a critical path that must survive refactoring.
+- To show the failure path next to the success path, with `alt`.
 
-See [specification §12](/en/referensi/spesifikasi/komposisi-dan-flow/#12-flows) for the full rules.
+The full rules are in [specification §12](/en/referensi/spesifikasi/komposisi-dan-flow/#12-flows).
 
 ## Check the result
 
-Zoom into the checkout map until the internal steps appear. Compare the charge and write steps with the order in the file. If they are reversed, reorder the steps and compile again.
+On the checkout map, zoom in until the internal steps are visible. Match the charging and saving steps with the order of steps in the file. Then remove `case declined` and run `dim check`: the message is `E612`, because `alt` needs at least two branches. Use `opt` instead if the failure path really doesn't need to be drawn.

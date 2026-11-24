@@ -1,57 +1,61 @@
 ---
-title: Read arrows at different zoom levels
-description: How one dim model produces a diagram at each level using a frontier, lifting, and aggregation.
+title: Read arrows as the zoom changes
+description: How one dim model produces a diagram at every level through the frontier, lifting, and aggregation.
 ---
 
 import ZoomMap from '../../../../components/zoom-map/ZoomMap.astro';
 import shop from '../../../../data/shop.json';
 
-During review, find who writes to Postgres. Start at the system level and zoom until the writing function appears.
+During a review, find out what writes to Postgres. Start from the system view, then zoom in until the function that writes is readable.
 
-C4 commonly uses a separate diagram for each level. dim builds every view from **one model**. The elements you open determine what the map displays.
+In plain C4, each level is a separate diagram drawn on its own. In dim, there's only **one model**. Every zoom level is a view of the same model, computed from which elements are open.
 
-Zoom in to see the contents of each box as they become large enough to read. Double-click `Online Shop` to move closer, then find `API` and zoom in further.
+Zoom in to see what's inside each box once it's large enough to read. Double-click `Online Shop` to move closer, then find `API` and go further in.
 
 <ZoomMap model={shop} uid="konsep" />
 
 ## Places and regions
 
-- A **place** is a solid box for an element that is closed or has no children. Arrows attach to places.
-- A **region** is a dashed boundary around the contents of an open element.
+Every visible element is in one of two states:
 
-The **frontier** is the set of visible places. With all systems closed, it contains `Customer`, `Online Shop`, and `Payment Gateway`.
+- **A place** (a solid box): an element that's closed, or that has no content. Arrows always attach to places.
+- **A region** (a dashed boundary): an element that's open. A region only wraps its content; arrows never attach to it.
+
+The set of places currently visible is called the **frontier**. When every system is closed, the frontier is `Customer`, `Online Shop`, and `Payment Gateway`.
 
 ## Lifting
 
-dim stores each relation with its original endpoints, such as `find_by_id()` and `Postgres`. To draw the relation, the map lifts each endpoint to its nearest ancestor on the frontier, using the endpoint itself if it is already visible.
+A relation is always stored with its original ends, such as `selectOrder` from `find_by_id()` to `Postgres`. To draw it, each end rises to its nearest ancestor on the frontier:
 
-| Open elements | `find_by_id()` lifts to | `Postgres` lifts to | Result |
+| Open | `find_by_id()` rises to | `Postgres` rises to | Result |
 |---|---|---|---|
-| None | `Online Shop` | `Online Shop` | Hidden |
+| (none) | `Online Shop` | `Online Shop` | not drawn |
 | `shop` | `API` | `Postgres` | `API → Postgres` |
-| `shop` and `api` | `Orders` | `Postgres` | `Orders → Postgres` |
-| All | `find_by_id()` | `Postgres` | `find_by_id() → Postgres` |
+| `shop`, `api` | `Orders` | `Postgres` | `Orders → Postgres` |
+| everything | `find_by_id()` | `Postgres` | `find_by_id() → Postgres` |
 
-When both endpoints lift to the same place, the relation is **internal** and the map hides it. That's why relations inside a closed `Online Shop` don't become self-arrows.
+The first row matters: if both ends rise to the same place, the relation is **internal** and isn't drawn. That's why, when `Online Shop` is closed, the relations inside it don't become an arrow from `Online Shop` to itself.
 
-A relation between an element and its own ancestor would be hidden at every level, so dim reports error `E022`.
+It's also why dim forbids a relation between an element and its own ancestor (error `E404`): such a relation would disappear at every zoom level.
 
 ## Aggregation
 
-Several relations can lift to the same ordered pair of places. When `API` and `Postgres` are visible as boxes, `repo.save → db` and `repo.find → db` can both appear as `API → Postgres`. Their combined arrow retains the original relations, every `op` (`write` and `read` here), and the data in each direction (`send Order · receive Order`).
+Several relations can rise to the same pair of places. When `API` and `Postgres` are visible as boxes, `insertOrder`, `selectOrder`, and `recordRefund` all show as `API → Postgres`. They merge into one arrow that still carries:
 
-Direction still matters. `a → b` and `b → a` are separate arrows.
+- the ids of its source relations, so it can be traced back;
+- every `op` involved (`write, read`);
+- the data flow per direction (`push Order, RefundId` and `pull Order`).
 
-Open **Relations in this view** below the map to see the aggregate relations. Select a relation to highlight its arrow and see its operations and data flow.
+Direction is respected: `a → b` and `b → a` are two different arrows.
 
-In the Exact editor, select the arrow from API to Postgres. Under **Referenced types** on the `INSERT orders` relation, choose `Order` to open its definition on the map. The element detail also shows the implementation location when the model supplies a `source`.
+Open **Relations in this view** below the map to see the result of aggregation. Choose a relation to highlight its arrow and see the operations and data that flow.
 
-## What the parser and renderer do
+## Who does what
 
-`compileProject` returns relations with their original endpoints. The renderer computes the frontier, lifts the endpoints, and aggregates arrows. One JSON file supports every level, and renderers derive the same diagrams from the same model.
+The parser does **not** lift. A parsed model always contains relations with their original ends, and the view computes the frontier, lifting, and aggregation. That way one JSON file is enough for every zoom level, and every view draws the same diagram from the same model.
 
-See [specification §10](/en/referensi/spesifikasi/semantik-zoom/#10-zoom-semantics-lifting) for the normative rules.
+The normative rules are in [specification §14](/en/referensi/spesifikasi/semantik-zoom/#14-zoom-semantics-lifting). The deployment view, which applies the same rules to the node hierarchy, is covered in [Map where software runs](/en/konsep/deployment/).
 
 ## Check the result
 
-Select the INSERT relation when API and Postgres are visible. Zoom into API until its source appears. Match the INSERT label at both levels to confirm you followed the same operation.
+Choose the arrow from API to Postgres while both are visible as boxes. Zoom into API until `find_by_id()` appears. Confirm that the `selectOrder` arrow now starts at `find_by_id()`, with the same `SELECT orders` label.

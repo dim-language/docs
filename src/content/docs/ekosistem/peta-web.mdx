@@ -5,22 +5,24 @@ description: Tampilkan model checkout dengan komponen peta SDK.
 
 import ShopMap from '../../../examples/model-pertama/ShopMap.astro';
 import source from '../../../examples/model-pertama/kode.dim?raw';
+import config from '../../../examples/model-pertama/dim.config?raw';
 
-Di proyek Astro, [pasang SDK](/referensi/cli/#pasang). Salin file akhir `toko.dim` dari [tutorial](/mulai/) ke `src/models/toko.dim`. Simpan komponen berikut di `src/components/`.
+Di proyek Astro, [pasang SDK](/referensi/cli/#pasang). Salin file akhir `toko.dim` beserta `dim.config`-nya dari [tutorial](/mulai/) ke `src/models/`. Simpan komponen berikut di `src/components/`.
 
 ```astro title="src/components/ShopMap.astro" contoh-tutorial="ShopMap.astro"
 ```
 
-Buat halaman yang membaca file model sebagai teks. Komponen mengompilasinya saat halaman dirender.
+Buat halaman yang membaca model dan config-nya sebagai teks. Komponen mengompilasinya saat halaman dirender.
 
 ```astro title="src/pages/checkout.astro"
 ---
 import ShopMap from '../components/ShopMap.astro';
 import source from '../models/toko.dim?raw';
+import config from '../models/dim.config?raw';
 ---
-<ShopMap source={source} language="id" />
+<ShopMap source={source} config={config} language="id" />
 ```
 
 Jalankan dev server Astro dan buka `/checkout/`. Perbesar petanya sampai Web dan API terlihat. Pilih relasi POST untuk memeriksa request dan respons, seperti pada contoh yang dirender di sini.
 
-<ShopMap source={source} language="id" />
+<ShopMap source={source} config={config} language="id" />

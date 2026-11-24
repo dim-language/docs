@@ -1,37 +1,73 @@
 ---
 title: Telusuri satu flow
-description: Menandai urutan relasi sebagai satu user journey yang bisa disorot di setiap level zoom.
+description: Menandai urutan relasi sebagai satu user journey, dengan cabang alternatif, opsional, dan paralel, yang bisa disorot di setiap level zoom.
 ---
 
 import ZoomMap from '../../../components/zoom-map/ZoomMap.astro';
 import shop from '../../../data/shop.json';
 
-Seorang reviewer ingin tahu kapan pembayaran ditagih sebelum pesanan disimpan. Beri ID pada relasi checkout dan urutkan ID itu sebagai langkah flow.
+Seorang reviewer ingin tahu kapan pembayaran ditagih sebelum pesanan disimpan, dan apa yang terjadi kalau penagihan ditolak. Susun id relasi checkout sebagai langkah flow, lalu pisahkan jalur berhasil dan jalur gagalnya.
 
 Panah di peta menjawab "siapa bicara dengan siapa". Pertanyaan berikutnya biasanya "apa yang terjadi saat pembeli menekan bayar?". Jawabannya adalah **urutan** beberapa relasi, dan `flow` menyimpan urutan itu di model.
 
 ```dim
 flow checkout "Checkout" {
   description "Dari pembeli menekan bayar sampai order tersimpan.";
-  step checkout_click;
-  step checkout_post;
-  step run_checkout;
+  step clickPay;
+  step postCheckout;
+  step runCheckout;
+  step computeTotal;
   step charge "Tagih dulu";
-  step charge_gateway;
-  step save_order "Simpan setelah tertagih";
-  step insert_order;
+  step chargeGateway;
+  alt {
+    case paid "Pembayaran berhasil" {
+      step saveOrder "Simpan setelah tertagih";
+      step insertOrder;
+    }
+    case declined "Pembayaran ditolak" {
+      step showDeclined;
+    }
+  }
 }
 ```
 
-Setiap `step` merujuk relasi lewat id eksplisitnya, mis. `charge: a -> b`. Relasi tanpa id eksplisit tidak bisa dipakai di flow, karena id default (`a->b#0`) berubah kalau ujung relasinya berubah. Keterangan di `step` opsional; kalau tidak ditulis, label relasinya yang dipakai.
+Setiap `step` merujuk relasi lewat id-nya. Keterangan di `step` opsional; kalau tidak ditulis, label relasinya yang dipakai.
+
+## Cabang
+
+Journey nyata sering bercabang. Flow punya tiga jenis cabang, dan setiap cabang wajib punya id dan label:
+
+| Blok | Arti | Contoh |
+|---|---|---|
+| `alt` | tepat satu dari beberapa jalur | pembayaran berhasil atau ditolak |
+| `opt` | langkah yang boleh dilewati | memakai kupon |
+| `par` | jalur yang berjalan bersamaan | kirim struk dan catat audit |
+
+```dim
+opt coupon "Pakai kupon" {
+  step validateCoupon;
+}
+
+par {
+  lane receipt "Kirim struk" { step sendReceipt; }
+  lane audit "Catat audit" { step writeAudit; }
+}
+```
+
+`alt` dan `par` minimal punya dua cabang, dan setiap cabang minimal punya satu langkah. Cabang boleh bersarang.
+
+## Penomoran
+
+Langkah dinomori supaya mudah dirujuk dalam diskusi. Jalur utama bernomor 1, 2, 3, …. Blok cabang memakai satu nomor, dan setiap cabangnya mendapat huruf. Di flow checkout di atas, `chargeGateway` adalah langkah 6, `insertOrder` adalah 7a.2, dan `showDeclined` adalah 7b.1.
 
 ## Flow di setiap level zoom
 
-Flow ditulis di level paling detail, sama seperti relasi. Saat di-zoom out, setiap step ikut di-lift:
+Flow ditulis di level paling detail, sama seperti relasi. Saat di-zoom out, setiap step ikut di-lift, per urutan dan tanpa melintasi batas cabang:
 
 1. Step yang relasinya menjadi internal (kedua ujungnya di dalam satu elemen tertutup) disembunyikan.
-2. Step berurutan yang jatuh ke panah yang sama digabung.
-3. Langkah yang tersisa dinomori ulang untuk level itu.
+2. Step berurutan dalam urutan yang sama yang jatuh ke panah yang sama digabung.
+3. Cabang yang semua langkahnya tersembunyi menjadi kosong, dan blok yang semua cabangnya kosong ikut hilang.
+4. Langkah yang tersisa dinomori ulang untuk level itu.
 
 <ZoomMap
   model={shop}
@@ -40,16 +76,16 @@ Flow ditulis di level paling detail, sama seperti relasi. Saat di-zoom out, seti
   caption="Perbesar peta untuk mengikuti alur Checkout. Langkah di dalam kotak muncul saat isi kotaknya cukup besar untuk dibaca."
 />
 
-Saat komponen `Checkout` dan `Payments` terlihat sebagai kotak, `charge` (method `checkout()` memanggil `PaymentClient.charge()`) tampil sebagai panah `Checkout → Payments`. Peta menyembunyikan `run_checkout` karena kedua ujungnya ada di komponen `Checkout`.
+Saat component `Checkout` dan `Payments` terlihat sebagai kotak, `charge` (method `checkout()` memanggil `PaymentClient.charge()`) tampil sebagai panah `Checkout → Payments`. Peta menyembunyikan `runCheckout` dan `computeTotal`, karena kedua ujungnya ada di component `Checkout`. Di level container, cabang `declined` ikut hilang: `showDeclined` berlangsung seluruhnya di dalam Web App.
 
 ## Kapan memakai flow
 
 - Untuk journey yang sering ditanyakan orang baru: checkout, login, refund.
 - Untuk menandai jalur kritis yang harus dijaga saat refactor.
-- Bukan untuk menggambar semua kemungkinan cabang. Flow adalah satu urutan; cabang lain ditulis sebagai flow lain.
+- Untuk menunjukkan jalur gagal di samping jalur berhasilnya, dengan `alt`.
 
 Aturan lengkapnya ada di [spesifikasi §12](/referensi/spesifikasi/komposisi-dan-flow/#12-flow).
 
 ## Cek hasilnya
 
-Di peta checkout, perbesar sampai langkah internal terlihat. Cocokkan langkah penagihan dan penyimpanan dengan urutan step di file. Jika urutannya keliru, ubah urutan step dan kompilasi kembali.
+Di peta checkout, perbesar sampai langkah internal terlihat. Cocokkan langkah penagihan dan penyimpanan dengan urutan step di file. Lalu hapus `case declined` dan jalankan `dim check`: pesannya `E612`, karena `alt` butuh minimal dua cabang. Ganti `alt` dengan `opt` kalau jalur gagalnya memang tidak perlu digambar.

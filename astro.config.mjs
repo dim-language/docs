@@ -63,7 +63,7 @@ export default defineConfig({
 							const example = codeBlock.metaOptions.getString('contoh-tutorial');
 							if (!example) return;
 
-							const source = (/^[a-z-]+\.(dim|mjs)$/.test(example) || example === 'ShopMap.astro')
+							const source = (/^[a-z-]+\.(dim|mjs)$/.test(example) || example === 'ShopMap.astro' || example === 'dim.config')
 								? readFileSync(new URL(example, tutorialDir), 'utf8')
 								: JSON.parse(readFileSync(new URL('cek.json', tutorialDir), 'utf8'))[example];
 							if (typeof source !== 'string') throw new Error(`Contoh tutorial tidak ditemukan: ${example}`);
@@ -101,10 +101,11 @@ export default defineConfig({
 				{
 					label: 'Panduan', translations: { en: 'Guide' },
 					items: [
-						{ slug: 'panduan' }, { slug: 'menulis/memodelkan' }, { slug: 'menulis/elemen' },
-						{ slug: 'menulis/relasi' }, { slug: 'konsep/aliran-data' }, { slug: 'konsep/peta-zoom' },
-						{ slug: 'konsep/level-kode' }, { slug: 'konsep/endpoint' }, { slug: 'konsep/alur' },
-						{ slug: 'konsep/komposisi' }, { slug: 'ekosistem/peta-web' },
+						{ slug: 'panduan' }, { slug: 'menulis/memodelkan' }, { slug: 'menulis/konfigurasi' },
+						{ slug: 'menulis/elemen' }, { slug: 'menulis/relasi' }, { slug: 'konsep/aliran-data' },
+						{ slug: 'konsep/endpoint' }, { slug: 'konsep/level-kode' }, { slug: 'konsep/alur' },
+						{ slug: 'konsep/komposisi' }, { slug: 'konsep/deployment' }, { slug: 'konsep/peta-zoom' },
+						{ slug: 'ekosistem/peta-web' },
 					],
 				},
 				{
@@ -118,12 +119,17 @@ export default defineConfig({
 							items: [
 								{ slug: 'referensi/spesifikasi', label: 'Ikhtisar', translations: { en: 'Overview' } },
 								{ slug: 'referensi/spesifikasi/sintaks' },
+								{ slug: 'referensi/spesifikasi/konfigurasi' },
 								{ slug: 'referensi/spesifikasi/model' },
+								{ slug: 'referensi/spesifikasi/level-kode' },
+								{ slug: 'referensi/spesifikasi/tipe' },
+								{ slug: 'referensi/spesifikasi/relasi' },
+								{ slug: 'referensi/spesifikasi/endpoint' },
+								{ slug: 'referensi/spesifikasi/komposisi-dan-flow' },
+								{ slug: 'referensi/spesifikasi/deployment' },
+								{ slug: 'referensi/spesifikasi/semantik-zoom' },
 								{ slug: 'referensi/spesifikasi/validasi' },
 								{ slug: 'referensi/spesifikasi/output' },
-								{ slug: 'referensi/spesifikasi/semantik-zoom' },
-								{ slug: 'referensi/spesifikasi/komposisi-dan-flow' },
-								{ slug: 'referensi/spesifikasi/endpoint-http' },
 								{ slug: 'referensi/spesifikasi/bentuk-kanonik' },
 							],
 						},

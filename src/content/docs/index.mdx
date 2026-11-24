@@ -46,14 +46,13 @@ import shop from '../../data/shop.json';
 <img class="dim-scene" src="/dido/order-id.webp" width="640" height="374" alt="" loading="lazy" />
 <div class="dim-example-body">
 
-Kali ini Dido nanya dulu. Arsiteknya geleng. “ID-nya aja.” Mereka buka model dan catat kesepakatannya di panah **Web App → API**. Sekarang Dido bisa kasih agennya file yang bilang persis apa yang dikirim (`CheckoutRequest`) dan apa yang balik (`OrderId`).
+Kali ini Dido nanya dulu. Arsiteknya geleng. “ID-nya aja.” Mereka buka model dan catat kesepakatannya di panah **Web App → API**. Sekarang Dido bisa kasih agennya file yang bilang persis apa yang dikirim (`Cart`) dan apa yang balik (`OrderId`).
 
 ```dim title="shop.dim"
-checkout_post: web.checkout.button -> api.checkout.route "POST /checkout" {
+sendCart: web.checkout -> api.checkout "Kirim keranjang" {
   op call;
-  tech "HTTPS/JSON";
-  data push "CheckoutRequest";
-  data pull "OrderId";
+  data push api.orders.cart;
+  data pull api.orders.orderId;
 }
 ```
 
@@ -71,11 +70,11 @@ checkout_post: web.checkout.button -> api.checkout.route "POST /checkout" {
 <img class="dim-scene" src="/dido/missing-direction.webp" width="640" height="330" alt="" loading="lazy" />
 <div class="dim-example-body">
 
-Dido udah nulis tipe request-nya. Yang kelupaan: siapa yang ngirim? Pas model dicek di CI, muncul `E035`. Karena Web App yang ngirim request ke API, Dido tinggal tambahin `push`.
+Dido udah nulis tipe request-nya. Yang kelupaan: siapa yang ngirim? Pas model dicek di CI, muncul `E406`. Karena Web App yang ngirim request ke API, Dido tinggal tambahin `push`.
 
 ```diff
-- data "CheckoutRequest";
-+ data push "CheckoutRequest";
+- data api.orders.cart;
++ data push api.orders.cart;
 ```
 
 <LinkButton href="/referensi/cli/" icon="right-arrow">Cek model pakai SDK</LinkButton>

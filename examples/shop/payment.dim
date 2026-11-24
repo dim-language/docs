@@ -1,6 +1,59 @@
+dim "0.6";
+
 // Payment gateway pihak ketiga. Di-import oleh main.dim.
+// Sistem eksternal hanya berisi kontrak API-nya: endpoint dan tipe data.
 
 system payment "Payment Gateway" {
+  description "Gateway pihak ketiga untuk kartu dan e-wallet.";
   external;
-  container gateway "Gateway API";
+
+  container gateway "Gateway API" {
+    role service;
+
+    component charges "Charges" {
+      description "API publik gateway untuk penagihan dan refund.";
+
+      record chargeRequest "ChargeRequest" {
+        description "Permintaan menagih satu pembayaran.";
+        field reference: uuid "Id order dari pemanggil, dipakai sebagai idempotency key";
+        field amount: decimal;
+      }
+
+      record chargeResult "ChargeResult" {
+        description "Penagihan yang berhasil.";
+        field chargeId: string;
+      }
+
+      record refundRequest "RefundRequest" {
+        description "Permintaan mengembalikan dana satu penagihan.";
+        field chargeId: string;
+      }
+
+      record refundResult "RefundResult" {
+        description "Refund yang diterima gateway.";
+        field refundId: string;
+      }
+
+      record declined "Declined" {
+        description "Gateway menolak permintaan.";
+        field reason: string;
+      }
+
+      endpoint charge "Tagih" {
+        description "Menagih satu pembayaran.";
+        http post "/charges";
+        body chargeRequest;
+        returns 201 chargeResult;
+        throws 402 declined "Kartu atau e-wallet menolak penagihan";
+      }
+
+      endpoint refund "Refund" {
+        description "Mengembalikan dana dari satu penagihan.";
+        http post "/refunds";
+        body refundRequest;
+        returns 201 refundResult;
+        throws 409 declined "Penagihan sudah di-refund";
+      }
+    }
+  }
 }

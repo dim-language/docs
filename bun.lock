@@ -6,7 +6,7 @@
       "name": "dim-monorepo",
       "dependencies": {
         "@astrojs/starlight": "^0.42.10",
-        "@dim/sdk": "https://github.com/dim-language/dim-sdk/releases/download/v0.2.0/dim-sdk-0.2.0.tgz",
+        "@dim/sdk": "https://github.com/dim-language/dim-sdk/releases/download/v0.3.0/dim-sdk-0.3.0.tgz",
         "@fontsource/ibm-plex-mono": "^5.3.0",
         "@fontsource/kalam": "^5.3.0",
         "@fontsource/source-sans-3": "^5.3.1",
@@ -109,7 +109,7 @@
 
     "@ctrl/tinycolor": ["@ctrl/tinycolor@4.3.0", "", {}, "sha512-6V0+8vw/GmH92URQ/Ki12FPhoB3nqaQUJE+5xgbFbB5ok0OXYK5jCQsQQoyR3BzCddHsCpyCFRnIcI1PSOVYkQ=="],
 
-    "@dim/sdk": ["@dim/sdk@https://github.com/dim-language/dim-sdk/releases/download/v0.2.0/dim-sdk-0.2.0.tgz", {}, "sha512-I2abD7jLqD+lCOshm+zn4+vO1dsLMbdxx1dX22mAH6KVRAxM5rQw+0HVFVJQaG2sjQ52nNvWNOlX+na6XDlWxg=="],
+    "@dim/sdk": ["@dim/sdk@https://github.com/dim-language/dim-sdk/releases/download/v0.3.0/dim-sdk-0.3.0.tgz", {}, "sha512-6flo/dUOGzvnAfE0gPJGnk0T0yk0j7fLrdQGgdujnllOQoATpUY/IiTGN9/1bCLHxElIDKhvwJ56CVQhOy18ww=="],
 
     "@emmetio/abbreviation": ["@emmetio/abbreviation@2.3.3", "", { "dependencies": { "@emmetio/scanner": "^1.0.4" } }, "sha512-mgv58UrU3rh4YgbE/TzgLQwJ3pFsHHhCLqY20aJq+9comytTXUDNGG/SMtSeMJdkpxgXSXunBGLD8Boka3JyVA=="],
 

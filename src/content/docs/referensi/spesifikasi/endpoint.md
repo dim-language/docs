@@ -1,0 +1,213 @@
+---
+title: Endpoint
+description: Antarmuka component lewat HTTP, gRPC, GraphQL, dan event, beserta pewarisan prefix, auth, dan rate.
+---
+
+## 10. Endpoint
+
+Endpoint adalah **antarmuka** sebuah component: cara pihak lain memanggilnya atau menerima pesannya. Endpoint bukan konsep kode. Satu endpoint bisa diimplementasikan oleh `function` (misalnya di Express) atau `method` (misalnya di Spring), jadi endpoint berdiri sendiri di bawah component dan hanya **menunjuk** ke kode yang menanganinya.
+
+Dengan begitu, kontrak API bisa ditulis sebelum kodenya ada, atau tanpa memodelkan level kode sama sekali.
+
+dim tidak menggantikan OpenAPI, protobuf, atau skema GraphQL. Contoh request dan respons serta aturan validasi per field tetap di sana. dim mencatat kontraknya di level arsitektur: siapa memanggil apa, dengan tipe apa, dan apa yang bisa gagal.
+
+```dim
+component orders "Orders" {
+  description "Membuat dan membaca order.";
+  prefix "/orders";
+
+  endpoint createOrder "Buat order" {
+    description "Membuat order dari keranjang.";
+    http post "/";
+    handler controller.create;
+    auth bearer ordersWrite;
+    rate user 10 per 1m;
+    body cart;
+    returns 201 order;
+    throws 409 outOfStock "Ada barang yang stoknya habis";
+  }
+}
+```
+
+### 10.1 Baris protokol
+
+Setiap endpoint punya **tepat satu baris protokol**. Baris ini menyatakan protokolnya sekaligus alamat endpoint di protokol itu, sama seperti cara route ditulis di kode (`@PostMapping("/orders")`, `app.post("/orders")`).
+
+| Protokol | Baris protokol | Contoh |
+|---|---|---|
+| HTTP | `http <method> "<path>";` | `http post "/orders";` |
+| gRPC | `grpc "<service>" "<rpc>";` | `grpc "OrderService" "GetOrder";` |
+| GraphQL | `graphql <operasi> "<field>";` | `graphql query "order";` |
+| Event | `event "<nama>" on <path-queue>;` | `event "OrderPlaced" on ::shop.events;` |
+
+Endpoint tanpa baris protokol, atau dengan lebih dari satu, adalah `E501`. Properti atau member yang tidak berlaku untuk protokolnya adalah `E502`.
+
+### 10.2 Properti umum
+
+| Properti | Nilai | Keterangan |
+|---|---|---|
+| `description` | prosa | wajib |
+| `handler` | path ke `function` atau `method` | kode yang menangani endpoint ini |
+| `auth` | skema + scope | [§10.7](#107-prefix-auth-dan-rate); tidak berlaku untuk event |
+| `rate` | kunci, jumlah, durasi; boleh berulang | [§10.7](#107-prefix-auth-dan-rate); tidak berlaku untuk event |
+| `source`, `tags`, `meta` | | [§6.3](/referensi/spesifikasi/model/#63-properti-umum) |
+
+`handler` harus menunjuk `function` atau `method` di container yang sama (`E506`). Parser tidak membandingkan parameter handler dengan kontrak endpoint.
+
+### 10.3 HTTP
+
+```dim
+endpoint suspendMember "Tangguhkan anggota" {
+  description "Menangguhkan anggota sampai diaktifkan lagi.";
+  http post "/{memberId}/suspend";
+  param memberId: uuid "Id membership";
+  header "X-Request-Id": uuid "Mencegah permintaan ganda";
+  returns 200 membershipStatus;
+  throws 403 forbidden "Mengubah membership sendiri";
+  throws 404 notFound "Membership tidak ditemukan";
+}
+```
+
+Baris protokol: `http <method> "<path>";`
+
+- `method`: `get`, `post`, `put`, `patch`, `delete`, `head`, atau `options`.
+- `path`: literal `httpPath` ([§3.9](/referensi/spesifikasi/sintaks/#39-literal-bertipe)), relatif terhadap `prefix` ([§10.7](#107-prefix-auth-dan-rate)).
+
+| Member | Bentuk | Keterangan |
+|---|---|---|
+| `param` | `<id>: <tipe> ["ket"]`, boleh berulang | parameter path |
+| `query` | `<id>: <tipe> ["ket"]`, boleh berulang | parameter query |
+| `header` | `"<nama>": <tipe> ["ket"]`, boleh berulang | header request; nama berupa literal `headerName` |
+| `cookie` | `"<nama>": <tipe> ["ket"]`, boleh berulang | cookie request; nama berupa literal `cookieName` |
+| `body` | `<tipe>` | body request |
+| `returns` | `<status> [<tipe>] ["ket"]` | wajib; respons sukses, dengan atau tanpa body |
+| `throws` | `<status> <tipe> ["ket"]`, boleh berulang | respons error |
+| `sets` | `cookie`\|`header` `"<nama>"` `["ket"]`, boleh berulang | cookie atau header yang di-set respons |
+
+Aturan:
+
+- Setiap `{nama}` di path lengkap (termasuk dari `prefix`) harus punya tepat satu `param` dengan id yang sama, dan setiap `param` harus punya placeholder-nya (`E503`).
+- Status `returns` harus 200–399. Status `throws` harus 400–599 (`E504`). `throws` dengan status yang sama boleh berulang untuk tipe yang berbeda.
+- Id `param` dan `query` unik dalam satu endpoint. Nama `header` unik tanpa membedakan huruf besar-kecil. Nama `cookie` unik. Duplikat adalah `E303`.
+- `body` pada `get` atau `head` adalah `E509`.
+- Dua endpoint HTTP dalam satu container dengan method dan path lengkap yang sama adalah `E505`.
+
+Respons 401 untuk endpoint yang `auth`-nya bukan `none`, dan 429 untuk endpoint yang punya `rate`, tidak perlu ditulis di `throws`. Konsumen menampilkannya sebagai respons tersirat.
+
+### 10.4 gRPC
+
+```dim
+endpoint getOrder "Ambil order" {
+  description "Mengambil satu order lewat id-nya.";
+  grpc "OrderService" "GetOrder";
+  request orderId;
+  returns order;
+  throws notFound orderMissing;
+}
+```
+
+Baris protokol: `grpc "<service>" "<rpc>";`. Keduanya literal `externalName`.
+
+| Member atau properti | Bentuk | Keterangan |
+|---|---|---|
+| `request` | `<tipe>` | wajib |
+| `returns` | `<tipe>` | wajib |
+| `stream` | `client`, `server`, atau `bidi` | untuk RPC streaming |
+| `throws` | `<kode> <tipe> ["ket"]`, boleh berulang | kode status gRPC dalam camelCase |
+
+Kode status yang dikenal: `cancelled`, `unknown`, `invalidArgument`, `deadlineExceeded`, `notFound`, `alreadyExists`, `permissionDenied`, `resourceExhausted`, `failedPrecondition`, `aborted`, `outOfRange`, `unimplemented`, `internal`, `unavailable`, `dataLoss`, `unauthenticated`. Kode lain adalah `E504`. Dua endpoint gRPC dalam satu container dengan service dan rpc yang sama adalah `E505`.
+
+### 10.5 GraphQL
+
+```dim
+endpoint orderQuery "Query order" {
+  description "Mengambil order milik pengguna yang sedang masuk.";
+  graphql query "order";
+  param id: uuid;
+  returns order?;
+  throws orderMissing;
+}
+```
+
+Baris protokol: `graphql <operasi> "<field>";`
+
+- `operasi`: `query`, `mutation`, atau `subscription`.
+- `field`: literal `externalName`, nama field di root type.
+
+| Member | Bentuk | Keterangan |
+|---|---|---|
+| `param` | `<id>: <tipe> ["ket"]`, boleh berulang | argumen field |
+| `returns` | `<tipe>` | wajib |
+| `throws` | `<tipe> ["ket"]`, boleh berulang | error yang dikembalikan di `errors` |
+
+Dua endpoint GraphQL dalam satu container dengan operasi dan field yang sama adalah `E505`.
+
+### 10.6 Event
+
+```dim
+endpoint orderPlaced "Order dibuat" {
+  description "Dikirim setelah order tersimpan.";
+  event "OrderPlaced" on ::shop.events;
+  payload order;
+}
+```
+
+Baris protokol: `event "<nama>" on <path-queue>;`
+
+- `nama`: literal `externalName`, nama event.
+- `path-queue`: path ke container berperan `queue` (`E507`).
+
+| Member | Bentuk | Keterangan |
+|---|---|---|
+| `payload` | `<tipe>` | wajib |
+
+Endpoint event berada di component **pemilik** event-nya, biasanya pengirimnya. Pengirim menulis `publish` ke endpoint ini, dan penerima menulis `subscribe` ke endpoint ini. Dua endpoint event dengan nama dan queue yang sama adalah `E505`.
+
+### 10.7 `prefix`, `auth`, dan `rate`
+
+```dim
+container api "API" {
+  role service;
+  prefix "/v1";
+  auth bearer;
+  rate ip 100 per 1m;
+
+  component accounts "Auth" {
+    description "Login dan refresh token.";
+    prefix "/auth";
+
+    endpoint login "Masuk" {
+      description "Masuk dengan email dan password.";
+      http post "/login";
+      auth none;
+      rate ip 5 per 1m;
+      body credentials;
+      returns 200 session;
+      throws 401 invalidCredentials;
+    }
+  }
+}
+```
+
+| Properti | Nilai | Berlaku untuk |
+|---|---|---|
+| `prefix` | literal `httpPath` | `container`, `component` |
+| `auth` | `none`, atau skema diikuti ≥0 rujukan scope | `container`, `component`, `endpoint` |
+| `rate` | `<kunci> <INT> per <DURATION>`, boleh berulang | `container`, `component`, `endpoint` |
+
+- Skema `auth`: `none`, `bearer`, `cookie`, `basic`, `apiKey`. `auth none` tidak boleh diikuti scope (`E508`). Scope merujuk deklarasi `scope` di `dim.config` (`E104`).
+- Kunci `rate`: `ip`, `user`, `session`, `apiKey`. Kunci yang sama dua kali di satu elemen adalah `E508`.
+- **Pewarisan.** Endpoint memakai `auth` dari dirinya sendiri, atau dari leluhur terdekat yang menulisnya. `rate` diwariskan per kunci: untuk setiap kunci, nilai dari elemen terdekat yang menulis kunci itu yang berlaku. `prefix` dari semua leluhur digabung dari luar ke dalam, lalu path endpoint ditambahkan di belakangnya.
+- `prefix` hanya berlaku untuk endpoint HTTP. `prefix`, `auth`, atau `rate` di elemen yang tidak punya endpoint yang cocok di bawahnya adalah `E510`.
+
+### 10.8 Relasi ke endpoint
+
+```dim
+placeOrder: web.checkout -> api.orders.createOrder { op call; }
+announceOrder: api.orders.checkoutService -> api.orders.orderPlaced { op publish; }
+reserveStock: warehouse.stock -> ::shop.api.orders.orderPlaced { op subscribe; }
+```
+
+- `call` ke endpoint HTTP, gRPC, atau GraphQL. `publish` dan `subscribe` ke endpoint event. `op` lain ke endpoint adalah `E405`.
+- Relasi ke endpoint **tidak menulis `data`** (`E406`). Datanya diambil dari endpoint: `push` dari `body`, `request`, `param`, atau `payload`, dan `pull` dari `returns`.
+- Label turunannya dijelaskan di [§9.6](/referensi/spesifikasi/relasi/#96-label).

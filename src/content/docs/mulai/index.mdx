@@ -12,12 +12,17 @@ Simpan peta Dido di satu file `toko.dim`. Siapkan Node.js 24 dan Bun, lalu jalan
 ```sh
 mkdir dim-checkout
 cd dim-checkout
-bun add https://github.com/dim-language/dim-sdk/releases/download/v0.2.0/dim-sdk-0.2.0.tgz
+bun add https://github.com/dim-language/dim-sdk/releases/download/v0.3.0/dim-sdk-0.3.0.tgz
 ```
 
-Simpan kode berikut sebagai `check.mjs` di folder itu. Skrip ini membaca file yang kamu berikan, menjalankan compiler, lalu mencetak jumlah elemen dan relasinya.
+Simpan kode berikut sebagai `check.mjs` di folder itu. Skrip ini membaca file yang kamu berikan beserta `dim.config` di folder yang sama, menjalankan compiler, lalu mencetak jumlah elemen dan relasinya.
 
 ```js contoh-tutorial="check.mjs"
+```
+
+Simpan juga `dim.config` di folder yang sama. Di file ini Dido mendeklarasikan teknologi yang akan dipakai tim, sekali untuk seluruh proyek.
+
+```dim contoh-tutorial="dim.config"
 ```
 
 ## Orang dan sistem
@@ -27,7 +32,7 @@ Buat file `toko.dim` dan isi dengan model berikut.
 ```dim contoh-tutorial="sistem.dim"
 ```
 
-Setiap elemen punya jenis (`person` atau `system`), ID yang dipakai dalam kode, dan nama yang tampil di peta. Panah `pembeli -> toko` menunjukkan bahwa pembeli yang memulai interaksi. Deklarasi tanpa blok diakhiri dengan `;`.
+Setiap file diawali `dim "0.6";`. Setiap elemen punya jenis (`person` atau `system`), ID camelCase yang dipakai dalam path, dan nama yang tampil di peta. Relasi `belanja` punya id dan `op use`, dan panahnya menunjukkan bahwa pembeli yang memulai interaksi. Setiap statement tanpa blok diakhiri `;`.
 
 ```bash
 node check.mjs toko.dim
@@ -37,9 +42,3 @@ node check.mjs toko.dim
 ```
 
 Dua elemen dan satu relasi sudah cukup untuk menggambarkan siapa yang memakai toko online.
-
-## Kelanjutan tiket Dido
-
-- [2. Tim menambahkan checkout](/mulai/checkout/)
-- [3. Layar konfirmasi berubah](/mulai/kontrak/)
-- [4. Review dengan arsitek](/mulai/review/)

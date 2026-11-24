@@ -1,4 +1,7 @@
+dim "0.6";
+
 person pembeli "Pembeli";
+
 system toko "Toko Online";
 
-pembeli -> toko "Belanja";
+belanja: pembeli -> toko "Belanja" { op use; }

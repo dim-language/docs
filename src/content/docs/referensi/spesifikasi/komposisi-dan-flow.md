@@ -1,28 +1,29 @@
 ---
 title: Komposisi file dan flow
-description: Aturan import, extend, amends, remove, dan alur relasi.
+description: Aturan import, extend, amends, remove, dan unset, serta flow dengan cabang alt, opt, dan par.
 ---
 
 ## 11. Komposisi file
 
-Model besar bisa dipecah ke beberapa file. Semua file tetap membentuk **satu model**: path, lifting, dan id relasi bekerja seolah semuanya ditulis di satu file.
+Model besar bisa dipecah ke beberapa file. Semua file tetap membentuk **satu model**: path, lifting, dan id relasi bekerja seolah semuanya ditulis di satu file. Semua file memakai `dim.config` yang sama ([§5.1](/referensi/spesifikasi/konfigurasi/#51-file-dan-proyek)).
 
 ### 11.1 `import`
 
 ```dim
 // main.dim
+dim "0.6";
 import "shop.dim";
 import "payment.dim";
 
-person customer "Customer";
-checkout_click: customer -> shop.web.checkout.button "Klik bayar";
+person customer "Customer" { description "Belanja online."; }
+openCheckout: customer -> shop.web.checkout "Klik bayar" { op use; }
 ```
 
-- `import "<path>";` memuat semua elemen, relasi, dan flow top-level dari file itu ke model yang sama.
-- Path relatif terhadap **file yang menulis `import`**. `..` boleh dipakai.
-- Satu file hanya dimuat sekali, walau di-import dari beberapa file. Import melingkar adalah error `E041`.
-- `import` hanya boleh di top-level (`E042`), boleh di posisi mana pun di file.
-- Elemen top-level dengan id yang sama di dua file adalah error `E011`, sama seperti dua saudara dengan id sama. Untuk menambah isi elemen yang sudah ada, pakai `extend`.
+- `import "<path>";` memuat semua elemen, relasi, flow, dan environment top-level dari file itu ke model yang sama.
+- Path relatif terhadap file yang menulis `import`, dan berupa literal `filePath` ([§3.9](/referensi/spesifikasi/sintaks/#39-literal-bertipe)). File di luar folder proyek adalah `E107`.
+- Satu file hanya dimuat sekali walau di-import dari beberapa file. File yang tidak bisa dibaca adalah `E601`. Import melingkar adalah `E602`.
+- `import` hanya boleh di top-level, setelah deklarasi versi dan `amends` (`E603`).
+- Elemen top-level dengan id yang sama di dua file adalah `E202`. Untuk menambah isi elemen yang sudah ada, pakai `extend`.
 
 ### 11.2 `extend`
 
@@ -32,118 +33,127 @@ extend shop.db {
 }
 
 extend shop {
-  container replica "Read Replica" { shape database }
-  replica -> db "Replikasi" { op subscribe; data "WAL" }
+  container replica "Read Replica" { role database; tech postgres; }
+  replicate: replica -> db "Replikasi" { op read; data pull walRecord; }
 }
 ```
 
-- `extend <path> { … }` membuka kembali elemen yang sudah dideklarasikan, di file mana pun. Isi bloknya diperlakukan seperti isi deklarasi aslinya: boleh berisi atribut, elemen anak, relasi, dan `extend` lain. Path relasi di dalamnya di-resolve dari scope elemen itu.
-- Path target di-resolve seperti path relasi ([§7](/referensi/spesifikasi/model/#7-resolusi-path)), dari scope tempat `extend` ditulis. `extend` boleh di top-level maupun di dalam blok elemen.
-- Elemen target harus **sudah dideklarasikan sebelumnya**: di file yang di-import, atau lebih atas di file yang sama. Kalau tidak, error `E020`.
-- `extend` hanya boleh **mengisi atribut yang belum ada**. Mengisi ulang atribut yang sudah terisi adalah error `E044`, supaya memecah file tidak diam-diam mengubah isi. Atribut yang boleh berulang (`param`, `throws`) tetap ditambahkan; `param` dengan nama yang sudah ada tetap `E036`.
-- Nesting anak divalidasi terhadap elemen target ([§5.1](/referensi/spesifikasi/model/#51-jenis-elemen-dan-aturan-nesting)).
+- `extend <path> { … }` membuka kembali elemen yang sudah dideklarasikan, di file mana pun. Isinya diperlakukan seperti isi deklarasi aslinya: properti, member, elemen anak, relasi, dan `extend` lain.
+- Path target di-resolve dari scope tempat `extend` ditulis ([§6.9](/referensi/spesifikasi/model/#69-resolusi-path)). `extend` boleh di top-level maupun di dalam blok elemen.
+- Elemen target harus sudah dideklarasikan sebelumnya: di file yang di-import, atau lebih atas di file yang sama (`E609`).
+- Di file biasa, `extend` hanya boleh mengisi properti yang belum ada (`E605`), supaya memecah file tidak diam-diam mengubah isi. Member dan properti yang boleh berulang tetap ditambahkan. Member dengan id yang sudah ada adalah `E303`.
 
-### 11.3 `amends` dan `remove`
+### 11.3 `amends`, `remove`, dan `unset`
 
-Satu file bisa menjadi **turunan** dari model lain lalu mengubahnya. Kasus pakainya: arsitektur *as-is* vs *to-be*, proposal migrasi, atau varian per environment. Idenya dari `amends` di [Pkl](https://pkl-lang.org).
+Satu file bisa menjadi **turunan** dari model lain lalu mengubahnya, misalnya untuk arsitektur *as-is* dan *to-be*, atau proposal migrasi. Idenya dari `amends` di [Pkl](https://pkl-lang.org).
 
 ```dim
 // to-be.dim
+dim "0.6";
 amends "main.dim";
 
-remove shop.reports;               // elemen beserta anak dan relasinya
+remove shop.reports;
 
 extend shop.api {
-  tech "Rust/axum 0.8";            // menimpa: boleh karena file ini amends
-  component audit "Audit Log";
+  tech kotlin spring;
+  component audit "Audit Log" { description "Mencatat setiap perubahan order."; }
 }
-```
-
-- `amends "<path>";` harus menjadi statement pertama setelah deklarasi versi opsional, dan hanya sekali (`E043`). File dasar dimuat dulu (beserta semua import-nya), lalu isi file turunan diterapkan di atasnya. File dasar tetap bisa dipakai sendiri.
-- Di dalam file `amends`:
-  - `extend` boleh **menimpa** atribut. `param` dengan nama yang sudah ada menggantikan yang lama, begitu juga `throws` dengan tipe yang sama.
-  - `unset <atribut> [<kunci>];` di dalam blok `extend` menghapus atribut dari elemen itu, termasuk mematikan flag (lihat di bawah).
-  - `remove <target>;` menghapus elemen (beserta semua turunannya dan semua relasi yang menyentuhnya), relasi (lewat id eksplisit), atau flow (lewat id-nya).
-- `remove` dan `unset` di file biasa adalah error `E045`.
-
-**`unset`.** Kasus pakainya: `main.dim` menandai `payment` sebagai `external`, lalu di model *to-be* payment dibangun sendiri.
-
-```dim
-// to-be.dim
-amends "main.dim";
 
 extend payment {
   unset external;
-  tech "Rust/axum";
-}
-
-extend shop.api.orders.repo.save {
-  unset throws "DbError";
-  unset param order;
 }
 ```
 
-- `unset` hanya boleh langsung di dalam blok `extend` (`E047`). Elemen baru tidak punya atribut lama untuk dihapus.
-- Untuk atribut yang paling banyak muncul sekali, `unset <atribut>;` menghapusnya.
-- Untuk atribut yang boleh berulang, `unset <atribut>;` menghapus semua entrinya, dan `unset <atribut> <kunci>;` hanya menghapus entri dengan kunci itu. Kuncinya sama dengan yang dipakai untuk mengecek duplikat:
+- `amends "<path>";` harus menjadi statement kedua, tepat setelah deklarasi versi, dan hanya sekali (`E604`). File dasar dimuat dulu beserta semua import-nya, lalu isi file turunan diterapkan di atasnya.
+- Di dalam file `amends`:
+  - `extend` boleh **menimpa** properti. Member dengan id yang sudah ada menggantikan yang lama.
+  - `unset <properti>;` di dalam blok `extend` menghapus properti, termasuk mematikan flag.
+  - `unset <member> <id>;` menghapus satu member, misalnya `unset param order;` atau `unset field total;`.
+  - `remove <target>;` menghapus elemen beserta semua turunannya, semua relasi yang menyentuhnya, dan semua `deploy` serta `omit` yang merujuknya, relasi lewat id-nya, flow lewat id-nya, cabang flow lewat `<flow>.<cabang>`, atau environment lewat id-nya.
+- `remove` dan `unset` di file biasa adalah `E606`.
+- `unset` yang tidak langsung di dalam blok `extend`, atau yang menghapus sesuatu yang tidak ada, adalah `E608`. Properti wajib tidak bisa di-`unset`; untuk mengganti nilainya, tulis ulang propertinya.
+- Target `remove` satu segmen tanpa `::` bisa berarti elemen top-level, id relasi, id flow, atau id environment. Kalau lebih dari satu cocok, `E607`. Tulis `remove ::nama` untuk elemen.
+- Relasi atau `extend` yang ditulis **setelah** `remove` dan merujuk elemen yang dihapus adalah `E208`.
+- Step yang relasinya hilang karena `remove` ikut hilang dari flow. Kalau sebuah cabang atau flow menjadi kosong karenanya, `E612`. Hapus cabang atau flow itu juga secara eksplisit.
 
-| Atribut | Kunci |
-|---|---|
-| `param` | nama (IDENT) |
-| `query`, `cookie` | nama (STRING) |
-| `header` | nama (STRING), tanpa membedakan huruf besar-kecil |
-| `rate` | kunci rate (IDENT) |
-| `throws` | tipe (STRING), atau status (INT) di endpoint; semua entri dengan tipe/status itu |
-| `sets` | jenis dan nama, mis. `unset sets cookie "refreshToken";` |
-
-- Atribut yang tidak dikenal adalah `E030`. Atribut, atau entri dengan kunci itu, yang tidak ada di elemen target adalah `E047`, supaya salah ketik tidak lolos diam-diam.
-- `unset` dan pengisian ulang atribut yang sama di satu blok diterapkan berurutan. Untuk mengganti nilai, cukup tulis atributnya lagi tanpa `unset`.
-- Model setelah `unset` divalidasi ulang seperti biasa. Menghapus `http` dari endpoint, misalnya, tetap `E060`.
-- Target `remove` berupa path. Nama satu segmen tanpa `::` bisa berarti elemen top-level, id relasi, atau id flow; kalau lebih dari satu cocok, error `E046`. Tulis `remove ::nama` untuk elemen.
-- Elemen yang dihapus boleh dideklarasikan ulang dengan id yang sama. Relasi yang ditulis sebelum `remove` tetap merujuk elemen lama, jadi ikut hilang.
-- Relasi atau `extend` yang ditulis **setelah** `remove` dan merujuk elemen yang dihapus adalah error `E020`.
-- `step` yang relasinya hilang karena `remove` dibuang dari flow-nya dengan warning `W030`.
-- File `amends` boleh juga memakai `import`. File dasar diterapkan lebih dulu, lalu file yang di-import, lalu isi file turunan.
-
-Karena id elemen (path) dan id relasi ([§9](/referensi/spesifikasi/output/#9-format-output-json)) stabil, konsumen bisa menampilkan **diff** antara model dasar dan turunannya: elemen dan relasi yang ditambah, diubah, dan dihapus. Relasi yang dihapus tetap dihitung saat memberi id default ([§9](/referensi/spesifikasi/output/#9-format-output-json)), jadi id relasi lain di model turunan sama persis dengan di model dasar.
-
-Bedanya dengan Pkl: di Pkl, `amends` tidak boleh menambah properti baru. Di dim, file `amends` boleh menambah elemen, karena arsitektur memang berevolusi.
+Karena path elemen dan id relasi stabil, konsumen bisa menampilkan **diff** antara model dasar dan turunannya: elemen dan relasi yang ditambah, diubah, dan dihapus.
 
 ### 11.4 Urutan penerapan
 
-1. File utama dibaca. File yang ditulisnya di `amends` dan `import` dimuat lebih dulu, rekursif, dengan urutan: `amends`, lalu `import` sesuai urutan tulisan.
-2. Statement di setiap file diterapkan berurutan. Urutan ini menentukan:
-   - `extend` hanya melihat elemen yang sudah ada,
-   - `remove` hanya mengenai apa yang ditulis sebelumnya,
-   - urutan `nodes`, `edges`, dan `flows` di output.
-3. Relasi dan `step` di-resolve setelah semua file selesai diterapkan, jadi relasi boleh merujuk elemen yang dideklarasikan lebih bawah, seperti di satu file.
+1. File utama dibaca. File yang ditulisnya di `amends` dan `import` dimuat lebih dulu, rekursif, dengan urutan `amends`, lalu `import` sesuai urutan tulisan.
+2. Statement di setiap file diterapkan berurutan. Urutan ini menentukan apa yang terlihat oleh `extend` dan `remove`, serta urutan elemen, relasi, flow, dan environment di output.
+3. Path relasi, tipe, step, dan rujukan lain di-resolve setelah semua file selesai diterapkan, jadi rujukan boleh menunjuk sesuatu yang dideklarasikan lebih bawah.
 
 ---
 
 ## 12. Flow
 
-`flow` menandai urutan relasi sebagai satu user journey, supaya konsumen bisa menyorotnya di semua level zoom.
+`flow` menandai urutan relasi sebagai satu journey, supaya konsumen bisa menyorotnya di semua level zoom. Journey nyata sering bercabang, jadi flow punya tiga jenis cabang.
 
 ```dim
 flow checkout "Checkout" {
   description "Dari pembeli menekan bayar sampai order tersimpan.";
-  step checkout_click;
-  step checkout_post;
-  step charge "Tagih dulu";
-  step save_order;
+  step openCheckout;
+  step placeOrder;
+  opt coupon "Pakai kupon" {
+    step validateCoupon;
+  }
+  alt {
+    case paid "Pembayaran berhasil" {
+      step saveOrder;
+      par {
+        lane receipt "Kirim struk" { step sendReceipt; }
+        lane audit "Catat audit" { step writeAudit; }
+      }
+    }
+    case declined "Pembayaran ditolak" {
+      step showPaymentError "Tampilkan alasan penolakan";
+    }
+  }
 }
 ```
 
-- `flow <id> ["<nama>"] { … }` hanya boleh di top-level (`E042`). Id flow unik di seluruh model (`E051`) dan punya namespace sendiri, terpisah dari id elemen dan relasi.
-- Isi blok: `step`, `description`, dan `tags`. Statement lain adalah `E030`/`E034`.
-- `step <id-relasi> ["<keterangan>"]` merujuk relasi lewat **id eksplisit**-nya ([§4.4](/referensi/spesifikasi/sintaks/#44-relasi)), boleh relasi di file lain atau yang ditulis lebih bawah. Id yang tidak ada adalah `E050`. Id default (`a->b#0`) tidak bisa dipakai, karena berubah kalau ujung relasinya berubah.
-- Satu relasi boleh muncul di beberapa step atau beberapa flow. Step tidak harus bersambung (ujung step sebelumnya tidak harus sama dengan pangkal step berikutnya), karena journey sering melewati kerja asinkron.
-- Flow tanpa step mendapat warning `W031`.
+### 12.1 Sintaks
 
-**Semantik zoom (untuk konsumen).** Di setiap level, setiap step di-lift seperti relasinya ([§10.2](/referensi/spesifikasi/semantik-zoom/#102-lifting)):
+```dim
+flow <id> "<nama>" { ... }
+step <id-relasi> ["<keterangan>"];
+opt <id> "<label>" { ... }
+alt { case <id> "<label>" { ... } ... }
+par { lane <id> "<label>" { ... } ... }
+```
+
+- `flow` hanya boleh di top-level (`E603`). Id flow unik di seluruh model dan punya namespace sendiri (`E611`).
+- Isi blok flow: `description`, `tags`, `meta`, lalu urutan langkah. Urutan langkah berisi `step`, `opt`, `alt`, dan `par`, dan boleh bersarang.
+- `step` merujuk relasi lewat id-nya ([§9.1](/referensi/spesifikasi/relasi/#91-sintaks)), boleh relasi di file lain atau yang ditulis lebih bawah. Id yang tidak ada adalah `E610`. Keterangan step opsional.
+
+### 12.2 Cabang
+
+| Blok | Arti | Isi |
+|---|---|---|
+| `opt` | langkah yang boleh dilewati | ≥1 langkah |
+| `alt` | tepat satu dari beberapa jalur | ≥2 `case`, masing-masing ≥1 langkah |
+| `par` | jalur yang berjalan bersamaan | ≥2 `lane`, masing-masing ≥1 langkah |
+
+- Setiap `opt`, `case`, dan `lane` wajib punya id dan label (`E613`). Id-nya unik di dalam satu flow (`E611`), sehingga bisa dirujuk sebagai `<flow>.<cabang>`.
+- Flow tanpa langkah, cabang kosong, `alt` dengan kurang dari dua `case`, atau `par` dengan kurang dari dua `lane` adalah `E612`.
+- Satu relasi boleh muncul di beberapa step atau beberapa flow. Step tidak harus bersambung, karena journey sering melewati kerja asinkron.
+
+### 12.3 Penomoran
+
+Langkah dinomori supaya bisa dirujuk dalam percakapan dan ditampilkan di peta:
+
+- Langkah di jalur utama bernomor `1`, `2`, `3`, ….
+- Sebuah blok cabang memakai satu nomor di urutannya. Setiap `case` atau `lane` mendapat huruf sesuai urutan tulisan, dan `opt` mendapat huruf `a`.
+- Langkah di dalam cabang bernomor `<nomor blok><huruf>.<urutan>`, dan seterusnya untuk cabang yang bersarang.
+
+Untuk contoh di atas: `openCheckout` 1, `placeOrder` 2, `validateCoupon` 3a.1, `saveOrder` 4a.1, `sendReceipt` 4a.2a.1, `writeAudit` 4a.2b.1, dan `showPaymentError` 4b.1.
+
+### 12.4 Flow di setiap level zoom
+
+Di setiap level zoom, setiap step di-lift seperti relasinya ([§14.2](/referensi/spesifikasi/semantik-zoom/#142-lifting)), dan aturan berikut berlaku **per urutan langkah**, tanpa melintasi batas cabang:
 
 1. Step yang relasinya menjadi internal disembunyikan.
-2. Step **berurutan** yang jatuh ke panah lift yang sama digabung menjadi satu langkah.
-3. Langkah yang tersisa dinomori ulang 1..n untuk level itu.
-
-Contoh di Z2 untuk flow di atas: `customer → web` (1), `web → api` (2), lalu `charge` dan `save_order` hilang karena keduanya di dalam `api`.
+2. Step **berurutan dalam urutan yang sama** yang jatuh ke panah lift yang sama digabung menjadi satu langkah.
+3. Cabang yang semua langkahnya tersembunyi menjadi kosong. `alt` atau `par` yang semua cabangnya kosong ikut hilang. `alt` atau `par` yang tinggal satu cabang tidak kosong tetap ditampilkan sebagai cabang, supaya pembaca tahu ada jalur lain di level yang lebih detail.
+4. Langkah yang tersisa dinomori ulang dengan aturan [§12.3](#123-penomoran) untuk level itu.

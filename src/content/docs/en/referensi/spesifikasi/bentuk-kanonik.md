@@ -1,75 +1,87 @@
 ---
-title: Canonical form and future versions
-description: The canonical form of dim text and plans for subsequent versions.
+title: Canonical form
+description: One text form for every dim model, including the order of block contents.
 ---
 
-## 14. Canonical form
+## 17. Canonical form
 
-Every valid `.dim` source has one canonical form. A formatter produces it. A tool that changes `.dim` text, such as an editor applying an edit from the map, must write the edited portion in canonical form. Preserve untouched text to keep diffs small.
+Every valid dim text has **one** canonical form. `dim fmt` produces it, and tools that write dim text (such as an editor that edits through the map) must write the parts they change in this form.
 
-A formatter changes only whitespace, newlines, indentation, and semicolons. It preserves all other tokens (IDs, names, strings, numbers, paths, and comments) and statement order. The resulting model is identical except for `span`. Formatting canonical text leaves it identical.
+The formatter changes spaces, line breaks, indentation, and **the order of statements within blocks**. It never changes ids, names, prose, values, paths, or comments, so the parsed model is identical except for `spans`. Formatting text that's already canonical changes nothing.
 
-### 14.1 Rules
+The formatter only works on valid text. Text with errors isn't formatted.
 
-1. **File.** Use UTF-8 without BOM and `\n` line endings. End with exactly one `\n` and trim trailing whitespace on each line.
-2. **Indentation.** Use two spaces per block level. Tabs are disallowed.
-3. **One statement per line**, except inside a single-line block (rule 5).
-4. **Multiline blocks.** Write `{` on the same line as the statement header with one space before it. Write each child on its own line one level deeper. Put `}` on its own line aligned with the header.
-5. **Single-line blocks.** Use `header { a; b }`. Preserve this form only when all of the following hold.
-   - The author wrote it on one line, with no line break between `{` and `}`.
-   - It contains only attributes, including flow `step` entries. It contains no elements, relations, `extend` or `unset` statements.
-   - It contains no comments or multiline strings.
-   - The line is at most 100 characters including indentation.
+### 17.1 Layout
 
-   Write the block over multiple lines if any condition fails. A formatter never collapses a multiline block to one line.
-6. **Empty blocks.** Write an element or relation with an empty block as a simple statement, for example `container db "Postgres";`. The grammar requires a block for `extend` and `flow`, so keep `{}` on these statements.
-7. **Semicolons.** At top level and in multiline blocks, end every statement without a block with `;`, including the last one before `}`. Omit the semicolon after a block statement. In single-line blocks, put semicolons between entries only. Remove extra semicolons.
-8. **Spacing within a line.** Use one space between tokens. Omit spaces around `.`, after a leading `::`, and before `;`. Attach the relation ID's colon directly to its ID (`checkout_post: a -> b`).
-9. **Blank lines.** Preserve at most one consecutive blank line. Remove blank lines at the start of a file, immediately after `{`, and immediately before `}`.
-10. **Comments.** Preserve their text. Indent a standalone comment to its block level. Keep a trailing `//` comment on its statement's line with one space before it.
-11. **Multiline strings.** Keep the opening `"""` at the end of the attribute line. Indent the contents and closing `"""` one level deeper than the attribute. Preserve extra indentation inside the string so its value stays the same ([§3.7](/en/referensi/spesifikasi/sintaks/#37-multiline-strings)).
-12. **Line length.** Rule 5 is the only length constraint. Leave other long lines intact.
+1. **Files.** UTF-8 without a BOM, `\n` line breaks, ending in exactly one `\n`, with no trailing spaces.
+2. **Indentation.** Two spaces per block level, no tabs.
+3. **One statement per line**, except in one-line blocks (rule 5).
+4. **Multiline blocks.** `{` on the same line as the statement head, separated by one space. Each item on its own line, one level deeper. `}` on its own line, aligned with the statement head.
+5. **One-line blocks** are written `head { a; b; }`. This form is used when every condition holds, and a multiline block is used otherwise:
+   - the content is only properties, members, or `step`s, with no elements, relations, flow branches, `extend`, or `unset`,
+   - at most three statements,
+   - no comments or multiline prose inside,
+   - the line, including indentation, is at most 100 characters.
+6. **Empty blocks** on elements and relations aren't written: `container db "Orders DB";` is only valid if the element has no required properties. `extend`, `flow`, `environment`, and flow branches always use a block.
+7. **Spaces within a line.** Tokens are separated by one space, except: no spaces around `.`, after a leading `::`, before `;`, `,`, a member's `:`, and `[]`; no spaces inside `<` `>`; a relation id's `:` sticks to the id; one space after `,`.
+8. **Blank lines.** One blank line is required between groups of statements ([§17.2](#172-order-within-blocks)), and around elements, relations, or `extend`s written with a multiline block. Elsewhere, blank lines written by the author are kept, at most one in a row. There are no blank lines at the start of a file, right after `{`, or right before `}`.
+9. **Comments.** Their content isn't changed. A comment belongs to the statement below it and moves with it. A trailing comment stays on its line, separated by one space.
+10. **Multiline prose.** The opening `"""` ends its property's line. Content lines and the closing `"""` are indented one level deeper than the property.
+11. **`meta`.** Its content is written as JSON with two-space indentation, with keys in the order written.
+12. **Long lines.** Apart from rule 5, the formatter doesn't break long lines.
 
-### 14.2 Example
+### 17.2 Order within blocks
 
-Before formatting:
+Within every block, statements are grouped and ordered:
+
+1. **Properties**, in a fixed order: `description`, `role`, the endpoint protocol line, `paradigm`, kind-specific properties (in the order of their table in each chapter), `tech`, `tags`, `external`, `source`, `meta`.
+2. **Members**, in the order of the tables in [§7.4](/en/referensi/spesifikasi/level-kode/#74-members) and [§10.3](/en/referensi/spesifikasi/endpoint/#103-http). Members of the same kind keep the order written, because the order of `param`s and `field`s is meaningful.
+3. **Child elements**, in the order written.
+4. **`extend`s**, in the order written.
+5. **Relations**, in the order written.
+
+In a relation block: `op`, `data` (in the order written), `tech`, `description`, `tags`, `meta`.
+
+At the top level of a file: the version declaration, `amends`, `import`s (sorted by path), then `person`, `system`, `extend`, relations, `flow`, `environment`, `remove`, each in the order written.
+
+In `dim.config`: the version declaration, `tech`, `tag`, `scope`, `root`, then `style` with selectors ordered `kind`, `role`, `tag`. Declarations of the same kind keep the order written, because the order of `tag`s decides style precedence ([§5.6](/en/referensi/spesifikasi/konfigurasi/#56-style)).
+
+Steps in a flow are never reordered.
+
+### 17.3 Example
+
+Before:
 
 ```dim
+dim "0.6";
 system shop "Online Shop"{
-	container api "API" { tech "Rust/axum"; component orders "Orders" {} }
-
-
-  container db "Postgres" { tech "PostgreSQL" ; shape database ; }
-  api->db "SELECT"{op read;data "Order";};
+  container db "Orders DB" { tags pci ; role database; tech postgres;}
+  saveOrder:api.orders->db { data push api.orders.order; op write; }
+  container api "API" {
+    tech kotlin;
+    component orders "Orders" { description "Stores orders."; }
+    role service;
+  }
 }
 ```
 
-After formatting:
+After:
 
 ```dim
+dim "0.6";
+
 system shop "Online Shop" {
+  container db "Orders DB" { role database; tech postgres; tags pci; }
+
   container api "API" {
-    tech "Rust/axum";
-    component orders "Orders";
+    role service;
+    tech kotlin;
+
+    component orders "Orders" { description "Stores orders."; }
   }
 
-  container db "Postgres" { tech "PostgreSQL"; shape database }
-  api -> db "SELECT" { op read; data "Order" }
+  saveOrder: api.orders -> db { op write; data push api.orders.order; }
 }
 ```
 
-The `api` block spans several lines because it contains an element. The formatter drops the empty block from `orders`. It preserves the one-line blocks on `db` and the relation because the author used one line and both blocks contain only attributes.
-
----
-
-## 15. Plans for future versions
-
-This section is **non-normative**.
-
-- **Response envelopes** such as `{ success, statusCode, data }` could wrap every successful response. A possible design is an inherited container attribute, like `auth`.
-- **Other protocols** (gRPC, GraphQL, WebSocket) are planned as attributes alongside `http` on `form endpoint`.
-- **OpenAPI export** from the CLI could use `code.http` and [type references](/en/referensi/spesifikasi/model/#66-type-references) to `struct` elements.
-- **Branching flows** could express alternative, optional, or parallel paths. Today each path is a separate flow.
-- **Deployment views** could show where containers run, such as in a region, cluster, or node.
-
-Tools decide styling (colors, icons, and line styles using JSON fields such as `kind`, `tags`, `shape`, `external`, `ui`, and `op`), layout, and box positions. They also decide how to show [model diffs](/en/referensi/spesifikasi/komposisi-dan-flow/#113-amends-and-remove), format diagnostics for other tools, and behave while a model contains errors.
+The properties of `db` are reordered, `role` in `api` moves above its child element, and the relation moves below the elements.

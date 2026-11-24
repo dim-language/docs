@@ -6,10 +6,10 @@ description: Validasi model, ekspor JSON, dan format file DIM di TypeScript.
 ## Pasang
 
 ```sh
-npm install https://github.com/dim-language/dim-sdk/releases/download/v0.2.0/dim-sdk-0.2.0.tgz
+npm install https://github.com/dim-language/dim-sdk/releases/download/v0.3.0/dim-sdk-0.3.0.tgz
 ```
 
-Paket juga tersedia di [GitHub Releases](https://github.com/dim-language/dim-sdk/releases/tag/v0.2.0).
+Paket juga tersedia di [GitHub Releases](https://github.com/dim-language/dim-sdk/releases/tag/v0.3.0).
 
 SDK menyertakan runtime WebAssembly. Panggil dan tunggu `initDim()` sebelum menggunakan compiler, formatter, atau peta.
 
@@ -24,19 +24,20 @@ Simpan skrip ini sebagai `check.mjs` di proyek yang memasang SDK.
 node check.mjs toko.dim
 ```
 
-Kode keluar `1` berarti model gagal dikompilasi. Diagnostik memuat lokasi file, baris, dan kolom, beserta kode seperti `E040` untuk file yang tidak ditemukan.
+Kode keluar `1` berarti model gagal dikompilasi. Diagnostik memuat lokasi file, baris, dan kolom, beserta kode seperti `E601` untuk file yang tidak ditemukan.
 
 ## Kompilasi proyek dengan import
 
-`compileProject` menerima nama file utama dan isi semua file proyek. Pakai path relatif dengan pemisah `/`.
+`compileProject` menerima nama file utama dan isi semua file proyek, termasuk `dim.config`. Pakai path relatif dengan pemisah `/`.
 
 ```ts
 import { compileProject, formatFile, initDim } from '@dim/sdk';
 
 await initDim();
 const files = {
-  'main.dim': 'dim "0.5"; import "shop.dim"; person buyer; buyer -> shop;',
-  'shop.dim': 'system shop "Toko";',
+  'dim.config': 'dim "0.6";',
+  'main.dim': 'dim "0.6"; import "shop.dim"; person buyer "Pembeli"; shopping: buyer -> shop { op use; }',
+  'shop.dim': 'dim "0.6"; system shop "Toko";',
 };
 
 const { model, diagnostics } = compileProject('main.dim', files);

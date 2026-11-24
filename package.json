@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@astrojs/starlight": "^0.42.10",
-    "@dim/sdk": "https://github.com/dim-language/dim-sdk/releases/download/v0.2.0/dim-sdk-0.2.0.tgz",
+    "@dim/sdk": "https://github.com/dim-language/dim-sdk/releases/download/v0.3.0/dim-sdk-0.3.0.tgz",
     "@fontsource/ibm-plex-mono": "^5.3.0",
     "@fontsource/kalam": "^5.3.0",
     "@fontsource/source-sans-3": "^5.3.1",

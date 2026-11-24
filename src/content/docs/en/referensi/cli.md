@@ -6,10 +6,10 @@ description: Validate models, export JSON, and format DIM files in TypeScript.
 ## Install
 
 ```sh
-npm install https://github.com/dim-language/dim-sdk/releases/download/v0.2.0/dim-sdk-0.2.0.tgz
+npm install https://github.com/dim-language/dim-sdk/releases/download/v0.3.0/dim-sdk-0.3.0.tgz
 ```
 
-The package is also available from [GitHub Releases](https://github.com/dim-language/dim-sdk/releases/tag/v0.2.0).
+The package is also available from [GitHub Releases](https://github.com/dim-language/dim-sdk/releases/tag/v0.3.0).
 
 The SDK includes a WebAssembly runtime. Call and await `initDim()` before using the compiler, formatter, or map.
 
@@ -24,19 +24,20 @@ Save this script as `check.mjs` in the project where you installed the SDK.
 node check.mjs toko.dim
 ```
 
-Exit code `1` means the model failed to compile. Diagnostics include the file, line, and column, along with a code such as `E040` for missing files.
+Exit code `1` means the model failed to compile. Diagnostics include the file, line, and column, along with a code such as `E601` for missing files.
 
 ## Compile a project with imports
 
-`compileProject` takes an entry filename and the contents of all project files. Use relative paths with `/` separators.
+`compileProject` takes an entry filename and the contents of all project files, including `dim.config`. Use relative paths with `/` separators.
 
 ```ts
 import { compileProject, formatFile, initDim } from '@dim/sdk';
 
 await initDim();
 const files = {
-  'main.dim': 'dim "0.5"; import "shop.dim"; person buyer; buyer -> shop;',
-  'shop.dim': 'system shop "Shop";',
+  'dim.config': 'dim "0.6";',
+  'main.dim': 'dim "0.6"; import "shop.dim"; person buyer "Buyer"; shopping: buyer -> shop { op use; }',
+  'shop.dim': 'dim "0.6"; system shop "Store";',
 };
 
 const { model, diagnostics } = compileProject('main.dim', files);

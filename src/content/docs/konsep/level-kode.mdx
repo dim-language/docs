@@ -1,69 +1,95 @@
 ---
 title: Catat kontrak fungsi
-description: Menulis class, function, method, dan field dengan parameter, nilai kembali, dan keterangan, supaya level paling dalam peta bisa dibaca sebagai class diagram dan call graph.
+description: Menulis tipe data, fungsi, class, dan method mengikuti paradigma kodenya, supaya level paling dalam peta bisa dibaca sebagai class diagram dan call graph.
 ---
 
 import ZoomMap from '../../../components/zoom-map/ZoomMap.astro';
 import shop from '../../../data/shop.json';
 
-Pilih fungsi checkout yang dipanggil lintas komponen. Salin tipe parameter dan hasil dari signature, lalu cari satu kondisi error dari implementasinya.
+Pilih fungsi checkout yang dipanggil lintas komponen. Catat tipe parameter dan hasilnya, lalu cari satu kondisi error dari implementasinya.
 
-Di level paling dalam, elemen `code` bisa menjelaskan dirinya selengkap class diagram: bentuknya apa, butuh parameter apa, mengembalikan apa, error apa yang bisa terjadi, dan **untuk apa dia ada**.
-
-Tujuannya dua. Editor bisa menggambar class diagram dan call graph dari model yang sama. Dan siapa pun yang mengerjakan kodenya, manusia atau AI, bisa membaca kontrak setiap unit tanpa harus menebak dari nama.
+Di level paling dalam, model bisa menjelaskan kode selengkap class diagram: tipe datanya apa, fungsi butuh parameter apa, mengembalikan apa, error apa yang bisa terjadi, dan **untuk apa setiap unit ada**. Tujuannya dua. Editor bisa menggambar class diagram dan call graph dari model yang sama. Dan siapa pun yang mengerjakan kodenya, manusia atau AI, bisa membaca kontrak setiap unit tanpa menebak dari nama.
 
 <ZoomMap
   model={shop}
-  focus="shop.api.orders.repo"
+  focus="shop.api.orders.rows"
   uid="kode"
-  caption="Detail kode dari examples/shop/. Kartu class, interface, dan struct menampilkan field di atas garis tebal dan method di bawahnya. Garis putus-putus menunjukkan relasi struktural."
+  caption="Detail kode dari examples/shop/. Kartu class, interface, dan record menampilkan field di atas garis tebal dan method di bawahnya. Garis putus-putus menunjukkan relasi struktural."
 />
 
-Di peta, `code` dengan form tipe (`class`, `interface`, `struct`, `enum`, `trait`) yang terbuka digambar sebagai kartu class diagram. Notasinya mengikuti UML: `+` public, `−` private, `#` protected, `~` internal; nama yang abstract ditulis miring, member static bergaris bawah. Relasi ke method tertentu menempel ke baris method itu, bukan ke kartunya. Arahkan kursor ke baris untuk membaca keterangannya.
+## Paradigma, bukan bahasa pemrograman
 
-## Bentuk: `form`
-
-`form` memberi tahu apa sebenarnya sebuah elemen `code`:
-
-| `form` | Dipakai untuk |
-|---|---|
-| `module` | file atau namespace |
-| `class`, `struct`, `enum` | tipe yang punya data dan perilaku |
-| `interface`, `trait` | kontrak tanpa implementasi |
-| `function` | fungsi lepas |
-| `method` | fungsi milik sebuah tipe |
-| `field` | data milik sebuah tipe atau module |
-
-Editor memakai `form` untuk memilih cara menggambar: tipe digambar dengan bagian field dan method, fungsi lepas sebagai simpul call graph.
-
-## Kontrak: parameter, nilai kembali, error
+dim tidak terikat ke satu bahasa pemrograman, tapi mengikuti **paradigma**. `class`, `function`, dan `record` ada di banyak bahasa, sedangkan `&Order` atau `Result<T, E>` hanya ada di satu bahasa. Karena itu setiap container yang berisi kode menyatakan paradigmanya:
 
 ```dim
-code handler "handle_checkout()" {
-  form function;
-  description "Memvalidasi keranjang, menyimpan order, lalu menagih pembayaran.";
-  param req "CheckoutRequest" "Isi keranjang dan alamat pengiriman";
-  returns "Result<OrderId>" "Id order yang baru dibuat";
-  throws "PaymentError" "Penagihan ditolak gateway";
-  async;
+container api "API" {
+  role service;
+  paradigm procedural oop;
+  tech rust;
 }
 ```
 
-- `param <nama> "<tipe>" ["<keterangan>"]` boleh ditulis berkali-kali. Di `class` atau `struct`, `param` berarti parameter konstruktor.
-- `returns "<tipe>" ["<keterangan>"]` paling banyak satu kali.
-- `throws "<tipe>" ["<keterangan>"]` boleh berkali-kali, satu per jenis error.
-- Field memakai `type "<tipe>"`.
-- `visibility` (`public`, `private`, `protected`, `internal`) dan flag `static`, `abstract`, `async` melengkapi bentuknya.
+| Paradigma | Kind yang boleh |
+|---|---|
+| semua | `record`, `enum`, `union`, `alias` |
+| `procedural` | `module`, `function` |
+| `functional` | `module`, `function` (wajib `pure` atau `effects`) |
+| `oop` | `class`, `interface`, `method`, `constructor` |
 
-Tipe ditulis sebagai string apa adanya (`"Option<Order>"`, `"&str"`, `"Promise<void>"`). dim tidak terikat ke satu bahasa pemrograman, jadi tidak mencoba memahami sintaks tipe.
+Bahasa multi-paradigma seperti Rust, Kotlin, atau TypeScript cukup menulis lebih dari satu paradigma. Component boleh mempersempitnya, misalnya `paradigm oop;` untuk modul yang hanya berisi class. Kind di luar paradigmanya adalah error `E301`, jadi `class` tidak bisa tiba-tiba muncul di service yang fungsional.
 
-Atribut yang tidak cocok dengan `form` ditolak: `returns` di sebuah `field`, atau `type` di sebuah `function`, adalah error `E031`. Kalau `form` tidak ditulis, semua atribut diterima.
+## Tipe data
+
+Tipe ditulis sebagai ekspresi, bukan string, dengan primitif milik dim (`string`, `int`, `decimal`, `uuid`, `datetime`, …), list `T[]`, optional `T?`, dan `map<K, V>`. Tipe bernama dideklarasikan sebagai unit kode dan dirujuk lewat path:
+
+```dim
+alias orderId "OrderId" {
+  description "Id order, dibuat saat checkout.";
+  type uuid;
+}
+
+record order "Order" {
+  description "Order yang sudah dibayar dan menunggu dikirim.";
+  field id: orderId;
+  field items: item[];
+  field total: money;
+}
+
+enum orderStatus "OrderStatus" {
+  description "Tahap sebuah order.";
+  variant pending;
+  variant paid;
+  variant shipped "Sudah diserahkan ke kurir";
+}
+```
+
+Karena rujukannya lewat path, nama tipe tidak harus unik di seluruh model. Tipe milik component lain cukup dirujuk dengan path-nya, misalnya `payments.paymentError`. Detailnya ada di [spesifikasi §8](/referensi/spesifikasi/tipe/#8-tipe).
+
+## Kontrak: parameter, hasil, error
+
+```dim
+method run "checkout()" {
+  description "Satu checkout dari keranjang sampai order tersimpan. Order tidak disimpan kalau penagihan gagal.";
+  async;
+  param cart: orders.cart "Isi keranjang dan alamat pengiriman";
+  returns orders.orderId "Id order yang baru dibuat";
+  throws payments.paymentError "Penagihan ditolak gateway";
+}
+```
+
+- `param <id>: <tipe> ["<keterangan>"]` boleh ditulis berkali-kali, dan urutannya adalah urutan parameter.
+- `returns <tipe>` paling banyak satu kali. Tanpa `returns`, unit itu tidak mengembalikan nilai.
+- `throws <tipe>` boleh berkali-kali, satu per jenis error. Tipenya harus `record`, `enum`, `union`, atau `class`.
+- `field` dipakai di `record` dan `class`, dan `variant` di `enum` dan `union`.
+- `visibility`, `static`, dan `abstract` hanya ada di paradigma `oop`. `pure` dan `effects` hanya ada di `functional`.
+
+Member seperti `field` dan `param` bukan elemen: tidak punya path dan tidak bisa menjadi ujung relasi.
 
 ## Keterangan itu wajib
 
-Setiap `class`, `interface`, `struct`, `enum`, `trait`, `function`, dan `method` tanpa `description` mendapat warning `W020`.
+Setiap `module`, `function`, `class`, `interface`, `method`, `constructor`, `record`, `enum`, `union`, dan `alias` wajib punya `description`. Tanpa itu, model tidak lolos pemeriksaan (`E205`).
 
-Alasannya praktis: nama seperti `process()` atau `Manager` tidak memberi tahu apa-apa. Satu kalimat tentang tugas sebuah unit adalah perbedaan antara orang (atau AI) yang memakai unit itu dengan benar dan yang menebak. Tulis apa yang dia kerjakan dan kapan dipakai, bukan mengulang namanya.
+Alasannya praktis: nama seperti `process()` atau `Manager` tidak memberi tahu apa-apa. Satu kalimat tentang tugas sebuah unit adalah perbedaan antara orang (atau AI) yang memakai unit itu dengan benar dan yang menebak. Tulis apa yang dikerjakannya dan kapan dipakai, bukan mengulang namanya.
 
 ```dim
 // Kurang membantu
@@ -73,39 +99,39 @@ description "Repository untuk order.";
 description "Implementasi OrderStore di atas Postgres. Semua penulisan memakai satu transaksi per order.";
 ```
 
-`field` dan `module` tidak wajib punya keterangan, karena tipe dan isinya biasanya sudah cukup menjelaskan.
+Keterangan di `field`, `variant`, dan `param` opsional.
 
 ## Relasi antar kode
 
-Relasi interaksi bekerja seperti di level lain. "Method ini dipanggil oleh function `x`" ditulis sebagai `x -> method { op call }`; daftar pemanggil cukup dihitung dari panah yang masuk.
+Relasi interaksi bekerja seperti di level lain. "Method ini dipanggil oleh function `x`" ditulis sebagai `callRun: x -> method { op call; }`. Daftar pemanggil cukup dihitung dari panah yang masuk.
 
 Untuk bentuk kode, ada empat relasi **struktural**:
 
 | `op` | Arti | Arah |
 |---|---|---|
-| `extends` | pewarisan | turunan → induk |
-| `implements` | memenuhi kontrak | implementasi → interface/trait |
+| `inherits` | pewarisan | turunan → induk |
+| `implements` | memenuhi kontrak | class → interface |
 | `owns` | komposisi | pemilik → yang dimiliki |
 | `refers` | asosiasi | yang menyimpan → yang dirujuk |
 
 ```dim
-shop.api.orders.repo -> shop.api.orders.store { op implements }
+repoContract: shop.api.orders.rows -> shop.api.orders.store { op implements; }
 ```
 
-Relasi struktural hanya boleh antara dua elemen `code` dan tidak punya aliran data. Saat di-zoom out, relasi ini tetap naik: kalau class di komponen A `extends` class di komponen B, panah `A → B` muncul di level komponen sebagai dependency.
+`inherits` dan `implements` hanya ada di paradigma `oop`. Relasi struktural tidak punya aliran data. Saat di-zoom out, relasi ini tetap naik: kalau class di component A `inherits` class di component B, panah `A → B` muncul di level component sebagai dependency.
 
 ## Rekursi
 
 Rekursi langsung adalah satu-satunya relasi ke diri sendiri yang diizinkan:
 
 ```dim
-walk -> walk "telusuri anak berikutnya" { op call }
+sumBundle: api.checkout.service.total -> api.checkout.service.total "Isi bundel" { op call; }
 ```
 
-Di peta, rekursi digambar sebagai loop di kotaknya. Begitu kotak itu tertutup di dalam elemen induknya, loop-nya ikut hilang seperti relasi internal lain. Rekursi tidak langsung (`a → b → a`) ditulis sebagai dua relasi biasa; editor bisa mendeteksinya sebagai siklus.
+Di peta, rekursi digambar sebagai loop di kotaknya. Rekursi tidak langsung (`a → b → a`) ditulis sebagai dua relasi biasa; editor bisa mendeteksinya sebagai siklus.
 
-Aturan lengkapnya ada di [spesifikasi §6.4](/referensi/spesifikasi/model/#64-detail-kode).
+Aturan lengkapnya ada di [spesifikasi §7](/referensi/spesifikasi/level-kode/#7-level-kode).
 
 ## Cek hasilnya
 
-Untuk contoh handler, cocokkan CheckoutRequest, `Result<OrderId>`, dan PaymentError dengan signature serta jalur gagal fungsi. Saat tipe hasil berubah, ubah returns dan periksa kembali model bersama diff kode.
+Untuk method `checkout()`, cocokkan `Cart`, `OrderId`, dan `PaymentError` dengan signature serta jalur gagal fungsi aslinya. Lalu hapus `description` dari `PaymentClient` dan jalankan `dim check`: pesannya `E205`.

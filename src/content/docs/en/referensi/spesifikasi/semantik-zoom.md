@@ -1,68 +1,79 @@
 ---
 title: Zoom semantics
-description: How to display, lift, and aggregate relations at each zoom level.
+description: How relations are shown, lifted, and grouped at each zoom level, including in the deployment view.
 ---
 
-## 10. Zoom semantics (lifting)
+## 14. Zoom semantics (lifting)
 
-These rules are normative for consumers such as frontends. They let different frontends derive the same diagram from the same model.
+This section is normative for **consumers** (maps, editors), not the parser. It's written here so every consumer draws the same diagram from the same model.
 
-### 10.1 View state
+### 14.1 View state
 
-The consumer stores the set of open elements (`expanded`). Top-level elements are always visible.
+A consumer keeps the set of elements that are currently **open**. Top-level elements are always visible.
 
-- An element is **visible** when all its ancestors are open.
-- The **frontier** is the set of visible elements that are closed or have no children. Draw a frontier element as a node and an open element as a boundary around its children.
+- An element is **visible** if all its ancestors are open.
+- An element is on the **frontier** if it's visible and either closed or childless. Frontier elements are drawn as boxes. Open elements are drawn as boundaries around their children.
 
-### 10.2 Lifting
+### 14.2 Lifting
 
-For an element `x`, `vis(x)` is the ancestor or self of `x` on the frontier. Traverse from the top level toward `x` and stop at the first element that is closed or has no children.
+For every element `x`, `vis(x)` is the ancestor-or-self of `x` that's on the frontier.
 
-For each edge `a -> b`, compute `vis(a)` and `vis(b)`.
+For every relation `a -> b`:
 
-- If `a == b` (recursion, [§4.4](/en/referensi/spesifikasi/sintaks/#44-relations)) and `vis(a) == a`, draw a **loop** on that element.
-- Otherwise, if `vis(a) == vis(b)`, the edge is **internal**. Hide it. This includes recursion inside a closed element.
-- In all other cases, draw `vis(a) -> vis(b)`.
+- If `a == b` (recursion) and `vis(a) == a`: the relation is drawn as a **loop** on that element.
+- If `vis(a) == vis(b)` otherwise: the relation is **internal** and isn't drawn.
+- Otherwise: the relation is drawn as `vis(a) -> vis(b)`.
 
-A frontier never contains both an ancestor and its descendant, and `E022` prohibits relations between them. The lifted endpoints therefore coincide or are disjoint.
+Because the frontier never contains two elements where one is the other's ancestor, and `E404` forbids relations between an ancestor and a descendant, `vis(a)` and `vis(b)` are always either equal or disjoint.
 
-### 10.3 Aggregation
+### 14.3 Aggregation
 
-Group lifted edges by the ordered pair `(vis(a), vis(b))`. Draw one arrow per group.
+Lifted relations are grouped by the directed pair `(vis(a), vis(b))`. Each group is drawn as one arrow:
 
 ```json
 {
   "from": "shop.api",
   "to": "shop.db",
-  "sources": [
-    "shop.api.orders.repo.save->shop.db#0",
-    "shop.api.orders.repo.find->shop.db#0"
-  ],
+  "sources": ["saveOrder", "loadOrder"],
   "ops": ["write", "read"],
-  "labels": ["INSERT orders", "SELECT orders"],
   "data": [
-    { "dir": "push", "payload": ["Order"], "refs": ["shop.api.orders.order"] },
-    { "dir": "pull", "payload": ["Order"], "refs": ["shop.api.orders.order"] }
+    { "dir": "push", "types": [{ "ref": "shop.api.orders.order" }] },
+    { "dir": "pull", "types": [{ "ref": "shop.api.orders.order" }] }
   ]
 }
 ```
 
-- `sources` stores the original edge IDs for tracing.
-- `ops` is the list of unique operations in the order they first occur.
-- Use the same lifting rules for structural relations. A class in component A extending a class in B still creates a dependency `A → B` at the component level. Consumers should use dashed lines for groups consisting solely of structural relations and ordinary interaction arrows for mixed groups.
-- Merge `data` entries by `dir`, with at most one `push` and one `pull`. `payload` and `refs` are unions in order of first occurrence. The ordered endpoints preserve data direction after lifting.
-- Consumers should show data direction along the line, for example with dots or chevrons, separately from the arrowhead. `push` follows the arrow, `pull` runs against it, and both directions can be shown with `⇄`.
-- `a -> b` and `b -> a` are distinct groups.
-- If a group contains a single edge that was drawn at its original endpoints, the consumer may display its label as written.
+- `sources`: the ids of the source relations, for tracing back.
+- `ops`: the unique `op`s of the source relations, in order of first appearance.
+- `data`: every data flow of the source relations, including those taken from endpoints ([§10.8](/en/referensi/spesifikasi/endpoint/#108-relations-to-endpoints)), merged per direction. At most one `push` and one `pull` entry, with unique types in order of first appearance.
+- Structural relations are lifted too. A class in component A that `inherits` a class in component B still shows as `A → B`, because that's a real dependency. A group containing only structural relations is drawn with a dashed line.
+- `a -> b` and `b -> a` are two different groups.
+- A group with one relation that isn't lifted uses that relation's label ([§9.6](/en/referensi/spesifikasi/relasi/#96-labels)). Other groups get a summary label, such as the number of relations.
 
-### 10.4 Example
+Consumers draw the direction of data as a marker along the line, separate from the arrowhead: `push` with the arrow, `pull` against it, and both meaning `⇄`.
 
-The example in [§2](/en/referensi/spesifikasi/#2-short-example) yields these arrows.
+### 14.4 Example
 
-| Open elements | Visible arrows |
+From the example in [§2](/en/referensi/spesifikasi/#2-short-example):
+
+| Open | Arrows shown |
 |---|---|
-| None | `customer → shop`, `shop → payment` (⇄ ChargeRequest / ChargeResult) |
-| `shop` | `customer → web`, `web → api` (⇄ CheckoutRequest / OrderId), `api → db` (⇄ Order), `api → payment` (⇄ ChargeRequest / ChargeResult) |
-| `shop`, `api` | `customer → web`, `web → checkout` (⇄ CheckoutRequest / OrderId), `checkout → orders` (push Order), `orders → db` (⇄ Order), `checkout → payment` (⇄ ChargeRequest / ChargeResult) |
+| (none) | `customer → shop` |
+| `shop` | `customer → web`, `web → api` (⇄ Cart / Order), `api → db` (push Order) |
+| `shop`, `web`, `api` | `customer → checkout`, `checkout → orders` (⇄ Cart / Order), `orders → db` (push Order) |
 
-When only `shop` is open, `handler -> repo.save` is hidden because both endpoints are inside `api`. Opening `api` reveals it again as `checkout → orders`.
+The `placeOrder` relation goes to the `createOrder` endpoint, so at the component level its arrow ends at `orders`, which owns that endpoint.
+
+Flows at each level follow [§12.4](/en/referensi/spesifikasi/komposisi-dan-flow/#124-flows-at-each-zoom-level).
+
+### 14.5 Deployment view
+
+The deployment view draws one environment. Its hierarchy is environment → node → `deploy` and `infra`, with the same open and closed rules as [§14.1](#141-view-state).
+
+Relations in this view are derived from the software model:
+
+1. Each software relation `a -> b` is mapped to containers: `c(a)` and `c(b)` are the containers that hold `a` and `b`, or the elements themselves if they're containers. Relations from or to a `person` or `system` map to that element itself.
+2. For every pair of a `deploy` of `c(a)` and a `deploy` of `c(b)` in the environment, there's one deployment relation `deploy(c(a)) -> deploy(c(b))`. If `c(a)` is deployed in several places, each place gets a relation.
+3. Ends that aren't deployed, such as a `person`, an external system or container, and an omitted container, are drawn outside the nodes. Relations to an omitted container aren't drawn.
+4. Infra relations ([§13.5](/en/referensi/spesifikasi/deployment/#135-relations-in-an-environment)) are added as written.
+5. The lifting and aggregation in [§14.2](#142-lifting)–[§14.3](#143-aggregation) apply to the node hierarchy. Relations between two `deploy`s inside a closed node become internal.

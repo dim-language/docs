@@ -14,7 +14,7 @@ const examples = [
 
 async function readSources(directory) {
 	const paths = (await readdir(directory, { recursive: true, withFileTypes: true }))
-		.filter((entry) => entry.isFile() && entry.name.endsWith('.dim'));
+		.filter((entry) => entry.isFile() && (entry.name.endsWith('.dim') || entry.name === 'dim.config'));
 	const root = fileURLToPath(directory);
 	return Object.fromEntries(await Promise.all(paths.map(async ({ name, parentPath }) => {
 		const path = join(parentPath, name);

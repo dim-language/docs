@@ -1,7 +1,7 @@
 ---
 // Diff dua model dim (model dasar dan turunan `amends`), dihitung dari id elemen dan id relasi
 // yang stabil (spesifikasi §11.3). Semua isi tabel berasal dari output parser.
-import type { DimEdge, DimModel, DimNode } from '@dim/sdk';
+import type { DimElement, DimModel, DimRelation } from '@dim/sdk';
 
 interface Props {
 	base: DimModel;
@@ -39,54 +39,52 @@ type Row = { change: 'ditambah' | 'dihapus' | 'diubah'; what: 'elemen' | 'relasi
 
 const show = (v: unknown) => (v === null || v === undefined ? text.empty : Array.isArray(v) ? v.join(', ') || text.empty : String(v));
 
-function nodeDetail(n: DimNode) {
-	return [n.kind, n.name !== n.id.split('.').pop() ? n.name : '', n.tech ?? ''].filter(Boolean).join(' · ');
+// Jenis elemen seperti ditulis di sumber: `container`, `endpoint`, atau bentuk kode (`class`, `record`, ...).
+const keyword = (e: DimElement) => (e.kind === 'code' ? e.form : e.kind);
+
+function elementDetail(e: DimElement) {
+	const techs = 'techs' in e ? (e.techs ?? []).join(', ') : '';
+	return [keyword(e), e.name, techs].filter(Boolean).join(' · ');
 }
 
-function edgeDetail(e: DimEdge) {
-	return [`${e.from} → ${e.to}`, e.op, e.label ?? ''].filter(Boolean).join(' · ');
+function relationDetail(r: DimRelation) {
+	return [`${r.from} → ${r.to}`, r.op, r.label ?? ''].filter(Boolean).join(' · ');
 }
 
-function changedFields(a: Record<string, unknown>, b: Record<string, unknown>, fields: string[]) {
+// Field yang berbeda, dari semua field kedua sisi. Field yang tidak berlaku tidak ditulis di JSON (§16), jadi
+// field yang hilang di satu sisi berarti ditambah atau dihapus.
+function changedFields(a: object, b: object) {
+	const x = a as Record<string, unknown>;
+	const y = b as Record<string, unknown>;
+	const fields = [...new Set([...Object.keys(x), ...Object.keys(y)])].filter((f) => f !== 'id');
 	return fields
-		.filter((f) => JSON.stringify(a[f]) !== JSON.stringify(b[f]))
-		.map((f) => `${f}: ${show(a[f])} → ${show(b[f])}`);
+		.filter((f) => JSON.stringify(x[f]) !== JSON.stringify(y[f]))
+		.map((f) => `${f}: ${show(typeof x[f] === 'object' && x[f] !== null && !Array.isArray(x[f]) ? JSON.stringify(x[f]) : x[f])} → ${show(typeof y[f] === 'object' && y[f] !== null && !Array.isArray(y[f]) ? JSON.stringify(y[f]) : y[f])}`);
 }
 
-const NODE_FIELDS = ['name', 'description', 'tech', 'shape', 'tags', 'external', 'ui', 'code'];
-const EDGE_FIELDS = ['from', 'to', 'label', 'op', 'data', 'tech', 'description', 'tags'];
+function compare<T extends { id: string }>(what: Row['what'], before: T[], after: T[], detail: (t: T) => string) {
+	const old = new Map(before.map((t) => [t.id, t]));
+	const now = new Set(after.map((t) => t.id));
+	for (const t of after) {
+		const was = old.get(t.id);
+		if (!was) rows.push({ change: 'ditambah', what, id: t.id, detail: detail(t) });
+		else {
+			const diff = changedFields(was, t);
+			if (diff.length) rows.push({ change: 'diubah', what, id: t.id, detail: diff.join('; ') });
+		}
+	}
+	for (const t of before) {
+		if (!now.has(t.id)) rows.push({ change: 'dihapus', what, id: t.id, detail: detail(t) });
+	}
+}
 
 const rows: Row[] = [];
-const baseNodes = new Map(base.nodes.map((n) => [n.id, n]));
-const derivedNodes = new Map(derived.nodes.map((n) => [n.id, n]));
-for (const n of derived.nodes) {
-	const old = baseNodes.get(n.id);
-	if (!old) rows.push({ change: 'ditambah', what: 'elemen', id: n.id, detail: nodeDetail(n) });
-	else {
-		const diff = changedFields(old as never, n as never, NODE_FIELDS);
-		if (diff.length) rows.push({ change: 'diubah', what: 'elemen', id: n.id, detail: diff.join('; ') });
-	}
-}
-for (const n of base.nodes) {
-	if (!derivedNodes.has(n.id)) rows.push({ change: 'dihapus', what: 'elemen', id: n.id, detail: nodeDetail(n) });
-}
-const baseEdges = new Map(base.edges.map((e) => [e.id, e]));
-const derivedEdges = new Map(derived.edges.map((e) => [e.id, e]));
-for (const e of derived.edges) {
-	const old = baseEdges.get(e.id);
-	if (!old) rows.push({ change: 'ditambah', what: 'relasi', id: e.id, detail: edgeDetail(e) });
-	else {
-		const diff = changedFields(old as never, e as never, EDGE_FIELDS);
-		if (diff.length) rows.push({ change: 'diubah', what: 'relasi', id: e.id, detail: diff.join('; ') });
-	}
-}
-for (const e of base.edges) {
-	if (!derivedEdges.has(e.id)) rows.push({ change: 'dihapus', what: 'relasi', id: e.id, detail: edgeDetail(e) });
-}
+compare('elemen', base.elements, derived.elements, elementDetail);
+compare('relasi', base.relations, derived.relations, relationDetail);
 
 const order = { dihapus: 0, diubah: 1, ditambah: 2 };
 rows.sort((a, b) => order[a.change] - order[b.change] || a.what.localeCompare(b.what));
-const unchanged = derived.nodes.length + derived.edges.length - rows.filter((r) => r.change !== 'dihapus').length;
+const unchanged = derived.elements.length + derived.relations.length - rows.filter((r) => r.change !== 'dihapus').length;
 ---
 
 <figure class="model-diff not-content">

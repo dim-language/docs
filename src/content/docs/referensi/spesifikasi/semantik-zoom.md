@@ -1,64 +1,79 @@
 ---
 title: Semantik zoom
-description: Cara menampilkan, mengangkat, dan menggabungkan relasi pada tiap level zoom.
+description: Cara menampilkan, mengangkat, dan menggabungkan relasi pada tiap level zoom, termasuk di view deployment.
 ---
 
-## 10. Semantik zoom (lifting)
+## 14. Semantik zoom (lifting)
 
-Bagian ini normatif untuk **konsumen** (frontend), bukan parser. Ditulis di sini supaya semua konsumen menghasilkan diagram yang sama dari model yang sama.
+Bagian ini normatif untuk **konsumen** (peta, editor), bukan parser. Ditulis di sini supaya semua konsumen menghasilkan diagram yang sama dari model yang sama.
 
-### 10.1 State tampilan
-Konsumen menyimpan himpunan elemen yang sedang **terbuka** (`expanded`). Elemen top-level selalu terlihat.
+### 14.1 State tampilan
+
+Konsumen menyimpan himpunan elemen yang sedang **terbuka**. Elemen top-level selalu terlihat.
 
 - Elemen **terlihat** kalau semua leluhurnya terbuka.
-- Elemen **frontier** adalah elemen terlihat yang tertutup atau tidak punya anak. Elemen frontier digambar sebagai node; elemen terbuka digambar sebagai boundary yang membungkus anak-anaknya.
+- Elemen **frontier** adalah elemen terlihat yang tertutup atau tidak punya anak. Elemen frontier digambar sebagai kotak. Elemen terbuka digambar sebagai batas yang membungkus anak-anaknya.
 
-### 10.2 Lifting
-Untuk setiap elemen `x`, `vis(x)` adalah leluhur-atau-diri-sendiri dari `x` yang berada di frontier: telusuri dari top-level ke bawah, berhenti di elemen pertama yang tertutup atau tidak punya anak.
+### 14.2 Lifting
 
-Untuk setiap edge `a -> b`:
-- Hitung `vis(a)` dan `vis(b)`.
-- Kalau `a == b` (rekursi, [§4.4](/referensi/spesifikasi/sintaks/#44-relasi)) dan `vis(a) == a`: edge digambar sebagai **loop** di elemen itu.
-- Kalau `vis(a) == vis(b)` selain kasus di atas: edge **internal**, tidak digambar. Rekursi di dalam elemen yang tertutup ikut menjadi internal.
-- Selain itu: edge digambar sebagai `vis(a) -> vis(b)`.
+Untuk setiap elemen `x`, `vis(x)` adalah leluhur-atau-diri-sendiri dari `x` yang berada di frontier.
 
-Karena frontier tidak pernah berisi dua elemen yang saling leluhur, dan `E022` melarang edge antara leluhur–keturunan, `vis(a)` dan `vis(b)` selalu sama atau saling lepas.
+Untuk setiap relasi `a -> b`:
 
-### 10.3 Aggregasi
-Edge yang sudah di-lift dikelompokkan berdasarkan pasangan berarah `(vis(a), vis(b))`. Setiap kelompok digambar sebagai satu panah:
+- Kalau `a == b` (rekursi) dan `vis(a) == a`: relasi digambar sebagai **loop** di elemen itu.
+- Kalau `vis(a) == vis(b)` selain kasus di atas: relasi **internal**, tidak digambar.
+- Selain itu: relasi digambar sebagai `vis(a) -> vis(b)`.
+
+Karena frontier tidak pernah berisi dua elemen yang saling leluhur, dan `E404` melarang relasi antara leluhur dan keturunan, `vis(a)` dan `vis(b)` selalu sama atau saling lepas.
+
+### 14.3 Aggregasi
+
+Relasi yang sudah di-lift dikelompokkan berdasarkan pasangan berarah `(vis(a), vis(b))`. Setiap kelompok digambar sebagai satu panah:
 
 ```json
 {
   "from": "shop.api",
   "to": "shop.db",
-  "sources": [
-    "shop.api.orders.repo.save->shop.db#0",
-    "shop.api.orders.repo.find->shop.db#0"
-  ],
+  "sources": ["saveOrder", "loadOrder"],
   "ops": ["write", "read"],
-  "labels": ["INSERT orders", "SELECT orders"],
   "data": [
-    { "dir": "push", "payload": ["Order"], "refs": ["shop.api.orders.order"] },
-    { "dir": "pull", "payload": ["Order"], "refs": ["shop.api.orders.order"] }
+    { "dir": "push", "types": [{ "ref": "shop.api.orders.order" }] },
+    { "dir": "pull", "types": [{ "ref": "shop.api.orders.order" }] }
   ]
 }
 ```
 
-- `sources`: id edge asal, untuk ditelusuri balik.
-- `ops`: himpunan `op` unik dari edge asal, urut sesuai urutan kemunculan pertama.
-- Relasi struktural ikut di-lift dengan aturan yang sama. Class di komponen A yang `extends` class di komponen B tetap terlihat sebagai `A → B` di level komponen, karena itu dependency yang nyata. Konsumen disarankan menggambar kelompok yang hanya berisi relasi struktural dengan garis putus-putus, dan kelompok campuran sebagai panah interaksi biasa.
-- `data`: entri `data` dari semua edge asal, digabung per `dir` (paling banyak satu entri `push` dan satu `pull`). `payload` dan `refs` adalah gabungan unik, urut sesuai kemunculan pertama. Arah tetap valid setelah lifting karena kelompok dibentuk dari pasangan berarah.
-- Konsumen disarankan menggambar arah data sebagai indikator di sepanjang garis (mis. titik bergerak atau chevron), terpisah dari kepala panah: `push` searah panah, `pull` berlawanan, keduanya ada berarti `⇄`.
+- `sources`: id relasi asal, untuk ditelusuri balik.
+- `ops`: himpunan `op` unik dari relasi asal, urut sesuai kemunculan pertama.
+- `data`: semua aliran data dari relasi asal, termasuk yang diambil dari endpoint ([§10.8](/referensi/spesifikasi/endpoint/#108-relasi-ke-endpoint)), digabung per arah. Paling banyak satu entri `push` dan satu `pull`, dengan tipe unik sesuai kemunculan pertama.
+- Relasi struktural ikut di-lift. Class di component A yang `inherits` class di component B tetap terlihat sebagai `A → B`, karena itu dependency yang nyata. Kelompok yang hanya berisi relasi struktural digambar dengan garis putus-putus.
 - `a -> b` dan `b -> a` adalah dua kelompok berbeda.
-- Kalau kelompok hanya berisi satu edge dan edge itu tidak di-lift, konsumen boleh menampilkan labelnya apa adanya.
+- Kelompok dengan satu relasi yang tidak di-lift memakai label relasi itu ([§9.6](/referensi/spesifikasi/relasi/#96-label)). Kelompok lain diberi label ringkasan, misalnya jumlah relasinya.
 
-### 10.4 Contoh
+Konsumen menggambar arah data sebagai penanda di sepanjang garis, terpisah dari kepala panah: `push` searah panah, `pull` berlawanan, dan keduanya berarti `⇄`.
+
+### 14.4 Contoh
+
 Dari contoh di [§2](/referensi/spesifikasi/#2-contoh-singkat):
 
 | Yang terbuka | Panah yang tampil |
 |---|---|
-| (tidak ada) | `customer → shop`, `shop → payment` (⇄ ChargeRequest / ChargeResult) |
-| `shop` | `customer → web`, `web → api` (⇄ CheckoutRequest / OrderId), `api → db` (⇄ Order), `api → payment` (⇄ ChargeRequest / ChargeResult) |
-| `shop`, `api` | `customer → web`, `web → checkout` (⇄ CheckoutRequest / OrderId), `checkout → orders` (push Order), `orders → db` (⇄ Order), `checkout → payment` (⇄ ChargeRequest / ChargeResult) |
+| (tidak ada) | `customer → shop` |
+| `shop` | `customer → web`, `web → api` (⇄ Cart / Order), `api → db` (push Order) |
+| `shop`, `web`, `api` | `customer → checkout`, `checkout → orders` (⇄ Cart / Order), `orders → db` (push Order) |
 
-Relasi `handler -> repo.save` hilang di level `shop` saja karena kedua ujungnya ada di `api`, lalu muncul kembali sebagai `checkout → orders` saat `api` dibuka.
+Relasi `placeOrder` menuju endpoint `createOrder`, jadi di level component panahnya berakhir di `orders`, pemilik endpoint itu.
+
+Flow di setiap level mengikuti [§12.4](/referensi/spesifikasi/komposisi-dan-flow/#124-flow-di-setiap-level-zoom).
+
+### 14.5 View deployment
+
+View deployment menggambar satu environment. Hierarkinya adalah environment → node → `deploy` dan `infra`, dengan aturan terbuka dan tertutup yang sama seperti [§14.1](#141-state-tampilan).
+
+Relasi di view ini diturunkan dari model software:
+
+1. Setiap relasi software `a -> b` dipetakan ke container: `c(a)` dan `c(b)` adalah container yang memuat `a` dan `b`, atau elemen itu sendiri kalau ia container. Relasi dari atau ke `person` dan `system` dipetakan ke elemen itu sendiri.
+2. Untuk setiap pasangan `deploy` dari `c(a)` dan `deploy` dari `c(b)` di environment itu, terbentuk satu relasi deployment `deploy(c(a)) -> deploy(c(b))`. Kalau `c(a)` di-deploy di beberapa tempat, setiap tempatnya mendapat relasi.
+3. Ujung yang tidak di-deploy, seperti `person`, system atau container eksternal, dan container yang di-`omit`, digambar di luar node. Relasi ke container yang di-`omit` tidak digambar.
+4. Relasi infra ([§13.5](/referensi/spesifikasi/deployment/#135-relasi-di-environment)) ditambahkan apa adanya.
+5. Lifting dan aggregasi [§14.2](#142-lifting)–[§14.3](#143-aggregasi) diterapkan di hierarki node. Relasi antara dua `deploy` di dalam node yang tertutup menjadi internal.

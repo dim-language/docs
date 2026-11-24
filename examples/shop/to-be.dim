@@ -1,27 +1,51 @@
-// Rencana arsitektur: laporan lama diganti analytics, dan setiap checkout dicatat.
-// File ini turunan dari main.dim; main.dim tetap bisa dipakai sendiri.
-
+dim "0.6";
 amends "main.dim";
 
-remove shop.reports;
+// Rencana arsitektur: laporan lama diganti analytics, dan setiap checkout dikirim sebagai event.
+// File ini turunan dari main.dim; main.dim tetap bisa dipakai sendiri.
 
 extend shop {
   container analytics "Analytics" {
-    tech "ClickHouse";
-    shape database;
     description "Menggantikan laporan harian; data masuk lewat event, bukan query ke Postgres.";
+    role database;
+    tech clickhouse;
+  }
+
+  container events "Checkout Events" {
+    description "Antrian event checkout untuk analytics.";
+    role queue;
+    tech sqs;
   }
 }
 
 extend shop.api {
-  tech "Rust/axum 0.8";
+  tech rust axum08;
+
   component audit "Audit Log" {
     description "Mencatat setiap checkout untuk rekonsiliasi dengan payment gateway.";
+
+    record checkoutEvent "CheckoutEvent" {
+      description "Satu checkout yang sudah selesai.";
+      field orderId: orders.orderId;
+      field total: orders.money;
+    }
+
+    endpoint checkoutCompleted "Checkout selesai" {
+      description "Dikirim setelah order tersimpan.";
+      event "CheckoutCompleted" on ::shop.events;
+      payload checkoutEvent;
+    }
   }
 }
 
-audit_checkout: shop.api.checkout.service.run -> shop.api.audit "Catat checkout" {
-  op write;
-  data "CheckoutEvent";
+extend production.aws {
+  node managed "Layanan terkelola" {
+    deploy analyticsDb shop.analytics { replicas 1; }
+    deploy eventsQueue shop.events { replicas 1; }
+  }
 }
-shop.api.audit -> shop.analytics "Kirim event" { op publish; data "CheckoutEvent" }
+
+announceCheckout: shop.api.checkout.service.run -> shop.api.audit.checkoutCompleted { op publish; }
+ingestCheckout: shop.analytics -> shop.api.audit.checkoutCompleted { op subscribe; }
+
+remove shop.reports;

@@ -9,11 +9,18 @@ After trying the prototype on a phone, the product team decides to show just the
 
 <DidoNote scene="order-id">If all we get back is the ID, which part of the POST arrow do I change?</DidoNote>
 
-Edit just the POST relation in `toko.dim`. Web still sends a full order and the API still persists it.
+In `toko.dim`, add a type for the order number to the Pesanan component, then change only the `pull` part of the POST relation. Web still sends a full order and the API still persists it.
 
 ```diff
-- toko.web -> toko.api "POST /pesanan" { op call; data push "Pesanan"; data pull "Pesanan" }
-+ toko.web -> toko.api "POST /pesanan" { op call; data push "Pesanan"; data pull "IdPesanan" }
++      alias idPesanan "IdPesanan" {
++        description "Nomor pesanan yang tampil di layar konfirmasi.";
++        type uuid;
++      }
+```
+
+```diff
+-  data pull toko.api.pesanan.dataPesanan;
++  data pull toko.api.pesanan.idPesanan;
 ```
 
 ```sh
@@ -30,6 +37,4 @@ The arrow count stays the same. To see what the compiler checks, remove `push` f
 ```text contoh-tutorial="tanpaArah"
 ```
 
-Each data type on an `op call` needs a direction. Restore `push`, rerun the check until it prints `ok`, then compare `data pull "IdPesanan"` with the API team’s agreed response. The response type promised to Web still needs a human review.
-
-[4. Review with the architect](/en/mulai/review/)
+Every `data` line needs a direction. Restore `push`, rerun the check until it prints `ok`, then compare `data pull toko.api.pesanan.idPesanan` with the API team’s agreed response. The response type promised to Web still needs a human review.
