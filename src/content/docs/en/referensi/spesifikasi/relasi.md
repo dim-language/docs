@@ -92,8 +92,8 @@ A relation has two separate aspects:
 - **`data` = which way data flows, and what data.** The direction is seen from the initiator: `push` means the initiator sends data to the target (with the arrow), and `pull` means the initiator fetches data from the target (against the arrow).
 
 ```dim
-loadOrder: repo -> db "Load order" { op read; data pull order; }
-saveOrder: repo -> db "Save order" { op write; data push order; }
+loadOrder: rows -> db "Load order" { op read; data pull order; }
+saveOrder: rows -> db "Save order" { op write; data push order; }
 
 submit: button -> handler "Submit cart" {
   op call;

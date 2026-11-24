@@ -31,7 +31,7 @@ system app "App" {
     auth bearer;
     rate ip 100 per 1m;
 
-    component auth "AuthController" {
+    component accounts "AuthController" {
       description "Sign-in and token refresh.";
       prefix "/auth";
 
@@ -65,7 +65,7 @@ system app "App" {
     }
   }
 
-  loginPost: web.login.submit -> api.auth.login { op call; }
+  loginPost: web.login.submit -> api.accounts.login { op call; }
 }
 ```
 

@@ -12,7 +12,7 @@ Di level paling dalam, model bisa menjelaskan kode selengkap class diagram: tipe
 
 <ZoomMap
   model={shop}
-  focus="shop.api.orders.repo"
+  focus="shop.api.orders.rows"
   uid="kode"
   caption="Detail kode dari examples/shop/. Kartu class, interface, dan record menampilkan field di atas garis tebal dan method di bawahnya. Garis putus-putus menunjukkan relasi struktural."
 />
@@ -115,7 +115,7 @@ Untuk bentuk kode, ada empat relasi **struktural**:
 | `refers` | asosiasi | yang menyimpan → yang dirujuk |
 
 ```dim
-repoContract: shop.api.orders.repo -> shop.api.orders.store { op implements; }
+repoContract: shop.api.orders.rows -> shop.api.orders.store { op implements; }
 ```
 
 `inherits` dan `implements` hanya ada di paradigma `oop`. Relasi struktural tidak punya aliran data. Saat di-zoom out, relasi ini tetap naik: kalau class di component A `inherits` class di component B, panah `A → B` muncul di level component sebagai dependency.

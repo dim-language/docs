@@ -92,8 +92,8 @@ Relasi punya dua aspek yang terpisah:
 - **`data` = ke mana data mengalir, dan data apa.** Arahnya dilihat dari sisi pemula: `push` berarti pemula mengirim data ke target (searah panah), `pull` berarti pemula mengambil data dari target (berlawanan arah panah).
 
 ```dim
-loadOrder: repo -> db "Baca order" { op read; data pull order; }
-saveOrder: repo -> db "Simpan order" { op write; data push order; }
+loadOrder: rows -> db "Baca order" { op read; data pull order; }
+saveOrder: rows -> db "Simpan order" { op write; data push order; }
 
 submit: button -> handler "Kirim keranjang" {
   op call;

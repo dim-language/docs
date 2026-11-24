@@ -12,7 +12,7 @@ At the deepest level, a model can describe code as fully as a class diagram: whi
 
 <ZoomMap
   model={shop}
-  focus="shop.api.orders.repo"
+  focus="shop.api.orders.rows"
   uid="kode"
   caption="Code detail from examples/shop/. Class, interface, and record cards show fields above the thick line and methods below it. Dashed lines show structural relations."
 />
@@ -115,7 +115,7 @@ For the shape of code, there are four **structural** relations:
 | `refers` | association | holder → referenced |
 
 ```dim
-repoContract: shop.api.orders.repo -> shop.api.orders.store { op implements; }
+repoContract: shop.api.orders.rows -> shop.api.orders.store { op implements; }
 ```
 
 `inherits` and `implements` exist only under `oop`. Structural relations have no data flow. When zoomed out, they still rise: if a class in component A `inherits` from a class in component B, an `A → B` arrow appears at the component level as a dependency.

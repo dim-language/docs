@@ -17,10 +17,10 @@ Every relation in dim answers two different questions:
 An arrow always points from whoever starts the interaction to its target.
 
 ```dim
-selectOrder: shop.api.orders.repo.find -> shop.db "SELECT orders" { op read; }
+selectOrder: shop.api.orders.rows.find -> shop.db "SELECT orders" { op read; }
 ```
 
-`repo.find` asks the database, so the arrow starts at `repo.find`. That's also the direction of the dependency: `repo.find` depends on `db`, not the other way around.
+`rows.find` asks the database, so the arrow starts at `rows.find`. That's also the direction of the dependency: `rows.find` depends on `db`, not the other way around.
 
 ## `data`: what flows
 
@@ -32,7 +32,7 @@ The direction of data is written from the initiator's point of view, followed by
 | `pull` | the initiator fetches data from the target | against it |
 
 ```dim
-selectOrder: shop.api.orders.repo.find -> shop.db "SELECT orders" {
+selectOrder: shop.api.orders.rows.find -> shop.db "SELECT orders" {
   op read;
   data pull shop.api.orders.order;
 }

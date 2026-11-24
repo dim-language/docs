@@ -17,10 +17,10 @@ Setiap relasi di dim menjawab dua pertanyaan yang berbeda:
 Panah selalu ditulis dari pihak yang memulai interaksi ke target interaksi.
 
 ```dim
-selectOrder: shop.api.orders.repo.find -> shop.db "SELECT orders" { op read; }
+selectOrder: shop.api.orders.rows.find -> shop.db "SELECT orders" { op read; }
 ```
 
-`repo.find` yang bertanya ke database, jadi panahnya dari `repo.find`. Ini sama dengan arah dependency: `repo.find` bergantung pada `db`, bukan sebaliknya.
+`rows.find` yang bertanya ke database, jadi panahnya dari `rows.find`. Ini sama dengan arah dependency: `rows.find` bergantung pada `db`, bukan sebaliknya.
 
 ## `data`: apa yang mengalir
 
@@ -32,7 +32,7 @@ Arah data ditulis dari sudut pandang pihak yang memulai, diikuti tipenya:
 | `pull` | pemula mengambil data dari target | berlawanan |
 
 ```dim
-selectOrder: shop.api.orders.repo.find -> shop.db "SELECT orders" {
+selectOrder: shop.api.orders.rows.find -> shop.db "SELECT orders" {
   op read;
   data pull shop.api.orders.order;
 }

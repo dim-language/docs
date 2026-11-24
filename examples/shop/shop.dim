@@ -194,7 +194,7 @@ system shop "Online Shop" {
         }
       }
 
-      class repo "OrderRepository" {
+      class rows "OrderRepository" {
         description "Implementasi OrderStore di atas Postgres. Semua penulisan memakai satu transaksi per order.";
 
         method find "find_by_id()" {
@@ -250,22 +250,22 @@ system shop "Online Shop" {
     data push api.orders.order;
   }
 
-  insertOrder: api.orders.repo.save -> db "INSERT orders" { op write; data push api.orders.order; }
+  insertOrder: api.orders.rows.save -> db "INSERT orders" { op write; data push api.orders.order; }
   getDetail: web.detail -> api.orders.getOrder { op call; tech https; }
 
-  findOrder: api.orders.detail -> api.orders.repo.find "Cari berdasarkan id" {
+  findOrder: api.orders.detail -> api.orders.rows.find "Cari berdasarkan id" {
     op call;
     data push api.orders.orderId;
     data pull api.orders.order;
   }
 
-  selectOrder: api.orders.repo.find -> db "SELECT orders" { op read; data pull api.orders.order; }
+  selectOrder: api.orders.rows.find -> db "SELECT orders" { op read; data pull api.orders.order; }
   postRefund: web.detail -> api.orders.refundOrder { op call; tech https; }
   recordRefund: api.orders.refund -> db "UPDATE orders" { op write; data push api.orders.refundId; }
   nightlyReport: reports -> db "SELECT orders" { op read; data pull api.orders.order; }
 
   // Struktur kelas.
-  repoContract: api.orders.repo -> api.orders.store { op implements; }
+  repoContract: api.orders.rows -> api.orders.store { op implements; }
   serviceStore: api.checkout.service -> api.orders.store { op refers; }
   serviceClient: api.checkout.service -> api.payments.client { op refers; }
 }

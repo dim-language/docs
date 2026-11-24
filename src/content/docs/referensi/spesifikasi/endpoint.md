@@ -172,7 +172,7 @@ container api "API" {
   auth bearer;
   rate ip 100 per 1m;
 
-  component auth "Auth" {
+  component accounts "Auth" {
     description "Login dan refresh token.";
     prefix "/auth";
 
