@@ -1,0 +1,126 @@
+---
+title: dim, bahasa untuk memodelkan arsitektur software
+description: Tulis arsitektur software dalam file .dim, lihat relasinya di peta yang bisa di-zoom, dan cek model dengan SDK TypeScript.
+template: splash
+tableOfContents: false
+---
+
+import '@fontsource/kalam/latin-400.css';
+import { LinkButton } from '@astrojs/starlight/components';
+import ZoomMap from '../../../components/zoom-map/ZoomMap.astro';
+import MapIntro from '../../../components/MapIntro.astro';
+import shop from '../../../data/shop.json';
+
+<div class="dim-landing">
+
+<div class="dim-demo" id="peta-checkout">
+<MapIntro text="Satu peta buat tim dan agen AI." />
+<ZoomMap model={shop} uid="beranda" flow="checkout" />
+</div>
+
+<section class="dim-map-action">
+<div class="dim-pitch">
+<ol class="dim-comic" role="list">
+<li><span class="dim-photo"><img src="/dido/hello.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Kenalin, Dido. (Bukan nama asli.)</p></li>
+<li><span class="dim-photo"><img src="/dido/architect.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Arsiteknya minta Dido bikin A.</p></li>
+<li><span class="dim-photo"><img src="/dido/idea.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Dido nangkepnya B. “Siap.”</p></li>
+<li><span class="dim-photo"><img src="/dido/agent.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Dido minta B di prompt. Agennya bikin C.</p></li>
+<li><span class="dim-photo"><img src="/dido/review.webp" alt="" width="400" height="400" loading="lazy" /></span><p>“Dido, coba jelasin kok A bisa jadi C.”</p></li>
+</ol>
+<div class="dim-comic-close">
+
+<p class="dim-punchline">Kita pernah ngalamin gini, sekarang (semoga aja) lo ga perlu</p>
+
+<LinkButton href="/id/mulai/" icon="right-arrow">Pakai dim, mulai di sini</LinkButton>
+</div>
+</div>
+</section>
+
+<div class="dim-examples">
+<section class="dim-example">
+<header>
+
+## “Baliknya satu order, kan?”
+
+</header>
+<img class="dim-scene" src="/dido/order-id.webp" width="640" height="374" alt="" loading="lazy" />
+<div class="dim-example-body">
+
+Kali ini Dido nanya dulu. Arsiteknya geleng. “ID-nya aja.” Mereka buka model dan catat kesepakatannya di panah **Web App → API**. Sekarang Dido bisa kasih agennya file yang bilang persis apa yang dikirim (`Cart`) dan apa yang balik (`OrderId`).
+
+```dim title="shop.dim"
+sendCart: web.checkout -> api.checkout "Kirim keranjang" {
+  op call;
+  data push api.orders.cart;
+  data pull api.orders.orderId;
+}
+```
+
+<LinkButton href="/id/konsep/aliran-data/" icon="right-arrow">Pelajari aliran data</LinkButton>
+
+</div>
+</section>
+
+<section class="dim-example">
+<header>
+
+## “Lah, arah datanya ke mana?”
+
+</header>
+<img class="dim-scene" src="/dido/missing-direction.webp" width="640" height="330" alt="" loading="lazy" />
+<div class="dim-example-body">
+
+Dido udah nulis tipe request-nya. Yang kelupaan: siapa yang ngirim? Pas model dicek di CI, muncul `E406`. Karena Web App yang ngirim request ke API, Dido tinggal tambahin `push`.
+
+```diff
+- data api.orders.cart;
++ data push api.orders.cart;
+```
+
+<LinkButton href="/id/referensi/cli/" icon="right-arrow">Cek model pakai SDK</LinkButton>
+
+</div>
+</section>
+
+</div>
+
+<div class="dim-definition">
+<p><dfn>dim (Diagram In Markup)</dfn> itu bahasa buat nulis arsitektur software sebagai teks. Modelnya bisa lo jelajahi sebagai peta, dari sistem sampai fungsi.</p>
+</div>
+
+<section class="dim-features">
+<header class="dim-guide-intro">
+<img src="/dido/your-turn.webp" width="285" height="480" loading="lazy" alt="" />
+<div>
+
+## Giliran lo. Bawa satu PR.
+
+Iya, lo yang di balik layar. Gambar alurnya sebelum Dido nebak lagi.
+
+</div>
+</header>
+
+<div class="dim-features-grid">
+<div>
+
+### Bikin yang pertama
+
+- [Tulis model pertama](/id/mulai/) bareng panduan langkah demi langkah, dari sistem sampai fungsi.
+- [Pasang SDK](/id/referensi/cli/#pasang) buat ngecek model lo dan ekspor JSON.
+- [Baca spesifikasi bahasa](/id/referensi/spesifikasi/) kalau lo butuh aturan sintaks atau validasi.
+
+</div>
+<div>
+
+### Pas sistemnya mulai rame
+
+- Susun [elemen](/id/menulis/elemen/) dan [relasi](/id/menulis/relasi/), lalu catat [kontrak HTTP](/id/konsep/endpoint/) atau [detail kode](/id/konsep/level-kode/) kalau lo perlu nunjukin isinya.
+- Pakai [flow](/id/konsep/alur/) buat ngikutin checkout atau refund, langkah demi langkah.
+- [Pecah model ke beberapa file](/id/konsep/komposisi/) dan [tulis usulan perubahan](/id/konsep/komposisi/#amends-model-turunan) pakai model lo sekarang sebagai dasarnya.
+
+</div>
+</div>
+
+</section>
+
+</div>

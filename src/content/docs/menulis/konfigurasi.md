@@ -1,11 +1,11 @@
 ---
-title: Siapkan dim.config
-description: Mendeklarasikan teknologi, tag, scope, root source, dan tampilan sekali untuk seluruh proyek.
+title: Set up dim.config
+description: Declare technologies, tags, scopes, source roots, and styles once for the whole project.
 ---
 
-Tim kamu memakai Kotlin, Postgres, dan Kafka di beberapa layanan. Daripada menulis `"Postgres 16"` di satu tempat dan `"PostgreSQL"` di tempat lain, deklarasikan setiap teknologi sekali, lalu rujuk id-nya dari model.
+Your team uses Kotlin, Postgres, and Kafka across several services. Instead of writing `"Postgres 16"` in one place and `"PostgreSQL"` in another, declare each technology once and reference its id from the model.
 
-Setiap proyek dim punya satu `dim.config` di folder yang sama dengan file utamanya. Semua file proyek memakai config itu.
+Every dim project has one `dim.config` in the same folder as its main file. All project files use that config.
 
 ```dim
 // dim.config
@@ -16,8 +16,8 @@ tech postgres "PostgreSQL" { version "16"; }
 tech kafka "Apache Kafka";
 tech https "HTTPS";
 
-tag pci "Menyimpan data kartu";
-tag deprecated "Akan dihapus";
+tag pci "Stores card data";
+tag deprecated "Will be removed";
 
 scope ordersWrite "orders:write";
 
@@ -33,11 +33,11 @@ style role queue { icon queue; background purple; }
 style tag pci { background warning; }
 ```
 
-`dim init` membuat file awal seperti ini, lengkap dengan style untuk setiap peran container.
+`dim init` creates a starting file like this one, with a style for every container role.
 
-## Teknologi: `tech`
+## Technologies: `tech`
 
-Deklarasikan setiap bahasa, framework, database, layanan cloud, dan protokol yang muncul di model. Model lalu cukup menulis id-nya:
+Declare every language, framework, database, cloud service, and protocol that appears in the model. The model then only writes the id:
 
 ```dim
 container db "Orders DB" {
@@ -48,21 +48,21 @@ container db "Orders DB" {
 publishOrder: api.orders -> events { op publish; data push api.orders.order; tech kafka; }
 ```
 
-Salah ketik seperti `tech postgress` langsung menjadi error, dan editor bisa melengkapi id-nya. Kalau dua versi dipakai bersamaan, deklarasikan dua tech: `postgres15` dan `postgres16`.
+A typo such as `tech postgress` is an immediate error, and the editor can complete the id. If two versions are used at the same time, declare two techs: `postgres15` and `postgres16`.
 
-## Tag: `tag`
+## Tags: `tag`
 
-Tag mengelompokkan elemen yang tersebar di banyak tempat: semua yang menyentuh data kartu, semua yang akan dihapus, semua milik satu tim. Elemen, relasi, dan flow memakainya dengan `tags pci deprecated;`.
+Tags group elements that are spread across the model: everything that touches card data, everything that will be removed, everything one team owns. Elements, relations, and flows use them with `tags pci deprecated;`.
 
-Tag yang belum dideklarasikan tidak bisa dipakai. Itu yang membuat tag tetap rapi: tidak ada `pci`, `PCI`, dan `cardData` untuk hal yang sama.
+A tag that isn't declared can't be used. That keeps tags tidy: there's no `pci`, `PCI`, and `cardData` for the same thing.
 
-## Scope auth: `scope`
+## Auth scopes: `scope`
 
-Endpoint yang meminta izin tertentu merujuk scope yang dideklarasikan di sini. Nilai string-nya adalah bentuk scope seperti yang dikirim di token. Lihat [Dokumentasikan endpoint](/konsep/endpoint/).
+Endpoints that need a particular permission refer to a scope declared here. Its string value is the scope as it's sent in a token. See [Document an endpoint](/konsep/endpoint/).
 
-## Lokasi source: `root`
+## Source locations: `root`
 
-`root` mencatat repositori tempat kode berada. Elemen menunjuk lokasinya relatif terhadap root itu:
+A `root` records the repository the code lives in. Elements point to their location relative to that root:
 
 ```dim
 system shop "Online Shop" {
@@ -75,17 +75,17 @@ system shop "Online Shop" {
 }
 ```
 
-Root diwariskan ke anak, tapi path selalu ditulis lengkap dari root, jadi setiap `source` bisa dibaca sendiri.
+The root is inherited by children, but a path is always written in full from the root, so every `source` can be read on its own.
 
-## Tampilan: `style`
+## Appearance: `style`
 
-Model tidak mengatur warna atau icon elemennya sendiri. Semua tampilan diatur di `dim.config`, per kind, per peran, atau per tag. Kalau beberapa style cocok, urutannya kind, lalu peran, lalu tag, dan yang terakhir menang.
+A model doesn't set the colors or icons of its own elements. All appearance is set in `dim.config`, by kind, by role, or by tag. If several styles match, the order is kind, then role, then tag, and the last one wins.
 
-- **Icon** diambil dari set tertutup berisi 24 icon semantik, misalnya `database`, `queue`, `server`, `payment`. Icon opsional.
-- **Background** diambil dari 12 token palet: enam semantik (`neutral`, `accent`, `info`, `success`, `warning`, `danger`) dan enam kategori (`blue`, `green`, `purple`, `orange`, `pink`, `teal`). Warna teks dan border dihitung otomatis supaya tetap terbaca di tema terang dan gelap.
+- **Icons** come from a closed set of 24 semantic icons, such as `database`, `queue`, `server`, and `payment`. Icons are optional.
+- **Backgrounds** come from 12 palette tokens: six semantic (`neutral`, `accent`, `info`, `success`, `warning`, `danger`) and six categorical (`blue`, `green`, `purple`, `orange`, `pink`, `teal`). Text and border colors are derived so they stay readable in light and dark themes.
 
-Daftar lengkapnya ada di [spesifikasi §5](/referensi/spesifikasi/konfigurasi/#5-konfigurasi-proyek).
+The full lists are in [specification §5](/referensi/spesifikasi/konfigurasi/#5-project-configuration).
 
-## Cek hasilnya
+## Check the result
 
-Ganti satu `tech` di model dengan id yang tidak dideklarasikan, lalu jalankan `dim check main.dim`. Pesannya menunjuk baris itu dengan `E104`. Kembalikan id-nya, lalu tambahkan `tags pci;` ke database dan pastikan background-nya berubah di peta.
+Change one `tech` in the model to an id that isn't declared, then run `dim check main.dim`. The message points to that line with `E104`. Restore the id, then add `tags pci;` to the database and confirm its background changes on the map.

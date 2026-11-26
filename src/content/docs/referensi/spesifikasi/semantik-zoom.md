@@ -1,34 +1,34 @@
 ---
-title: Semantik zoom
-description: Cara menampilkan, mengangkat, dan menggabungkan relasi pada tiap level zoom, termasuk di view deployment.
+title: Zoom semantics
+description: How relations are shown, lifted, and grouped at each zoom level, including in the deployment view.
 ---
 
-## 14. Semantik zoom (lifting)
+## 14. Zoom semantics (lifting)
 
-Bagian ini normatif untuk **konsumen** (peta, editor), bukan parser. Ditulis di sini supaya semua konsumen menghasilkan diagram yang sama dari model yang sama.
+This section is normative for **consumers** (maps, editors), not the parser. It's written here so every consumer draws the same diagram from the same model.
 
-### 14.1 State tampilan
+### 14.1 View state
 
-Konsumen menyimpan himpunan elemen yang sedang **terbuka**. Elemen top-level selalu terlihat.
+A consumer keeps the set of elements that are currently **open**. Top-level elements are always visible.
 
-- Elemen **terlihat** kalau semua leluhurnya terbuka.
-- Elemen **frontier** adalah elemen terlihat yang tertutup atau tidak punya anak. Elemen frontier digambar sebagai kotak. Elemen terbuka digambar sebagai batas yang membungkus anak-anaknya.
+- An element is **visible** if all its ancestors are open.
+- An element is on the **frontier** if it's visible and either closed or childless. Frontier elements are drawn as boxes. Open elements are drawn as boundaries around their children.
 
 ### 14.2 Lifting
 
-Untuk setiap elemen `x`, `vis(x)` adalah leluhur-atau-diri-sendiri dari `x` yang berada di frontier.
+For every element `x`, `vis(x)` is the ancestor-or-self of `x` that's on the frontier.
 
-Untuk setiap relasi `a -> b`:
+For every relation `a -> b`:
 
-- Kalau `a == b` (rekursi) dan `vis(a) == a`: relasi digambar sebagai **loop** di elemen itu.
-- Kalau `vis(a) == vis(b)` selain kasus di atas: relasi **internal**, tidak digambar.
-- Selain itu: relasi digambar sebagai `vis(a) -> vis(b)`.
+- If `a == b` (recursion) and `vis(a) == a`: the relation is drawn as a **loop** on that element.
+- If `vis(a) == vis(b)` otherwise: the relation is **internal** and isn't drawn.
+- Otherwise: the relation is drawn as `vis(a) -> vis(b)`.
 
-Karena frontier tidak pernah berisi dua elemen yang saling leluhur, dan `E404` melarang relasi antara leluhur dan keturunan, `vis(a)` dan `vis(b)` selalu sama atau saling lepas.
+Because the frontier never contains two elements where one is the other's ancestor, and `E404` forbids relations between an ancestor and a descendant, `vis(a)` and `vis(b)` are always either equal or disjoint.
 
-### 14.3 Aggregasi
+### 14.3 Aggregation
 
-Relasi yang sudah di-lift dikelompokkan berdasarkan pasangan berarah `(vis(a), vis(b))`. Setiap kelompok digambar sebagai satu panah:
+Lifted relations are grouped by the directed pair `(vis(a), vis(b))`. Each group is drawn as one arrow:
 
 ```json
 {
@@ -43,37 +43,37 @@ Relasi yang sudah di-lift dikelompokkan berdasarkan pasangan berarah `(vis(a), v
 }
 ```
 
-- `sources`: id relasi asal, untuk ditelusuri balik.
-- `ops`: himpunan `op` unik dari relasi asal, urut sesuai kemunculan pertama.
-- `data`: semua aliran data dari relasi asal, termasuk yang diambil dari endpoint ([§10.8](/referensi/spesifikasi/endpoint/#108-relasi-ke-endpoint)), digabung per arah. Paling banyak satu entri `push` dan satu `pull`, dengan tipe unik sesuai kemunculan pertama.
-- Relasi struktural ikut di-lift. Class di component A yang `inherits` class di component B tetap terlihat sebagai `A → B`, karena itu dependency yang nyata. Kelompok yang hanya berisi relasi struktural digambar dengan garis putus-putus.
-- `a -> b` dan `b -> a` adalah dua kelompok berbeda.
-- Kelompok dengan satu relasi yang tidak di-lift memakai label relasi itu ([§9.6](/referensi/spesifikasi/relasi/#96-label)). Kelompok lain diberi label ringkasan, misalnya jumlah relasinya.
+- `sources`: the ids of the source relations, for tracing back.
+- `ops`: the unique `op`s of the source relations, in order of first appearance.
+- `data`: every data flow of the source relations, including those taken from endpoints ([§10.8](/referensi/spesifikasi/endpoint/#108-relations-to-endpoints)), merged per direction. At most one `push` and one `pull` entry, with unique types in order of first appearance.
+- Structural relations are lifted too. A class in component A that `inherits` a class in component B still shows as `A → B`, because that's a real dependency. A group containing only structural relations is drawn with a dashed line.
+- `a -> b` and `b -> a` are two different groups.
+- A group with one relation that isn't lifted uses that relation's label ([§9.6](/referensi/spesifikasi/relasi/#96-labels)). Other groups get a summary label, such as the number of relations.
 
-Konsumen menggambar arah data sebagai penanda di sepanjang garis, terpisah dari kepala panah: `push` searah panah, `pull` berlawanan, dan keduanya berarti `⇄`.
+Consumers draw the direction of data as a marker along the line, separate from the arrowhead: `push` with the arrow, `pull` against it, and both meaning `⇄`.
 
-### 14.4 Contoh
+### 14.4 Example
 
-Dari contoh di [§2](/referensi/spesifikasi/#2-contoh-singkat):
+From the example in [§2](/referensi/spesifikasi/#2-short-example):
 
-| Yang terbuka | Panah yang tampil |
+| Open | Arrows shown |
 |---|---|
-| (tidak ada) | `customer → shop` |
+| (none) | `customer → shop` |
 | `shop` | `customer → web`, `web → api` (⇄ Cart / Order), `api → db` (push Order) |
 | `shop`, `web`, `api` | `customer → checkout`, `checkout → orders` (⇄ Cart / Order), `orders → db` (push Order) |
 
-Relasi `placeOrder` menuju endpoint `createOrder`, jadi di level component panahnya berakhir di `orders`, pemilik endpoint itu.
+The `placeOrder` relation goes to the `createOrder` endpoint, so at the component level its arrow ends at `orders`, which owns that endpoint.
 
-Flow di setiap level mengikuti [§12.4](/referensi/spesifikasi/komposisi-dan-flow/#124-flow-di-setiap-level-zoom).
+Flows at each level follow [§12.4](/referensi/spesifikasi/komposisi-dan-flow/#124-flows-at-each-zoom-level).
 
-### 14.5 View deployment
+### 14.5 Deployment view
 
-View deployment menggambar satu environment. Hierarkinya adalah environment → node → `deploy` dan `infra`, dengan aturan terbuka dan tertutup yang sama seperti [§14.1](#141-state-tampilan).
+The deployment view draws one environment. Its hierarchy is environment → node → `deploy` and `infra`, with the same open and closed rules as [§14.1](#141-view-state).
 
-Relasi di view ini diturunkan dari model software:
+Relations in this view are derived from the software model:
 
-1. Setiap relasi software `a -> b` dipetakan ke container: `c(a)` dan `c(b)` adalah container yang memuat `a` dan `b`, atau elemen itu sendiri kalau ia container. Relasi dari atau ke `person` dan `system` dipetakan ke elemen itu sendiri.
-2. Untuk setiap pasangan `deploy` dari `c(a)` dan `deploy` dari `c(b)` di environment itu, terbentuk satu relasi deployment `deploy(c(a)) -> deploy(c(b))`. Kalau `c(a)` di-deploy di beberapa tempat, setiap tempatnya mendapat relasi.
-3. Ujung yang tidak di-deploy, seperti `person`, system atau container eksternal, dan container yang di-`omit`, digambar di luar node. Relasi ke container yang di-`omit` tidak digambar.
-4. Relasi infra ([§13.5](/referensi/spesifikasi/deployment/#135-relasi-di-environment)) ditambahkan apa adanya.
-5. Lifting dan aggregasi [§14.2](#142-lifting)–[§14.3](#143-aggregasi) diterapkan di hierarki node. Relasi antara dua `deploy` di dalam node yang tertutup menjadi internal.
+1. Each software relation `a -> b` is mapped to containers: `c(a)` and `c(b)` are the containers that hold `a` and `b`, or the elements themselves if they're containers. Relations from or to a `person` or `system` map to that element itself.
+2. For every pair of a `deploy` of `c(a)` and a `deploy` of `c(b)` in the environment, there's one deployment relation `deploy(c(a)) -> deploy(c(b))`. If `c(a)` is deployed in several places, each place gets a relation.
+3. Ends that aren't deployed, such as a `person`, an external system or container, and an omitted container, are drawn outside the nodes. Relations to an omitted container aren't drawn.
+4. Infra relations ([§13.5](/referensi/spesifikasi/deployment/#135-relations-in-an-environment)) are added as written.
+5. The lifting and aggregation in [§14.2](#142-lifting)–[§14.3](#143-aggregation) apply to the node hierarchy. Relations between two `deploy`s inside a closed node become internal.

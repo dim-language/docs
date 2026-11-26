@@ -1,28 +1,28 @@
 ---
-title: Pasang peta di halaman Astro
-description: Tampilkan model checkout dengan komponen peta SDK.
+title: Embed a map on an Astro page
+description: Display your checkout model with the SDK map component.
 ---
 
 import ShopMap from '../../../examples/model-pertama/ShopMap.astro';
 import source from '../../../examples/model-pertama/kode.dim?raw';
 import config from '../../../examples/model-pertama/dim.config?raw';
 
-Di proyek Astro, [pasang SDK](/referensi/cli/#pasang). Salin file akhir `toko.dim` beserta `dim.config`-nya dari [tutorial](/mulai/) ke `src/models/`. Simpan komponen berikut di `src/components/`.
+In an Astro project, [install the SDK](/referensi/cli/#install). Copy the final `shop.dim` and its `dim.config` from the [tutorial](/mulai/) to `src/models/`. Save the following component in `src/components/`.
 
 ```astro title="src/components/ShopMap.astro" contoh-tutorial="ShopMap.astro"
 ```
 
-Buat halaman yang membaca model dan config-nya sebagai teks. Komponen mengompilasinya saat halaman dirender.
+Create a page that reads the model and its config as text. The component compiles it when the page renders.
 
 ```astro title="src/pages/checkout.astro"
 ---
 import ShopMap from '../components/ShopMap.astro';
-import source from '../models/toko.dim?raw';
+import source from '../models/shop.dim?raw';
 import config from '../models/dim.config?raw';
 ---
-<ShopMap source={source} config={config} language="id" />
+<ShopMap source={source} config={config} language="en" />
 ```
 
-Jalankan dev server Astro dan buka `/checkout/`. Perbesar petanya sampai Web dan API terlihat. Pilih relasi POST untuk memeriksa request dan respons, seperti pada contoh yang dirender di sini.
+Start the Astro dev server and open `/checkout/`. Zoom until Web and API appear, then select the POST relation to inspect its request and response. Try it in the same component below.
 
-<ShopMap source={source} config={config} language="id" />
+<ShopMap source={source} config={config} language="en" />

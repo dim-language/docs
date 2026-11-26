@@ -1,13 +1,13 @@
 ---
-title: Tipe
-description: Ekspresi tipe, tipe primitif, tipe komposit, dan rujukan ke tipe bernama.
+title: Types
+description: Type expressions, primitive types, composite types, and references to named types.
 ---
 
-## 8. Tipe
+## 8. Types
 
-dim punya sistem tipe sendiri yang kecil. Tipe di dim menjelaskan **bentuk data**, bukan representasinya di satu bahasa pemrograman. Memetakan `decimal` ke `BigDecimal` atau `uuid` ke `string` adalah urusan alat yang membaca model, misalnya generator kode.
+dim has a small type system of its own. A type in dim describes the **shape of data**, not how one programming language represents it. Mapping `decimal` to `BigDecimal` or `uuid` to `string` is the job of tools that read the model, such as code generators.
 
-Tipe ditulis sebagai **ekspresi**, bukan string, jadi parser bisa memeriksa setiap bagiannya.
+Types are written as **expressions**, not strings, so the parser can check every part of them.
 
 ```dim
 field id: uuid;
@@ -28,91 +28,91 @@ base      = PRIMITIVE
           | "map" "<" type "," type ">" ;
 ```
 
-- `T[]` adalah list berisi `T`.
-- `T?` berarti nilainya boleh tidak ada.
-- Akhiran dibaca dari kiri ke kanan: `order[]?` adalah list yang boleh tidak ada, sedangkan `order?[]` adalah list yang setiap isinya boleh tidak ada.
-- `T??` adalah `E001`.
+- `T[]` is a list of `T`.
+- `T?` means the value can be absent.
+- Suffixes read left to right: `order[]?` is a list that can be absent, while `order?[]` is a list whose items can each be absent.
+- `T??` is `E001`.
 
-### 8.2 Tipe primitif
+### 8.2 Primitive types
 
-| Tipe | Isi |
+| Type | Content |
 |---|---|
-| `string` | teks |
-| `int` | bilangan bulat |
-| `float` | bilangan pecahan biner |
-| `decimal` | bilangan pecahan desimal yang presisi, untuk uang |
-| `bool` | benar atau salah |
-| `bytes` | data biner |
-| `date` | tanggal tanpa jam |
-| `datetime` | tanggal dan jam dengan zona waktu |
-| `duration` | rentang waktu |
-| `uuid` | UUID |
-| `url` | URL |
+| `string` | text |
+| `int` | an integer |
+| `float` | a binary floating-point number |
+| `decimal` | an exact decimal number, for money |
+| `bool` | true or false |
+| `bytes` | binary data |
+| `date` | a date without a time |
+| `datetime` | a date and time with a time zone |
+| `duration` | a span of time |
+| `uuid` | a UUID |
+| `url` | a URL |
 
 ### 8.3 `map`
 
-`map<K, V>` adalah pasangan kunci-nilai. Kuncinya harus `string`, `int`, `uuid`, atau `enum` (`E308`).
+`map<K, V>` holds key-value pairs. The key must be `string`, `int`, `uuid`, or an `enum` (`E308`).
 
-### 8.4 Tipe bernama
+### 8.4 Named types
 
-Tipe bernama adalah unit kode `record`, `enum`, `union`, `alias`, `class`, atau `interface` ([§7.2](/referensi/spesifikasi/level-kode/#72-kind-level-kode)). `class` dan `interface` hanya ada di paradigma `oop`, tapi boleh dirujuk sebagai tipe dari mana pun. Tipe bernama dirujuk lewat **path**, yang di-resolve seperti path lain dari scope tempat ekspresi itu ditulis ([§6.9](/referensi/spesifikasi/model/#69-resolusi-path)).
+Named types are the code units `record`, `enum`, `union`, `alias`, `class`, and `interface` ([§7.2](/referensi/spesifikasi/level-kode/#72-code-level-kinds)). `class` and `interface` exist only under the `oop` paradigm, but they can be referenced as types from anywhere. A named type is referenced by **path**, which resolves like any other path from the scope where the expression is written ([§6.9](/referensi/spesifikasi/model/#69-path-resolution)).
 
 ```dim
 component orders "Orders" {
-  description "Membuat order.";
+  description "Creates orders.";
 
   record order "Order" {
-    description "Order yang sudah dibuat.";
+    description "An order that has been created.";
     field id: uuid;
-    field status: orderStatus;              // anak component yang sama
+    field status: orderStatus;              // a child of the same component
   }
 
   enum orderStatus "OrderStatus" {
-    description "Tahap order.";
+    description "The stage of an order.";
     variant pending;
     variant paid;
   }
 
   function findOrder "findOrder()" {
-    description "Mencari order.";
+    description "Looks up an order.";
     param id: uuid;
     returns order?;
-    throws ::shop.api.common.notFound;      // path absolut ke component lain
+    throws ::shop.api.common.notFound;      // an absolute path to another component
   }
 }
 ```
 
-- Path yang tidak menunjuk tipe bernama adalah `E306`.
-- Nama tipe **tidak** harus unik di seluruh model. Dua component boleh sama-sama punya `record config`, karena rujukannya lewat path.
-- Tipe dari component lain, container lain, atau system lain boleh dirujuk. Itulah cara menulis kontrak bersama: tipe didefinisikan sekali di tempat pemiliknya, lalu dirujuk dari mana pun.
+- A path that doesn't point to a named type is `E306`.
+- Type names **don't** have to be unique across the model. Two components can both have a `record config`, because references go through paths.
+- Types from another component, container, or system can be referenced. That's how shared contracts are written: a type is defined once, where it belongs, and referenced from anywhere.
 
 ### 8.5 `alias`
 
 ```dim
 alias orderId "OrderId" {
-  description "Id order, dibuat saat checkout.";
+  description "An order id, created at checkout.";
   type uuid;
 }
 ```
 
-`alias` memberi nama baru untuk sebuah tipe. Alias yang merujuk dirinya sendiri, langsung atau lewat alias lain, adalah `E310`.
+`alias` gives a type a new name. An alias that refers to itself, directly or through another alias, is `E310`.
 
-### 8.6 Rekursi
+### 8.6 Recursion
 
-Record boleh merujuk dirinya sendiri, langsung atau lewat tipe lain, asalkan rujukannya lewat `[]`, `?`, atau `map`. Rujukan langsung tanpa salah satunya membuat nilai yang tidak pernah selesai, jadi `E309`.
+A record can refer to itself, directly or through other types, as long as the reference goes through `[]`, `?`, or `map`. A direct reference without one of them describes a value that never ends, so it's `E309`.
 
 ```dim
 record category "Category" {
-  description "Kategori produk yang bisa bersarang.";
+  description "A product category that can be nested.";
   field name: string;
   field children: category[];   // ✅
   field parent: category?;      // ✅
 }
 ```
 
-### 8.7 Yang sengaja tidak ada
+### 8.7 What is left out on purpose
 
-- **Generic buatan pengguna.** List, optional, dan `map` sudah cukup untuk kontrak di level arsitektur.
-- **Union tanpa nama**, seperti `a | b`. Setiap pilihan harus dideklarasikan sebagai `union` supaya punya nama dan keterangan.
-- **Tipe hasil yang membungkus error**, seperti `Result<T, E>`. Error ditulis lewat `throws`.
-- **Referensi dan pointer**, seperti `&T` atau `*T`. Itu urusan representasi di bahasa tertentu.
+- **User-defined generics.** Lists, optionals, and `map` are enough for contracts at the architecture level.
+- **Anonymous unions** such as `a | b`. Every choice must be declared as a `union` so it has a name and a description.
+- **Result types that wrap errors**, such as `Result<T, E>`. Errors are written with `throws`.
+- **References and pointers** such as `&T` or `*T`. Those are representation details of particular languages.

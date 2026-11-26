@@ -1,8 +1,8 @@
 dim "0.6";
 
-person pembeli "Pembeli";
+person customer "Customer";
 
-system toko "Toko Online" {
+system shop "Online Shop" {
   container web "Web" { role app; tech astro; }
 
   container api "API" {
@@ -10,24 +10,24 @@ system toko "Toko Online" {
     paradigm procedural;
     tech rust;
 
-    component pesanan "Pesanan" {
-      description "Menerima pesanan dari Web dan menyimpannya.";
+    component orders "Orders" {
+      description "Takes orders from the web app and saves them.";
 
-      record dataPesanan "Pesanan" {
-        description "Isi pesanan yang dikirim Web.";
-        field barang: string[];
-        field alamat: string;
+      record order "Order" {
+        description "What the web app sends in an order.";
+        field items: string[];
+        field address: string;
       }
 
-      alias idPesanan "IdPesanan" {
-        description "Nomor pesanan yang tampil di layar konfirmasi.";
+      alias orderId "OrderId" {
+        description "The order number shown on the confirmation screen.";
         type uuid;
       }
 
-      function simpan "simpan_pesanan()" {
-        description "Menulis pesanan ke Postgres dalam satu transaksi.";
-        param pesanan: dataPesanan;
-        returns idPesanan;
+      function save "save_order()" {
+        description "Writes an order to Postgres in one transaction.";
+        param value: order;
+        returns orderId;
       }
     }
   }
@@ -35,15 +35,15 @@ system toko "Toko Online" {
   container db "Postgres" { role database; tech postgres; }
 }
 
-belanja: pembeli -> toko.web "Belanja" { op use; }
+shopping: customer -> shop.web "Shops" { op use; }
 
-kirimPesanan: toko.web -> toko.api "POST /pesanan" {
+placeOrder: shop.web -> shop.api "POST /orders" {
   op call;
-  data push toko.api.pesanan.dataPesanan;
-  data pull toko.api.pesanan.idPesanan;
+  data push shop.api.orders.order;
+  data pull shop.api.orders.orderId;
 }
 
-simpanPesanan: toko.api.pesanan.simpan -> toko.db "INSERT pesanan" {
+saveOrder: shop.api.orders.save -> shop.db "INSERT orders" {
   op write;
-  data push toko.api.pesanan.dataPesanan;
+  data push shop.api.orders.order;
 }

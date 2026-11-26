@@ -1,48 +1,48 @@
 ---
-title: Spesifikasi bahasa
-description: Spesifikasi normatif bahasa dim v0.6, dari struktur leksikal sampai konfigurasi proyek, level kode, tipe, relasi, endpoint, flow, deployment, semantik zoom, dan bentuk kanonik.
+title: Language specification
+description: The normative specification for dim v0.6, from lexical structure to project configuration, the code level, types, relations, endpoints, flows, deployment, zoom semantics, and canonical form.
 ---
 
-**Versi 0.6 (draf)** · Ekstensi file `.dim` · Konfigurasi proyek `dim.config`
+**Version 0.6 (draft)** · File extension `.dim` · Project configuration `dim.config`
 
-:::caution[Draf]
-Versi 0.6 adalah desain ulang dan **belum diimplementasi**. Compiler, SDK, dan editor masih memakai v0.5. Model v0.5 tidak bisa dibaca oleh parser v0.6, dan tidak ada migrasi otomatis.
+:::caution[Draft]
+Version 0.6 is a redesign and is **not implemented yet**. The compiler, SDK, and editor still use v0.5. A v0.6 parser can't read v0.5 models, and there is no automatic migration.
 :::
 
-`dim` adalah bahasa untuk mendeskripsikan arsitektur software sebagai **satu model hierarkis** yang bisa di-zoom. Konsepnya diambil dari [C4 model](https://c4model.com), dengan dua perbedaan utama:
+`dim` describes software architecture as **one zoomable, hierarchical model**. It takes its concepts from the [C4 model](https://c4model.com), with two main differences:
 
-1. Semua level (system, container, component, code) ada di **satu model**, bukan diagram terpisah.
-2. Relasi boleh menghubungkan elemen di **level mana pun**. Relasi di level yang lebih tinggi tidak ditulis, tapi **diturunkan** dari relasi yang lebih detail ([§14](/referensi/spesifikasi/semantik-zoom/#14-semantik-zoom-lifting)).
-
----
-
-## 1. Prinsip desain
-
-**Model yang bisa di-zoom**
-
-1. **Tulis relasi di level paling detail yang kamu tahu.** Kalau tahu fungsinya, tulis dari fungsi. Kalau cuma tahu container-nya, tulis dari container. Keduanya valid.
-2. **Level tinggi itu turunan, bukan tulisan.** `system → system` muncul otomatis dari relasi di bawahnya, jadi diagram level tinggi tidak bisa basi atau bertentangan dengan detailnya.
-3. **Zoom out meringkas, tidak membuang.** Relasi hasil lifting tetap membawa daftar relasi asalnya.
-4. **Parser tidak tahu soal layout.** Parser hanya menghasilkan model. Zoom, lifting, aggregasi, dan layout dikerjakan konsumen.
-
-**Keteraturan**
-
-5. **Setiap nilai punya jenis yang jelas.** Nilai di dim hanya bisa berupa salah satu dari tiga hal:
-   - **prosa** untuk dibaca manusia: nama elemen, `description`, label relasi, label cabang flow, dan keterangan;
-   - **rujukan** ke sesuatu yang dideklarasikan: elemen, tipe, relasi, tech, tag, scope, root;
-   - **literal bertipe** yang formatnya diperiksa: bilangan, durasi, URL, path file, path HTTP, dan sejenisnya ([§3.9](/referensi/spesifikasi/sintaks/#39-literal-bertipe)).
-
-   Tidak ada string bebas di luar prosa.
-6. **Dideklarasikan sekali, dirujuk di mana-mana.** Tech, tag, scope, root source, dan tampilan dideklarasikan di [`dim.config`](/referensi/spesifikasi/konfigurasi/#5-konfigurasi-proyek). Model hanya merujuknya.
-7. **Satu hal, satu cara menulis.** Setiap konsep punya tepat satu bentuk sintaks, dan setiap kata kunci punya tepat satu arti.
-8. **Tidak ada warning.** Setiap pelanggaran adalah error, dan model dengan error tidak menghasilkan output ([§15](/referensi/spesifikasi/validasi/#15-validasi)).
-9. **Bebas dari bahasa pemrograman, mengikuti paradigma.** Level kode memakai konsep paradigma (prosedural, fungsional, berorientasi objek) dan sistem tipe milik dim sendiri, bukan sintaks bahasa tertentu ([§7](/referensi/spesifikasi/level-kode/#7-level-kode), [§8](/referensi/spesifikasi/tipe/#8-tipe)).
+1. All levels (system, container, component, code) live in **one model**, not in separate diagrams.
+2. Relations can connect elements at **any level**. Relations at higher levels aren't written; they're **derived** from more detailed ones ([§14](/referensi/spesifikasi/semantik-zoom/#14-zoom-semantics-lifting)).
 
 ---
 
-## 2. Contoh singkat
+## 1. Design principles
 
-Satu proyek dim terdiri dari `dim.config` dan satu atau lebih file `.dim`:
+**A zoomable model**
+
+1. **Write each relation at the most detailed level you know.** If you know the function, write it from the function. If you only know the container, write it from the container. Both are valid.
+2. **Higher levels are derived, not written.** `system → system` appears automatically from the relations below it, so a high-level diagram can't go stale or contradict its details.
+3. **Zooming out summarizes; it doesn't discard.** A lifted relation keeps the list of relations it came from.
+4. **The parser knows nothing about layout.** It only produces the model. Zoom, lifting, aggregation, and layout are the consumer's job.
+
+**Order**
+
+5. **Every value has a clear kind.** A value in dim is exactly one of three things:
+   - **prose** for people to read: element names, `description`, relation labels, flow branch labels, and notes;
+   - a **reference** to something declared: an element, type, relation, tech, tag, scope, or root;
+   - a **typed literal** whose format is checked: numbers, durations, URLs, file paths, HTTP paths, and so on ([§3.9](/referensi/spesifikasi/sintaks/#39-typed-literals)).
+
+   There are no free-form strings outside prose.
+6. **Declare once, reference everywhere.** Techs, tags, scopes, source roots, and styles are declared in [`dim.config`](/referensi/spesifikasi/konfigurasi/#5-project-configuration). Models only reference them.
+7. **One thing, one way to write it.** Every concept has exactly one syntactic form, and every keyword has exactly one meaning.
+8. **No warnings.** Every violation is an error, and a model with errors produces no output ([§15](/referensi/spesifikasi/validasi/#15-validation)).
+9. **Independent of programming languages, faithful to paradigms.** The code level uses the concepts of programming paradigms (procedural, functional, object-oriented) and dim's own type system, not the syntax of a particular language ([§7](/referensi/spesifikasi/level-kode/#7-code-level), [§8](/referensi/spesifikasi/tipe/#8-types)).
+
+---
+
+## 2. Short example
+
+A dim project consists of `dim.config` and one or more `.dim` files:
 
 ```dim
 // dim.config
@@ -52,7 +52,7 @@ tech nextjs "Next.js";
 tech kotlin "Kotlin" { version "2.1"; }
 tech postgres "PostgreSQL" { version "16"; }
 
-tag pci "Menyimpan data kartu";
+tag pci "Stores card data";
 
 style role database { icon database; background neutral; }
 style tag pci { background warning; }
@@ -63,7 +63,7 @@ style tag pci { background warning; }
 dim "0.6";
 
 person customer "Customer" {
-  description "Belanja online.";
+  description "Shops online.";
 }
 
 system shop "Online Shop" {
@@ -72,7 +72,7 @@ system shop "Online Shop" {
     tech nextjs;
 
     component checkout "Checkout Page" {
-      description "Ringkasan keranjang dan tombol bayar.";
+      description "Cart summary and the pay button.";
     }
   }
 
@@ -82,21 +82,21 @@ system shop "Online Shop" {
     tech kotlin;
 
     component orders "Orders" {
-      description "Membuat dan menyimpan order.";
+      description "Creates and stores orders.";
 
       record cart "Cart" {
-        description "Barang yang akan dibayar.";
+        description "Items about to be paid for.";
         field productIds: uuid[];
       }
 
       record order "Order" {
-        description "Order yang sudah dibuat.";
+        description "An order that has been created.";
         field id: uuid;
-        field total: decimal "Total setelah diskon";
+        field total: decimal "Total after discounts";
       }
 
-      endpoint createOrder "Buat order" {
-        description "Membuat order dari keranjang.";
+      endpoint createOrder "Create order" {
+        description "Creates an order from a cart.";
         http post "/orders";
         body cart;
         returns 201 order;
@@ -111,63 +111,63 @@ system shop "Online Shop" {
   }
 
   placeOrder: web.checkout -> api.orders.createOrder { op call; }
-  saveOrder: api.orders -> db "Simpan order" { op write; data push api.orders.order; }
+  saveOrder: api.orders -> db "Save order" { op write; data push api.orders.order; }
 }
 
-openCheckout: customer -> shop.web.checkout "Klik bayar" { op use; }
+openCheckout: customer -> shop.web.checkout "Click pay" { op use; }
 
 flow checkout "Checkout" {
-  description "Dari pembeli menekan bayar sampai order tersimpan.";
+  description "From the shopper clicking pay to the order being saved.";
   step openCheckout;
   step placeOrder;
   step saveOrder;
 }
 ```
 
-`placeOrder` tidak menulis label maupun `data`. Keduanya diambil dari endpoint `createOrder`: label `POST /orders`, data `push cart`, dan `pull order` ([§10](/referensi/spesifikasi/endpoint/#10-endpoint)).
+`placeOrder` writes neither a label nor `data`. Both come from the `createOrder` endpoint: the label `POST /orders`, the data `push cart`, and `pull order` ([§10](/referensi/spesifikasi/endpoint/#10-endpoints)).
 
 ---
 
-## Bab spesifikasi
+## Specification chapters
 
-- [§3 Struktur leksikal](/referensi/spesifikasi/sintaks/#3-struktur-leksikal)
+- [§3 Lexical structure](/referensi/spesifikasi/sintaks/#3-lexical-structure)
 - [§4 Grammar](/referensi/spesifikasi/sintaks/#4-grammar)
-- [§5 Konfigurasi proyek](/referensi/spesifikasi/konfigurasi/#5-konfigurasi-proyek)
-- [§6 Elemen](/referensi/spesifikasi/model/#6-elemen)
-- [§7 Level kode](/referensi/spesifikasi/level-kode/#7-level-kode)
-- [§8 Tipe](/referensi/spesifikasi/tipe/#8-tipe)
-- [§9 Relasi](/referensi/spesifikasi/relasi/#9-relasi)
-- [§10 Endpoint](/referensi/spesifikasi/endpoint/#10-endpoint)
-- [§11 Komposisi file](/referensi/spesifikasi/komposisi-dan-flow/#11-komposisi-file)
-- [§12 Flow](/referensi/spesifikasi/komposisi-dan-flow/#12-flow)
+- [§5 Project configuration](/referensi/spesifikasi/konfigurasi/#5-project-configuration)
+- [§6 Elements](/referensi/spesifikasi/model/#6-elements)
+- [§7 Code level](/referensi/spesifikasi/level-kode/#7-code-level)
+- [§8 Types](/referensi/spesifikasi/tipe/#8-types)
+- [§9 Relations](/referensi/spesifikasi/relasi/#9-relations)
+- [§10 Endpoints](/referensi/spesifikasi/endpoint/#10-endpoints)
+- [§11 File composition](/referensi/spesifikasi/komposisi-dan-flow/#11-file-composition)
+- [§12 Flows](/referensi/spesifikasi/komposisi-dan-flow/#12-flows)
 - [§13 Deployment](/referensi/spesifikasi/deployment/#13-deployment)
-- [§14 Semantik zoom](/referensi/spesifikasi/semantik-zoom/#14-semantik-zoom-lifting)
-- [§15 Validasi](/referensi/spesifikasi/validasi/#15-validasi)
-- [§16 Format output (JSON)](/referensi/spesifikasi/output/#16-format-output-json)
-- [§17 Bentuk kanonik](/referensi/spesifikasi/bentuk-kanonik/#17-bentuk-kanonik)
+- [§14 Zoom semantics](/referensi/spesifikasi/semantik-zoom/#14-zoom-semantics-lifting)
+- [§15 Validation](/referensi/spesifikasi/validasi/#15-validation)
+- [§16 JSON output format](/referensi/spesifikasi/output/#16-json-output-format)
+- [§17 Canonical form](/referensi/spesifikasi/bentuk-kanonik/#17-canonical-form)
 
 ---
 
-## Perubahan dari 0.5
+## Changes from 0.5
 
-Versi 0.6 tidak kompatibel dengan 0.5. Ringkasannya:
+Version 0.6 isn't compatible with 0.5. In summary:
 
-| Topik | 0.5 | 0.6 |
+| Topic | 0.5 | 0.6 |
 |---|---|---|
-| Deklarasi versi | opsional | wajib di setiap file ([§4.6](/referensi/spesifikasi/sintaks/#46-deklarasi-versi)) |
-| Id | `snake_case` | camelCase, singkatan ditulis `httpClient` ([§3.4](/referensi/spesifikasi/sintaks/#34-identifier)) |
-| `;` | boleh dihilangkan sebelum `}` | wajib |
-| Konfigurasi | tidak ada | `dim.config` untuk tech, tag, scope, root, dan style ([§5](/referensi/spesifikasi/konfigurasi/#5-konfigurasi-proyek)) |
-| `tech`, `tags` | string bebas | rujukan ke `dim.config` |
-| `shape`, `ui` | ada | dihapus; container wajib punya `role`, tampilan diatur lewat style ([§6.5](/referensi/spesifikasi/model/#65-peran-container)) |
-| `source` | satu string | `source { root …; path "…"; line …; }` ([§6.7](/referensi/spesifikasi/model/#67-lokasi-implementasi-source)) |
-| Ekstensi | `tags` | `meta` berisi JSON untuk properti eksperimental ([§6.8](/referensi/spesifikasi/model/#68-meta)) |
-| Level kode | `code` + `form` bebas bahasa | kind per konsep (`function`, `class`, `record`, …) dibatasi `paradigm` ([§7](/referensi/spesifikasi/level-kode/#7-level-kode)) |
-| Tipe | string yang dipotong per kata | ekspresi tipe dengan primitif dim dan rujukan lewat path ([§8](/referensi/spesifikasi/tipe/#8-tipe)) |
-| Relasi | id dan `op` opsional | id dan `op` wajib; aturan ujung per `op` ([§9](/referensi/spesifikasi/relasi/#9-relasi)) |
-| Pewarisan | `op extends` | `op inherits` |
-| Endpoint | `code` dengan `form endpoint`, hanya HTTP | kind `endpoint` dengan satu baris protokol: `http`, `grpc`, `graphql`, atau `event` ([§10](/referensi/spesifikasi/endpoint/#10-endpoint)) |
-| Flow | urutan lurus | cabang `alt`, `opt`, `par` ([§12](/referensi/spesifikasi/komposisi-dan-flow/#12-flow)) |
-| Deployment | tidak ada | `environment`, `node`, `infra`, `deploy` ([§13](/referensi/spesifikasi/deployment/#13-deployment)) |
-| Warning | ada | tidak ada; semua pelanggaran adalah error |
-| Output | `nodes`/`edges` dengan field `null` | `elements`/`relations` per kind, tanpa `null`, `spans` terpisah ([§16](/referensi/spesifikasi/output/#16-format-output-json)) |
+| Version declaration | optional | required in every file ([§4.6](/referensi/spesifikasi/sintaks/#46-version-declaration)) |
+| Ids | `snake_case` | camelCase, with acronyms written `httpClient` ([§3.4](/referensi/spesifikasi/sintaks/#34-identifiers)) |
+| `;` | could be omitted before `}` | required |
+| Configuration | none | `dim.config` for techs, tags, scopes, roots, and styles ([§5](/referensi/spesifikasi/konfigurasi/#5-project-configuration)) |
+| `tech`, `tags` | free strings | references to `dim.config` |
+| `shape`, `ui` | present | removed; containers must have a `role`, and appearance comes from styles ([§6.5](/referensi/spesifikasi/model/#65-container-roles)) |
+| `source` | one string | `source { root …; path "…"; line …; }` ([§6.7](/referensi/spesifikasi/model/#67-implementation-location-source)) |
+| Extension | `tags` | `meta` holds JSON for experimental properties ([§6.8](/referensi/spesifikasi/model/#68-meta)) |
+| Code level | `code` + free-form `form` | one kind per concept (`function`, `class`, `record`, …), limited by `paradigm` ([§7](/referensi/spesifikasi/level-kode/#7-code-level)) |
+| Types | strings split into words | type expressions with dim primitives and references by path ([§8](/referensi/spesifikasi/tipe/#8-types)) |
+| Relations | optional id and `op` | required id and `op`; end rules per `op` ([§9](/referensi/spesifikasi/relasi/#9-relations)) |
+| Inheritance | `op extends` | `op inherits` |
+| Endpoints | `code` with `form endpoint`, HTTP only | `endpoint` kind with one protocol line: `http`, `grpc`, `graphql`, or `event` ([§10](/referensi/spesifikasi/endpoint/#10-endpoints)) |
+| Flows | a straight sequence | `alt`, `opt`, and `par` branches ([§12](/referensi/spesifikasi/komposisi-dan-flow/#12-flows)) |
+| Deployment | none | `environment`, `node`, `infra`, `deploy` ([§13](/referensi/spesifikasi/deployment/#13-deployment)) |
+| Warnings | present | none; every violation is an error |
+| Output | `nodes`/`edges` with `null` fields | `elements`/`relations` per kind, no `null`, separate `spans` ([§16](/referensi/spesifikasi/output/#16-json-output-format)) |

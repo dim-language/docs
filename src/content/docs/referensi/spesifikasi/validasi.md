@@ -1,124 +1,124 @@
 ---
-title: Validasi
-description: Daftar kode error dalam spesifikasi dim.
+title: Validation
+description: The error codes in the dim specification.
 ---
 
-## 15. Validasi
+## 15. Validation
 
-dim v0.6 **tidak punya warning**. Setiap pelanggaran adalah error, dan model dengan error tidak menghasilkan output. Setiap diagnostik menyertakan lokasi sumber (file, baris, kolom, rentang) dan, kalau ada, saran perbaikan.
+dim v0.6 **has no warnings**. Every violation is an error, and a model with errors produces no output. Every diagnostic includes its source location (file, line, column, range) and, where possible, a suggested fix.
 
-Kode dikelompokkan per bab: `E0xx` leksikal dan grammar, `E1xx` konfigurasi, `E2xx` elemen dan path, `E3xx` level kode dan tipe, `E4xx` relasi, `E5xx` endpoint, `E6xx` komposisi dan flow, `E7xx` deployment.
+Codes are grouped by chapter: `E0xx` lexical and grammar, `E1xx` configuration, `E2xx` elements and paths, `E3xx` code level and types, `E4xx` relations, `E5xx` endpoints, `E6xx` composition and flows, `E7xx` deployment.
 
-### 15.1 Leksikal dan grammar
+### 15.1 Lexical and grammar
 
-| Kode | Kondisi |
+| Code | Condition |
 |---|---|
-| `E001` | sintaks tidak valid, termasuk `;` yang hilang atau berlebih |
-| `E002` | string tidak valid: escape tidak dikenal, tidak ditutup, baris baru literal, prosa kosong, atau `"""` pembuka tidak langsung diikuti baris baru |
-| `E003` | keyword dipakai sebagai id |
-| `E004` | indentasi prosa multi-baris tidak konsisten dengan `"""` penutup |
-| `E005` | id tidak ditulis camelCase ([§3.4](/referensi/spesifikasi/sintaks/#34-identifier)) |
-| `E006` | deklarasi versi tidak ada, bukan statement pertama, ditulis lebih dari sekali, versinya tidak didukung, atau berbeda antar-file |
-| `E007` | literal bertipe tidak sesuai formatnya ([§3.9](/referensi/spesifikasi/sintaks/#39-literal-bertipe)) |
-| `E008` | bilangan atau durasi tidak valid |
-| `E009` | `meta` bukan objek JSON yang valid, key teratasnya bukan camelCase, memakai nama properti bahasa, atau sudah dipromosikan menjadi properti |
+| `E001` | invalid syntax, including a missing or extra `;` |
+| `E002` | invalid string: unknown escape, unterminated, a literal line break, empty prose, or an opening `"""` not followed directly by a line break |
+| `E003` | a keyword used as an id |
+| `E004` | multiline prose indentation inconsistent with the closing `"""` |
+| `E005` | an id not written in camelCase ([§3.4](/referensi/spesifikasi/sintaks/#34-identifiers)) |
+| `E006` | the version declaration is missing, not the first statement, written more than once, unsupported, or different between files |
+| `E007` | a typed literal that doesn't match its format ([§3.9](/referensi/spesifikasi/sintaks/#39-typed-literals)) |
+| `E008` | an invalid number or duration |
+| `E009` | `meta` isn't a valid JSON object, a top-level key isn't camelCase, uses a language property name, or has been promoted to a property |
 
-### 15.2 Konfigurasi
+### 15.2 Configuration
 
-| Kode | Kondisi |
+| Code | Condition |
 |---|---|
-| `E101` | `dim.config` tidak ada di folder file utama |
-| `E102` | statement selain konfigurasi di `dim.config`, atau statement konfigurasi di file `.dim` |
-| `E103` | id deklarasi duplikat dalam satu jenis, atau nilai `scope` duplikat |
-| `E104` | rujukan ke tech, tag, scope, atau root yang tidak dideklarasikan |
-| `E105` | style tanpa properti, selector duplikat, atau kind, peran, icon, maupun token yang tidak dikenal |
-| `E106` | `root` tanpa `repo` atau `branch` |
-| `E107` | file proyek di luar folder `dim.config` |
+| `E101` | no `dim.config` in the main file's folder |
+| `E102` | a non-configuration statement in `dim.config`, or a configuration statement in a `.dim` file |
+| `E103` | a duplicate declaration id within one kind, or a duplicate `scope` value |
+| `E104` | a reference to an undeclared tech, tag, scope, or root |
+| `E105` | a style without properties, a duplicate selector, or an unknown kind, role, icon, or token |
+| `E106` | a `root` without `repo` or `branch` |
+| `E107` | a project file outside the `dim.config` folder |
 
-### 15.3 Elemen dan path
+### 15.3 Elements and paths
 
-| Kode | Kondisi |
+| Code | Condition |
 |---|---|
-| `E201` | nesting melanggar [§6.1](/referensi/spesifikasi/model/#61-jenis-elemen-dan-nesting) atau [§7.2](/referensi/spesifikasi/level-kode/#72-kind-level-kode), termasuk unit kode selain tipe data di elemen eksternal |
-| `E202` | id duplikat di antara saudara, termasuk elemen top-level yang sama di dua file; pesannya menyarankan `extend` |
-| `E203` | nama elemen tidak ditulis |
-| `E204` | properti tidak berlaku untuk kind ini |
-| `E205` | properti wajib tidak ditulis |
-| `E206` | properti ditulis lebih dari sekali, padahal tidak boleh berulang |
-| `E207` | jumlah atau jenis nilai properti salah, termasuk nilai enum yang tidak dikenal |
-| `E208` | path tidak bisa di-resolve, atau menunjuk elemen yang sudah dihapus dengan `remove` |
-| `E209` | segmen pertama path ditemukan di lebih dari satu scope ([§6.9](/referensi/spesifikasi/model/#69-resolusi-path)) |
-| `E210` | `this` di top-level, atau bukan di awal path |
-| `E211` | `source` tanpa `root` di dirinya maupun leluhurnya |
-| `E212` | `external` di container yang sudah eksternal karena system-nya |
-| `E213` | container berisi unit kode selain tipe data tanpa `paradigm`, atau component menulis paradigma yang tidak dimiliki leluhurnya |
+| `E201` | nesting that breaks [§6.1](/referensi/spesifikasi/model/#61-element-kinds-and-nesting) or [§7.2](/referensi/spesifikasi/level-kode/#72-code-level-kinds), including code units other than data types in external elements |
+| `E202` | a duplicate id among siblings, including the same top-level element in two files; the message suggests `extend` |
+| `E203` | a missing element name |
+| `E204` | a property that doesn't apply to this kind |
+| `E205` | a missing required property |
+| `E206` | a property written more than once when it can't repeat |
+| `E207` | the wrong number or kind of property values, including an unknown enum value |
+| `E208` | a path that can't be resolved, or that points to an element removed with `remove` |
+| `E209` | the first segment of a path found in more than one scope ([§6.9](/referensi/spesifikasi/model/#69-path-resolution)) |
+| `E210` | `this` at the top level, or not at the start of a path |
+| `E211` | a `source` without a `root` on itself or any ancestor |
+| `E212` | `external` on a container that's already external through its system |
+| `E213` | a container with code units other than data types but no `paradigm`, or a component that lists a paradigm its ancestors don't have |
 
-### 15.4 Level kode dan tipe
+### 15.4 Code level and types
 
-| Kode | Kondisi |
+| Code | Condition |
 |---|---|
-| `E301` | kind level kode tidak dimiliki paradigma efektifnya |
-| `E302` | member tidak berlaku untuk kind ini, `enum` tanpa varian, atau `union` dengan kurang dari dua varian |
-| `E303` | id member duplikat dalam satu unit kode atau endpoint, termasuk nama `header` dan `cookie` |
-| `E304` | `function` di paradigma `functional` tanpa tepat satu dari `pure` atau `effects`, atau salah satunya di luar `functional` |
-| `E305` | `visibility`, `static`, atau `abstract` di luar paradigma `oop`, atau `method` `abstract` di luar `class` `abstract` |
-| `E306` | rujukan tipe tidak menunjuk `record`, `enum`, `union`, `alias`, `class`, atau `interface` |
-| `E307` | tipe di `throws` level kode bukan `record`, `enum`, `union`, atau `class` |
-| `E308` | kunci `map` bukan `string`, `int`, `uuid`, atau `enum` |
-| `E309` | record merujuk dirinya sendiri tanpa `[]`, `?`, atau `map` |
-| `E310` | `alias` yang merujuk dirinya sendiri |
+| `E301` | a code-level kind its effective paradigms don't include |
+| `E302` | a member that doesn't apply to this kind, an `enum` without variants, or a `union` with fewer than two variants |
+| `E303` | a duplicate member id within a code unit or endpoint, including `header` and `cookie` names |
+| `E304` | a `function` under the `functional` paradigm without exactly one of `pure` or `effects`, or either one outside `functional` |
+| `E305` | `visibility`, `static`, or `abstract` outside the `oop` paradigm, or an `abstract` `method` outside an `abstract` `class` |
+| `E306` | a type reference that doesn't point to a `record`, `enum`, `union`, `alias`, `class`, or `interface` |
+| `E307` | a code-level `throws` type that isn't a `record`, `enum`, `union`, or `class` |
+| `E308` | a `map` key that isn't `string`, `int`, `uuid`, or an `enum` |
+| `E309` | a record that refers to itself without `[]`, `?`, or `map` |
+| `E310` | an `alias` that refers to itself |
 
-### 15.5 Relasi
+### 15.5 Relations
 
-| Kode | Kondisi |
+| Code | Condition |
 |---|---|
-| `E401` | relasi tanpa id, atau id relasi duplikat |
-| `E402` | relasi tanpa `op` |
-| `E403` | relasi ke diri sendiri selain `call` rekursif dari `function` atau `method` |
-| `E404` | relasi antara elemen dan leluhur atau keturunannya |
-| `E405` | ujung relasi melanggar aturan `op` ([§9.4](/referensi/spesifikasi/relasi/#94-aturan-ujung-relasi)) |
-| `E406` | arah `data` tidak ditulis atau tidak cocok dengan `op`, atau `data` di relasi struktural maupun relasi ke endpoint |
-| `E407` | relasi struktural di luar tabel [§7.5](/referensi/spesifikasi/level-kode/#75-relasi-di-level-kode) |
+| `E401` | a relation without an id, or a duplicate relation id |
+| `E402` | a relation without an `op` |
+| `E403` | a relation to itself other than a recursive `call` from a `function` or `method` |
+| `E404` | a relation between an element and its ancestor or descendant |
+| `E405` | relation ends that break the `op` rules ([§9.4](/referensi/spesifikasi/relasi/#94-relation-end-rules)) |
+| `E406` | a `data` direction that's missing or doesn't fit the `op`, or `data` on a structural relation or a relation to an endpoint |
+| `E407` | a structural relation outside the table in [§7.5](/referensi/spesifikasi/level-kode/#75-relations-at-the-code-level) |
 
-### 15.6 Endpoint
+### 15.6 Endpoints
 
-| Kode | Kondisi |
+| Code | Condition |
 |---|---|
-| `E501` | endpoint tanpa baris protokol, atau dengan lebih dari satu |
-| `E502` | properti atau member tidak berlaku untuk protokol endpoint ini |
-| `E503` | placeholder di path HTTP lengkap tanpa `param`, atau `param` tanpa placeholder |
-| `E504` | status `returns` HTTP di luar 200–399, status `throws` HTTP di luar 400–599, atau kode status gRPC tidak dikenal |
-| `E505` | dua endpoint dalam satu container dengan kontrak yang sama (HTTP: method dan path lengkap; gRPC: service dan rpc; GraphQL: operasi dan field; event: nama dan queue) |
-| `E506` | `handler` tidak menunjuk `function` atau `method` di container yang sama |
-| `E507` | queue di baris `event` tidak menunjuk container berperan `queue` |
-| `E508` | `auth none` dengan scope, atau kunci `rate` duplikat di satu elemen |
-| `E509` | `body` pada `get` atau `head` |
-| `E510` | `prefix`, `auth`, atau `rate` di elemen tanpa endpoint yang cocok di bawahnya |
+| `E501` | an endpoint without a protocol line, or with more than one |
+| `E502` | a property or member that doesn't apply to the endpoint's protocol |
+| `E503` | a placeholder in a full HTTP path without a `param`, or a `param` without a placeholder |
+| `E504` | an HTTP `returns` status outside 200–399, an HTTP `throws` status outside 400–599, or an unknown gRPC status code |
+| `E505` | two endpoints in one container with the same contract (HTTP: method and full path; gRPC: service and rpc; GraphQL: operation and field; events: name and queue) |
+| `E506` | a `handler` that doesn't point to a `function` or `method` in the same container |
+| `E507` | the queue in an `event` line doesn't point to a container with the `queue` role |
+| `E508` | `auth none` with scopes, or a duplicate `rate` key on one element |
+| `E509` | a `body` on `get` or `head` |
+| `E510` | `prefix`, `auth`, or `rate` on an element without a matching endpoint below it |
 
-### 15.7 Komposisi dan flow
+### 15.7 Composition and flows
 
-| Kode | Kondisi |
+| Code | Condition |
 |---|---|
-| `E601` | file yang di-`import` atau di-`amends` tidak bisa dibaca |
-| `E602` | import melingkar |
-| `E603` | `import`, `amends`, `remove`, `flow`, atau `environment` di dalam blok, atau `import` sebelum `amends` |
-| `E604` | `amends` bukan statement kedua, atau ditulis lebih dari sekali |
-| `E605` | `extend` mengisi properti yang sudah terisi, di file yang bukan `amends` |
-| `E606` | `remove` atau `unset` di file yang bukan `amends` |
-| `E607` | target `remove` cocok dengan lebih dari satu jenis (elemen, relasi, flow, environment) |
-| `E608` | `unset` tidak langsung di dalam blok `extend`, menghapus sesuatu yang tidak ada, atau menghapus properti wajib |
-| `E609` | target `extend` belum dideklarasikan |
-| `E610` | `step` merujuk id relasi yang tidak ada |
-| `E611` | id flow duplikat, atau id cabang duplikat dalam satu flow |
-| `E612` | flow tanpa langkah, cabang kosong, `alt` dengan kurang dari dua `case`, atau `par` dengan kurang dari dua `lane` |
-| `E613` | `opt`, `case`, atau `lane` tanpa id atau label |
+| `E601` | a file named in `import` or `amends` can't be read |
+| `E602` | a circular import |
+| `E603` | `import`, `amends`, `remove`, `flow`, or `environment` inside a block, or `import` before `amends` |
+| `E604` | `amends` isn't the second statement, or is written more than once |
+| `E605` | `extend` sets a property that's already set, in a file that isn't an `amends` file |
+| `E606` | `remove` or `unset` in a file that isn't an `amends` file |
+| `E607` | a `remove` target that matches more than one kind (element, relation, flow, environment) |
+| `E608` | `unset` not directly inside an `extend` block, removing something that doesn't exist, or removing a required property |
+| `E609` | an `extend` target that isn't declared yet |
+| `E610` | a `step` that refers to a relation id that doesn't exist |
+| `E611` | a duplicate flow id, or a duplicate branch id within one flow |
+| `E612` | a flow without steps, an empty branch, an `alt` with fewer than two `case`s, or a `par` with fewer than two `lane`s |
+| `E613` | an `opt`, `case`, or `lane` without an id or label |
 
 ### 15.8 Deployment
 
-| Kode | Kondisi |
+| Code | Condition |
 |---|---|
-| `E701` | container tidak di-`deploy` maupun di-`omit` di sebuah environment, di-`deploy` sekaligus di-`omit`, atau container eksternal di-`deploy` maupun di-`omit` |
-| `E702` | `deploy` tidak menunjuk container |
-| `E703` | `replicas` tidak ditulis atau kurang dari 1 |
-| `E704` | relasi di environment yang ujungnya bukan `infra` atau `deploy`, tanpa ujung `infra`, atau dengan `op` selain `use` dan `call` |
-| `E705` | id environment duplikat |
+| `E701` | a container neither deployed nor omitted in an environment, both deployed and omitted, or an external container that's deployed or omitted |
+| `E702` | a `deploy` that doesn't point to a container |
+| `E703` | `replicas` missing or less than 1 |
+| `E704` | a relation in an environment whose ends aren't `infra` or `deploy`, that has no `infra` end, or whose `op` isn't `use` or `call` |
+| `E705` | a duplicate environment id |

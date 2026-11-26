@@ -1,132 +1,132 @@
 ---
-title: Relasi
-description: Sintaks relasi, jenis op, aturan ujung relasi, aliran data, dan label.
+title: Relations
+description: Relation syntax, op kinds, relation end rules, data flow, and labels.
 ---
 
-## 9. Relasi
+## 9. Relations
 
 ```dim
-saveOrder: api.orders -> db "Simpan order" {
+saveOrder: api.orders -> db "Save order" {
   op write;
   data push api.orders.order;
   tech postgres;
 }
 ```
 
-### 9.1 Sintaks
+### 9.1 Syntax
 
 ```dim
-<id>: <dari> -> <ke> ["<label>"] { op <op>; ... }
+<id>: <from> -> <to> ["<label>"] { op <op>; ... }
 ```
 
-- **Id wajib** (`E401`). Id relasi unik di seluruh model dan punya namespace sendiri, terpisah dari path elemen (`E401`). Id dipakai oleh `step` di flow, oleh `remove`, dan oleh konsumen untuk menelusuri asal panah hasil lifting.
-- **`op` wajib** (`E402`).
-- Relasi boleh ditulis di top-level atau di dalam blok elemen mana pun. Path ujungnya di-resolve dari scope tempat relasi ditulis ([§6.9](/referensi/spesifikasi/model/#69-resolusi-path)).
+- **The id is required** (`E401`). Relation ids are unique across the model and have their own namespace, separate from element paths (`E401`). They're used by `step` in flows, by `remove`, and by consumers to trace a lifted arrow back to its sources.
+- **`op` is required** (`E402`).
+- A relation can be written at the top level or in any element's block. Its end paths resolve from the scope where it's written ([§6.9](/referensi/spesifikasi/model/#69-path-resolution)).
 
-**Arah panah adalah siapa yang memulai interaksi**, bukan arah aliran data. `api -> db { op read; }` berarti `api` yang membaca dari `db`. Datanya mengalir dari `db` ke `api`, tapi panahnya tetap `api -> db`. Arah data ditulis lewat `data` ([§9.5](#95-aliran-data)).
+**The arrow points from whoever starts the interaction**, not in the direction data flows. `api -> db { op read; }` means `api` reads from `db`. The data flows from `db` to `api`, but the arrow is still `api -> db`. The direction of data is written with `data` ([§9.5](#95-data-flow)).
 
-### 9.2 Properti relasi
+### 9.2 Relation properties
 
-| Properti | Nilai | Keterangan |
+| Property | Value | Notes |
 |---|---|---|
-| `op` | jenis relasi | wajib |
-| `data` | `push`\|`pull` + ekspresi tipe | boleh berulang ([§9.5](#95-aliran-data)) |
-| `tech` | ≥1 rujukan tech | protokol atau teknologi, mis. `https`, `grpc` |
-| `description` | prosa | |
-| `tags` | ≥1 rujukan tag | |
-| `meta` | objek JSON | [§6.8](/referensi/spesifikasi/model/#68-meta) |
+| `op` | a relation kind | required |
+| `data` | `push`\|`pull` + a type expression | repeatable ([§9.5](#95-data-flow)) |
+| `tech` | ≥1 tech reference | a protocol or technology, e.g. `https`, `grpc` |
+| `description` | prose | |
+| `tags` | ≥1 tag reference | |
+| `meta` | JSON object | [§6.8](/referensi/spesifikasi/model/#68-meta) |
 
-### 9.3 Jenis `op`
+### 9.3 `op` kinds
 
-**Interaksi** menggambarkan sesuatu yang terjadi saat program berjalan:
+**Interactions** describe something that happens at runtime:
 
-| `op` | Arti, dari sisi pemula |
+| `op` | Meaning, from the initiator's side |
 |---|---|
-| `use` | interaksi umum, termasuk manusia yang memakai aplikasi |
-| `call` | panggilan sinkron: fungsi, HTTP, RPC |
-| `read` | mengambil data dari penyimpanan |
-| `write` | menyimpan data ke penyimpanan |
-| `publish` | mengirim pesan async |
-| `subscribe` | menerima pesan async |
+| `use` | a general interaction, including a person using an application |
+| `call` | a synchronous call: function, HTTP, RPC |
+| `read` | fetching data from storage |
+| `write` | saving data to storage |
+| `publish` | sending an async message |
+| `subscribe` | receiving async messages |
 
-**Struktural** menggambarkan bentuk kode: `inherits`, `implements`, `owns`, `refers`. Aturannya ada di [§7.5](/referensi/spesifikasi/level-kode/#75-relasi-di-level-kode).
+**Structural** relations describe the shape of code: `inherits`, `implements`, `owns`, `refers`. Their rules are in [§7.5](/referensi/spesifikasi/level-kode/#75-relations-at-the-code-level).
 
-`op` lain adalah `E207`.
+Any other `op` is `E207`.
 
-### 9.4 Aturan ujung relasi
+### 9.4 Relation end rules
 
-Aturan ini hanya ada di tempat yang membuat sebuah `op` tidak bermakna. Tanpanya, `op` hanya menjadi label, dan lifting tidak bisa diandalkan.
+These rules exist only where an `op` would otherwise be meaningless. Without them, `op` would be just a label, and lifting couldn't be relied on.
 
-"Penyimpanan" berarti container dengan peran `database`, `storage`, atau `cache`, atau elemen di dalamnya.
+"Storage" means a container with the `database`, `storage`, or `cache` role, or an element inside one.
 
-| `op` | Ujung `dari` | Ujung `ke` |
+| `op` | `from` end | `to` end |
 |---|---|---|
-| `use` | apa pun | apa pun kecuali penyimpanan dan antrian |
-| `call` | bukan `person` | bukan `person`, penyimpanan, atau antrian; endpoint hanya yang protokolnya HTTP, gRPC, atau GraphQL |
-| `read`, `write` | bukan `person` | penyimpanan |
-| `publish`, `subscribe` | bukan `person` | container berperan `queue`, atau endpoint event ([§10.6](/referensi/spesifikasi/endpoint/#106-event)) |
-| struktural | unit kode | unit kode, sesuai tabel [§7.5](/referensi/spesifikasi/level-kode/#75-relasi-di-level-kode) |
+| `use` | anything | anything except storage and queues |
+| `call` | not a `person` | not a `person`, storage, or a queue; for endpoints, only HTTP, gRPC, or GraphQL |
+| `read`, `write` | not a `person` | storage |
+| `publish`, `subscribe` | not a `person` | a container with the `queue` role, or an event endpoint ([§10.6](/referensi/spesifikasi/endpoint/#106-events)) |
+| structural | a code unit | a code unit, per the table in [§7.5](/referensi/spesifikasi/level-kode/#75-relations-at-the-code-level) |
 
-Aturan tambahan untuk `person`:
+Additional rules for `person`:
 
-- Kalau `dari` adalah `person`, `ke` harus `system`, container berperan `app`, atau elemen di dalam container `app`. Manusia memakai aplikasi, bukan memanggil API atau database secara langsung.
-- `person -> person` tidak boleh.
+- If `from` is a `person`, `to` must be a `system`, a container with the `app` role, or an element inside an `app` container. People use applications; they don't call APIs or databases directly.
+- `person -> person` isn't allowed.
 
-Aturan umum:
+General rules:
 
-- **Relasi ke diri sendiri** hanya boleh untuk rekursi langsung: `call` dari `function` atau `method` ke dirinya sendiri. Selain itu `E403`.
-- **Relasi antara leluhur dan keturunan**, misalnya `shop.api.orders -> shop.api`, adalah `E404`. Relasi seperti itu selalu hilang saat lifting karena kedua ujungnya naik ke elemen yang sama.
+- **A relation to itself** is allowed only for direct recursion: a `call` from a `function` or `method` to itself. Otherwise `E403`.
+- **A relation between an ancestor and a descendant**, such as `shop.api.orders -> shop.api`, is `E404`. Such a relation always disappears when lifted, because both ends rise to the same element.
 
-Pelanggaran tabel ini adalah `E405`, dan pesannya menyebut aturan yang dilanggar. Pelanggaran tabel struktural adalah `E407`.
+Breaking this table is `E405`, and the message names the rule. Breaking the structural table is `E407`.
 
-### 9.5 Aliran data
+### 9.5 Data flow
 
 ```dim
-data push <tipe>;
-data pull <tipe>;
+data push <type>;
+data pull <type>;
 ```
 
-Relasi punya dua aspek yang terpisah:
+A relation has two separate aspects:
 
-- **Panah = siapa yang memulai interaksi.**
-- **`data` = ke mana data mengalir, dan data apa.** Arahnya dilihat dari sisi pemula: `push` berarti pemula mengirim data ke target (searah panah), `pull` berarti pemula mengambil data dari target (berlawanan arah panah).
+- **The arrow = who starts the interaction.**
+- **`data` = which way data flows, and what data.** The direction is seen from the initiator: `push` means the initiator sends data to the target (with the arrow), and `pull` means the initiator fetches data from the target (against the arrow).
 
 ```dim
-loadOrder: rows -> db "Baca order" { op read; data pull order; }
-saveOrder: rows -> db "Simpan order" { op write; data push order; }
+loadOrder: rows -> db "Load order" { op read; data pull order; }
+saveOrder: rows -> db "Save order" { op write; data push order; }
 
-submit: button -> handler "Kirim keranjang" {
+submit: button -> handler "Submit cart" {
   op call;
   data push cart;
   data pull order;
 }
 ```
 
-Aturan:
+Rules:
 
-- Arah **selalu ditulis**. Tidak ada arah default dari `op`, jadi setiap baris `data` bisa dibaca tanpa mengingat tabel.
-- Arah harus cocok dengan `op`. `read` dan `subscribe` hanya `pull`. `write` dan `publish` hanya `push`. `call` dan `use` boleh keduanya. Arah yang tidak ditulis atau tidak cocok adalah `E406`.
-- Relasi struktural tidak punya `data` (`E406`).
-- Relasi ke endpoint tidak menulis `data` (`E406`), karena datanya sudah ditentukan endpoint ([§10.8](/referensi/spesifikasi/endpoint/#108-relasi-ke-endpoint)).
+- The direction is **always written**. There's no default from `op`, so every `data` line can be read without remembering a table.
+- The direction must fit the `op`. `read` and `subscribe` only `pull`. `write` and `publish` only `push`. `call` and `use` can do both. A missing or mismatched direction is `E406`.
+- Structural relations have no `data` (`E406`).
+- Relations to endpoints don't write `data` (`E406`), because the endpoint already defines it ([§10.8](/referensi/spesifikasi/endpoint/#108-relations-to-endpoints)).
 
-**Kenapa panah tidak dipakai untuk arah data?**
+**Why isn't the arrow used for the direction of data?**
 
-1. `call` mengalirkan data dua arah, sedangkan satu panah hanya punya satu arah.
-2. Panah sebagai arah data membalik arah dependency: `api` yang membaca `db` akan digambar `db → api`, padahal `api` yang bergantung pada `db`.
-3. `push` dan `pull` bisa dibaca langsung, tanpa menghafal arti simbol.
+1. `call` moves data both ways, and one arrow has only one direction.
+2. Using the arrow for data reverses the dependency: an `api` that reads a `db` would be drawn `db → api`, even though `api` depends on `db`.
+3. `push` and `pull` read directly, without memorizing what a symbol means.
 
-### 9.6 Label
+### 9.6 Labels
 
-Label adalah prosa yang digambar di atas panah dan muncul di daftar langkah flow. Label **opsional**. Kalau tidak ditulis, konsumen menurunkannya dari struktur relasi:
+A label is prose drawn on an arrow and shown in flow step lists. Labels are **optional**. Without one, consumers derive a label from the relation's structure:
 
-| Relasi | Label turunan |
+| Relation | Derived label |
 |---|---|
-| `call` ke endpoint HTTP | method dan path lengkap, mis. `POST /v1/orders` |
-| `call` ke endpoint gRPC | `<Service>/<Rpc>` |
-| `call` ke endpoint GraphQL | operasi dan field, mis. `mutation createOrder` |
-| `publish`/`subscribe` ke endpoint event | nama event |
-| `read`, `write`, `publish`, `subscribe` dengan `data` | kata kerja `op` diikuti nama tipe, mis. "tulis Order" |
-| struktural | nama `op` |
-| selain itu | tidak ada label |
+| `call` to an HTTP endpoint | the method and full path, e.g. `POST /v1/orders` |
+| `call` to a gRPC endpoint | `<Service>/<Rpc>` |
+| `call` to a GraphQL endpoint | the operation and field, e.g. `mutation createOrder` |
+| `publish`/`subscribe` to an event endpoint | the event name |
+| `read`, `write`, `publish`, `subscribe` with `data` | the `op` verb followed by the type name, e.g. "write Order" |
+| structural | the `op` name |
+| anything else | no label |
 
-Kata kerja dan tanda baca label turunan mengikuti bahasa tampilan konsumen. Label yang ditulis selalu menang.
+The words and punctuation of derived labels follow the consumer's display language. A written label always wins.

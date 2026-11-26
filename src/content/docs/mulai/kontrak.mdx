@@ -1,40 +1,40 @@
 ---
-title: 3. Layar konfirmasi berubah
-description: Revisi kontrak respons setelah tim produk mengubah layar konfirmasi.
+title: 3. The confirmation screen changes
+description: Revise the response contract when the product team changes the confirmation screen.
 ---
 
 import DidoNote from '../../../components/DidoNote.astro';
 
-Saat mencoba prototipe di ponsel, tim produk memutuskan untuk menampilkan nomor pesanan saja. Tim API pun memangkas respons checkout. Dido menemukan satu baris di model yang sekarang sudah basi.
+After trying the prototype on a phone, the product team decides to show just the order number. The API team trims the checkout response. Dido spots the line in his model that has just gone stale.
 
-<DidoNote scene="order-id">Kalau yang balik cuma ID, bagian mana dari panah POST yang mesti gue ubah?</DidoNote>
+<DidoNote scene="order-id">If all we get back is the ID, which part of the POST arrow do I change?</DidoNote>
 
-Di `toko.dim`, tambahkan tipe untuk nomor pesanan di component Pesanan, lalu ubah bagian `pull` di relasi POST saja. Web masih mengirim pesanan lengkap dan API masih menyimpannya.
+In `shop.dim`, add a type for the order number to the Orders component, then change only the `pull` part of the POST relation. Web still sends a full order and the API still persists it.
 
 ```diff
-+      alias idPesanan "IdPesanan" {
-+        description "Nomor pesanan yang tampil di layar konfirmasi.";
++      alias orderId "OrderId" {
++        description "The order number shown on the confirmation screen.";
 +        type uuid;
 +      }
 ```
 
 ```diff
--  data pull toko.api.pesanan.dataPesanan;
-+  data pull toko.api.pesanan.idPesanan;
+-  data pull shop.api.orders.order;
++  data pull shop.api.orders.orderId;
 ```
 
 ```sh
-node check.mjs toko.dim
+node check.mjs shop.dim
 ```
 
 ```text contoh-tutorial="container"
 ```
 
-## Periksa arah saat review
+## Check the direction during review
 
-Jumlah panah tetap sama. Untuk melihat apa yang diperiksa compiler, coba hapus kata `push` dari request dan jalankan lagi perintah tadi.
+The arrow count stays the same. To see what the compiler checks, remove `push` from the request and run the command again.
 
 ```text contoh-tutorial="tanpaArah"
 ```
 
-Setiap baris `data` perlu arah. Kembalikan `push`, jalankan cek sampai muncul `ok`, lalu cocokkan `data pull toko.api.pesanan.idPesanan` dengan respons yang disepakati tim API. Tipe yang dijanjikan ke Web tetap perlu diperiksa saat review.
+Every `data` line needs a direction. Restore `push`, rerun the check until it prints `ok`, then compare `data pull shop.api.orders.orderId` with the API team’s agreed response. The response type promised to Web still needs a human review.

@@ -18,7 +18,8 @@ for (const { code, message } of result.diagnostics) {
 }
 if (result.model) {
 	const { elements, relations, flows } = result.model;
-	console.log(`ok: ${elements.length} elemen, ${relations.length} relasi, ${flows.length} flow`);
+	const count = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+	console.log(`ok: ${count(elements.length, 'element')}, ${count(relations.length, 'relation')}, ${count(flows.length, 'flow')}`);
 } else {
 	process.exitCode = 1;
 }

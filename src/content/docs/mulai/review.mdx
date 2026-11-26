@@ -1,38 +1,38 @@
 ---
-title: 4. Review dengan arsitek
-description: Telusuri penulisan pesanan dari peta sampai ke fungsi yang bertanggung jawab.
+title: 4. Review with the architect
+description: Trace the order write from the map to the function responsible.
 ---
 
 import ZoomMap from '../../../components/zoom-map/ZoomMap.astro';
 import toko from '../../../data/toko-tutorial.json';
 import DidoNote from '../../../components/DidoNote.astro';
 
-Sebelum menyetujui PR, arsitek sistem berhenti di panah API → Postgres. “Kalau ada pesanan tersimpan dua kali, fungsi mana yang kita periksa dulu?” Tim backend menunjuk `simpan_pesanan()` di komponen Pesanan. Arsitek meminta Dido mencatat pemilik operasi INSERT supaya tim piket bisa menemukannya lewat peta.
+Before approving the PR, the system architect stops at API → Postgres. “If an order gets written twice, which function do we inspect first?” The backend team points to `save_order()` in the orders component. The architect asks Dido to record who owns the INSERT so the on-call engineer can find it on the map.
 
-<DidoNote scene="architect">Gue pindahin pangkal panah INSERT ke fungsi yang perlu dicek tim piket.</DidoNote>
+<DidoNote scene="architect">I’ll move the INSERT arrow to the function the on-call engineer needs to inspect.</DidoNote>
 
-Tambahkan fungsi `simpan` ke component Pesanan dan tulis `paradigm procedural;` di `api`, karena container itu sekarang berisi kode. Lalu pindahkan asal panah INSERT ke fungsi itu. Bandingkan isi akhir `toko.dim` dengan filemu.
+Add the `save` function to the Orders component and write `paradigm procedural;` on `api`, because that container now holds code. Then move the source of the INSERT arrow to that function. Compare your file with the final `shop.dim` below.
 
-```dim contoh-tutorial="kode.dim" ins={10,27-31} ins="toko.api.pesanan.simpan"
+```dim contoh-tutorial="kode.dim" ins={10,27-31} ins="shop.api.orders.save"
 ```
 
 ```bash
-node check.mjs toko.dim
+node check.mjs shop.dim
 ```
 
 ```text contoh-tutorial="kode"
 ```
 
-Jumlah relasinya tetap tiga karena relasi `INSERT pesanan` sekarang dimulai dari fungsi. Perbesar peta untuk mengikuti panah `API → Postgres` sampai sumbernya terlihat sebagai `simpan_pesanan() → Postgres`.
+The model still has three relations. The `INSERT orders` relation now starts at the function. Zoom in to follow the `API → Postgres` arrow until its source appears as `save_order() → Postgres`.
 
-Di peta berikut, perbesar sampai Web dan API terlihat. Pilih relasi POST dan baca dua entri datanya. Web mengirim `Pesanan` dan menerima `IdPesanan`. Perkecil sampai toko tertutup. Panah POST menghilang karena kedua ujungnya ada di dalam toko.
+In the map below, zoom until Web and API appear. Select the POST relation and read its two data entries. Web sends `Order` and receives `OrderId`. Zoom out until only the shop is visible. The POST arrow disappears because both ends are inside the shop.
 
 <ZoomMap model={toko} uid="model-pertama" />
 
-Saat serah terima, tim Web bisa menunjukkan ID yang diterima layar konfirmasi. Tim piket bisa membuka API dan menemukan fungsi yang menulis pesanan. Dido melampirkan model yang sama ke tiket checkout.
+At handoff, the Web team can point to the ID received by the confirmation screen. The on-call engineer can open the API and find the function that writes the order. Dido attaches that same model to the checkout ticket.
 
-## Coba dengan satu PR
+## Try it on a pull request
 
-<DidoNote scene="your-turn">Ambil satu perubahan yang lagi lo review. Siapa yang mulai interaksi, dan apa yang dia harapkan balik?</DidoNote>
+<DidoNote scene="your-turn">Pick one change you’re reviewing. Who starts the interaction, and what do they expect back?</DidoNote>
 
-Salin `toko.dim` ke `pr.dim`. Ganti nama tampilan Web dan API sesuai sistemmu, lalu ubah label POST serta tipe request dan respons sesuai diff PR. Pertahankan ID agar path tetap cocok. Jalankan `node check.mjs pr.dim`. Setelah muncul `ok`, minta reviewer membaca relasi itu dan menyebutkan hasil yang diterima pemanggil. Cocokkan jawabannya dengan kode PR.
+Copy `shop.dim` to `pr.dim`. Change the Web and API display names to match your system. Replace the POST label and the request and response types with the ones in the diff. Keep the IDs so the paths still resolve. Run `node check.mjs pr.dim`. Once it prints `ok`, ask a reviewer to read the relation and name the value the caller receives. Check the answer against the code in the PR.

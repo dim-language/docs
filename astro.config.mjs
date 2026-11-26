@@ -31,7 +31,7 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: 'dim',
-			description: 'dim (Diagram In Markup): bahasa untuk menulis arsitektur software sebagai satu peta yang bisa di-zoom.',
+			description: 'dim (Diagram In Markup): a language for writing software architecture as one zoomable map.',
 			logo: {
 				light: './src/assets/logo-light.svg',
 				dark: './src/assets/logo-dark.svg',
@@ -40,8 +40,8 @@ export default defineConfig({
 			},
 			head: [{ tag: 'link', attrs: { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' } }],
 			locales: {
-				root: { label: 'Bahasa Indonesia', lang: 'id' },
-				en: { label: 'English' },
+				root: { label: 'English', lang: 'en' },
+				id: { label: 'Bahasa Indonesia', lang: 'id' },
 			},
 			customCss: [
 				'@fontsource/source-sans-3/400.css',
@@ -88,7 +88,7 @@ export default defineConfig({
 			components: { Sidebar: './src/components/DocsSidebar.astro' },
 			sidebar: [
 				{
-					label: 'Pengantar', translations: { en: 'Introduction' },
+					label: 'Introduction', translations: { id: 'Pengantar' },
 					items: [{ slug: 'mulai/apa-itu-dim' }, { slug: 'ekosistem' }],
 				},
 				{
@@ -99,7 +99,7 @@ export default defineConfig({
 					],
 				},
 				{
-					label: 'Panduan', translations: { en: 'Guide' },
+					label: 'Guide', translations: { id: 'Panduan' },
 					items: [
 						{ slug: 'panduan' }, { slug: 'menulis/memodelkan' }, { slug: 'menulis/konfigurasi' },
 						{ slug: 'menulis/elemen' }, { slug: 'menulis/relasi' }, { slug: 'konsep/aliran-data' },
@@ -109,15 +109,15 @@ export default defineConfig({
 					],
 				},
 				{
-					label: 'Referensi', translations: { en: 'Reference' },
+					label: 'Reference', translations: { id: 'Referensi' },
 					items: [
 						{ slug: 'referensi' }, { slug: 'referensi/cli' },
 						{
-							label: 'Spesifikasi bahasa',
-							translations: { en: 'Language specification' },
+							label: 'Language specification',
+							translations: { id: 'Spesifikasi bahasa' },
 							collapsed: true,
 							items: [
-								{ slug: 'referensi/spesifikasi', label: 'Ikhtisar', translations: { en: 'Overview' } },
+								{ slug: 'referensi/spesifikasi', label: 'Overview', translations: { id: 'Ikhtisar' } },
 								{ slug: 'referensi/spesifikasi/sintaks' },
 								{ slug: 'referensi/spesifikasi/konfigurasi' },
 								{ slug: 'referensi/spesifikasi/model' },

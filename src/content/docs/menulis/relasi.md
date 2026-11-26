@@ -1,86 +1,86 @@
 ---
-title: Hubungkan dua elemen
-description: Menulis relasi dengan id dan op di level mana pun, aturan ujungnya, dan cara path dirujuk dari dalam blok.
+title: Connect two elements
+description: Writing relations with an id and an op at any level, their end rules, and how paths resolve from inside a block.
 ---
 
-Saat Web membuat pesanan lewat API, mulailah dengan mencari path kedua elemen. Beri relasinya id yang menjelaskan interaksinya, lalu pilih `op` yang sesuai.
+When the Web app creates an order through the API, start by finding the paths of both elements. Give the relation an id that describes the interaction, then pick a fitting `op`.
 
-Relasi menghubungkan dua elemen, di level mana pun. Fungsi boleh berelasi dengan database, container boleh berelasi dengan fungsi di sistem lain.
+A relation connects two elements at any level. A function can relate to a database, and a container can relate to a function in another system.
 
 ```dim
-<id>: <dari> -> <ke> ["<label>"] { op <op>; … }
+<id>: <from> -> <to> ["<label>"] { op <op>; … }
 ```
 
 ```dim
-shopping: customer -> shop.web "Belanja" { op use; }
-saveOrder: shop.api.orders -> shop.db "Simpan order" {
+shopping: customer -> shop.web "Shops" { op use; }
+saveOrder: shop.api.orders -> shop.db "Save order" {
   op write;
   data push shop.api.orders.order;
   tech postgres;
 }
 ```
 
-## Id dan `op` selalu ditulis
+## The id and `op` are always written
 
-- **Id** ditulis camelCase dan unik di seluruh model. Id dipakai oleh `step` di [flow](/konsep/alur/), oleh `remove` di [model turunan](/konsep/komposisi/), dan oleh peta untuk menelusuri asal sebuah panah.
-- **`op`** menyatakan jenis interaksinya. Tidak ada `op` default, jadi setiap relasi bisa dibaca tanpa menebak.
+- The **id** is camelCase and unique across the model. It's used by `step` in [flows](/konsep/alur/), by `remove` in [derived models](/konsep/komposisi/), and by the map to trace where an arrow comes from.
+- The **`op`** states the kind of interaction. There's no default `op`, so every relation can be read without guessing.
 
-| `op` | Arti |
+| `op` | Meaning |
 |---|---|
-| `use` | interaksi umum, termasuk manusia yang memakai aplikasi |
-| `call` | panggilan sinkron: fungsi, HTTP, RPC |
-| `read` | mengambil data dari penyimpanan |
-| `write` | menyimpan data ke penyimpanan |
-| `publish` | mengirim pesan async ke antrian |
-| `subscribe` | menerima pesan async dari antrian |
+| `use` | a general interaction, including a person using an application |
+| `call` | a synchronous call: function, HTTP, RPC |
+| `read` | fetching data from storage |
+| `write` | saving data to storage |
+| `publish` | sending an async message to a queue |
+| `subscribe` | receiving async messages from a queue |
 
-Untuk bentuk kode, ada `inherits`, `implements`, `owns`, dan `refers`. Contohnya ada di [Catat kontrak fungsi](/konsep/level-kode/#relasi-antar-kode).
+For the shape of code, there's `inherits`, `implements`, `owns`, and `refers`. Examples are in [Record a function contract](/konsep/level-kode/#relations-between-code).
 
-## Arah panah
+## Arrow direction
 
-Panah selalu ditulis **dari pihak yang memulai interaksi**. `api -> db { op read; }` berarti `api` yang membaca dari `db`. Datanya mengalir dari `db` ke `api`, tapi panahnya tetap dari `api`, karena `api` yang bergantung pada `db`. Arah data dicatat terpisah dengan `data push` dan `data pull`. Penjelasannya ada di [Bedakan pemanggil dari arah data](/konsep/aliran-data/).
+The arrow always points **from whoever starts the interaction**. `api -> db { op read; }` means `api` reads from `db`. The data flows from `db` to `api`, but the arrow still starts at `api`, because `api` depends on `db`. The direction of data is recorded separately with `data push` and `data pull`. See [Separate the caller from the data direction](/konsep/aliran-data/).
 
-## Ujung yang masuk akal
+## Ends that make sense
 
-`op` dan peran container saling mengunci, supaya panah selalu berarti sesuatu:
+`op` and container roles lock together, so an arrow always means something:
 
-| `op` | Tujuan yang boleh |
+| `op` | Allowed target |
 |---|---|
-| `read`, `write` | container `database`, `storage`, atau `cache`, atau isinya |
-| `publish`, `subscribe` | container `queue`, atau endpoint event |
-| `call` | apa pun kecuali `person`, penyimpanan, dan antrian |
-| `use` | apa pun kecuali penyimpanan dan antrian |
+| `read`, `write` | a `database`, `storage`, or `cache` container, or its contents |
+| `publish`, `subscribe` | a `queue` container, or an event endpoint |
+| `call` | anything except a `person`, storage, and queues |
+| `use` | anything except storage and queues |
 
-Manusia (`person`) hanya boleh memakai sistem atau aplikasi (`role app`). Ia tidak memanggil API atau database secara langsung.
+A `person` can only use a system or an application (`role app`). People don't call APIs or databases directly.
 
-## Tempat menulis relasi
+## Where to write a relation
 
-Relasi boleh ditulis di top-level file, atau di dalam blok elemen mana pun. Path di dalamnya dibaca **relatif terhadap blok tempat relasi itu ditulis**:
+A relation can be written at the top level of a file, or inside any element's block. Its paths are read **relative to the block where the relation is written**:
 
 ```dim
 system shop "Online Shop" {
   container api "API" {
     role service;
-    component orders "Orders" { description "Menyimpan order."; }
+    component orders "Orders" { description "Stores orders."; }
     saveOrder: orders -> db "INSERT orders" { op write; }
   }
   container db "Postgres" { role database; }
 }
 ```
 
-Untuk setiap path, nama pertamanya dicari mulai dari blok tempat relasi ditulis. Kalau tidak ketemu, pencarian naik ke blok di atasnya, terus sampai top-level. Di contoh ini, `orders` ditemukan di `shop.api`, dan `db` ditemukan di `shop`. Setelah nama pertama ketemu, sisa path harus berupa anak langsung, berturut-turut.
+For each path, the first name is looked up starting at the block where the relation is written. If it isn't found, the lookup moves up to the enclosing block, all the way to the top level. In this example, `orders` is found in `shop.api`, and `db` is found in `shop`. Once the first name is found, the rest of the path must be direct children, one after another.
 
-**Nama yang sama di dua tingkat.** Kalau nama pertama sebuah path ditemukan di satu tingkat, tapi tingkat yang lebih luar juga punya anak dengan nama itu, pembaca tidak bisa tahu mana yang dimaksud. dim menolaknya dengan error `E209`. Tulis path yang lebih panjang (`api.payments`), `this` untuk elemen yang bloknya sedang ditulis, atau path absolut yang diawali `::` (`::shop.api.payments`).
+**The same name at two levels.** If the first name of a path is found at one level, but an outer level also has a child with that name, a reader can't tell which is meant. dim rejects it with `E209`. Write a longer path (`api.payments`), `this` for the element whose block you're in, or an absolute path starting with `::` (`::shop.api.payments`).
 
-## Yang tidak boleh
+## What isn't allowed
 
-- **Relasi ke diri sendiri** (`E403`), kecuali rekursi langsung: `call` dari `function` atau `method` ke dirinya sendiri.
-- **Relasi antara elemen dan leluhur atau keturunannya** (`E404`), misalnya `shop.api.orders -> shop.api`. Relasi seperti itu selalu hilang saat peta di-zoom out.
-- **Ujung yang tidak cocok dengan `op`** (`E405`), misalnya `read` ke container `service`.
-- **Path yang tidak ada** (`E208`). Pesannya menyebut di bagian path mana pencariannya berhenti.
+- **A relation to itself** (`E403`), except direct recursion: a `call` from a `function` or `method` to itself.
+- **A relation between an element and its ancestor or descendant** (`E404`), such as `shop.api.orders -> shop.api`. Such a relation always disappears when the map zooms out.
+- **Ends that don't fit the `op`** (`E405`), such as a `read` that targets a `service` container.
+- **A path that doesn't exist** (`E208`). The message says where in the path the lookup stopped.
 
-Aturan lengkapnya ada di [spesifikasi §9](/referensi/spesifikasi/relasi/#9-relasi) dan [§6.9](/referensi/spesifikasi/model/#69-resolusi-path).
+The full rules are in [specification §9](/referensi/spesifikasi/relasi/#9-relations) and [§6.9](/referensi/spesifikasi/model/#69-path-resolution).
 
-## Cek hasilnya
+## Check the result
 
-Ganti `op write` di `saveOrder` dengan `op read`, lalu jalankan `dim check`. Pesannya `E406`, karena `data push` tidak cocok dengan `read`. Kembalikan, lalu ubah tujuan relasi ke `shop.web`, yang berperan `app`, dan pastikan pesannya berganti menjadi `E405`: `write` hanya boleh ke penyimpanan.
+Change `op write` in `saveOrder` to `op read`, then run `dim check`. The message is `E406`, because `data push` doesn't fit `read`. Change it back, then point the relation at `shop.web`, which has the `app` role, and confirm the message becomes `E405`: `write` can only target storage.

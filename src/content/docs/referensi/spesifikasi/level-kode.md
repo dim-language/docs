@@ -1,53 +1,53 @@
 ---
-title: Level kode
-description: Paradigma, kind level kode, member, dan relasi struktural.
+title: Code level
+description: Paradigms, code-level kinds, members, and structural relations.
 ---
 
-## 7. Level kode
+## 7. Code level
 
-Level kode menjelaskan isi sebuah component: tipe data, fungsi, class, dan kontraknya. Tujuannya dua: editor bisa menggambar diagram class dan call graph dari model yang sama, dan siapa pun yang membaca model, manusia atau AI, tahu tugas dan kontrak setiap unit tanpa membuka source.
+The code level describes what's inside a component: data types, functions, classes, and their contracts. It serves two purposes: an editor can draw class diagrams and call graphs from the same model, and anyone reading the model, human or AI, knows each unit's job and contract without opening the source.
 
-dim **tidak terikat ke bahasa pemrograman**, tapi mengikuti **paradigma**. Konsep seperti `class`, `function`, dan `record` ada di banyak bahasa, sedangkan sintaks seperti `&Order` atau `Result<T, E>` hanya ada di satu bahasa. Karena itu level kode memakai kosakata paradigma dan sistem tipe milik dim sendiri ([§8](/referensi/spesifikasi/tipe/#8-tipe)).
+dim **isn't tied to a programming language**, but it follows **paradigms**. Concepts like `class`, `function`, and `record` exist in many languages, while syntax like `&Order` or `Result<T, E>` exists in only one. So the code level uses the vocabulary of paradigms and dim's own type system ([§8](/referensi/spesifikasi/tipe/#8-types)).
 
 ```dim
 component orders "Orders" {
-  description "Membuat dan menyimpan order.";
+  description "Creates and stores orders.";
   paradigm oop;
 
   record order "Order" {
-    description "Order yang sudah dibuat.";
+    description "An order that has been created.";
     field id: uuid;
-    field total: decimal "Total setelah diskon";
+    field total: decimal "Total after discounts";
   }
 
   enum orderStatus "OrderStatus" {
-    description "Tahap sebuah order.";
+    description "The stage an order is in.";
     variant pending;
     variant paid;
-    variant shipped "Sudah diserahkan ke kurir";
+    variant shipped "Handed to the courier";
   }
 
   interface orderStore "OrderStore" {
-    description "Tempat menyimpan order.";
+    description "Where orders are stored.";
     method save "save()" {
-      description "Menyimpan order baru.";
+      description "Stores a new order.";
       param value: order;
       throws storageFailure;
     }
   }
 
   class postgresOrderStore "PostgresOrderStore" {
-    description "OrderStore di atas Postgres.";
+    description "An OrderStore backed by Postgres.";
     method save "save()" {
-      description "Menyimpan order dalam satu transaksi.";
+      description "Stores an order in one transaction.";
       async;
       param value: order;
-      throws storageFailure "Gagal menulis ke database";
+      throws storageFailure "Writing to the database failed";
     }
   }
 
   record storageFailure "StorageFailure" {
-    description "Error saat menulis ke penyimpanan.";
+    description "An error while writing to storage.";
     field reason: string;
   }
 
@@ -55,99 +55,99 @@ component orders "Orders" {
 }
 ```
 
-### 7.1 Paradigma
+### 7.1 Paradigms
 
-| Paradigma | Kind yang boleh |
+| Paradigm | Allowed kinds |
 |---|---|
-| semua | `record`, `enum`, `union`, `alias` |
+| all | `record`, `enum`, `union`, `alias` |
 | `procedural` | `module`, `function` |
 | `functional` | `module`, `function` |
 | `oop` | `class`, `interface`, `method`, `constructor` |
 
-- Container yang berisi level kode wajib menulis `paradigm`, dan component boleh mempersempitnya ([§6.6](/referensi/spesifikasi/model/#66-paradigma)).
-- Kind yang tidak dimiliki paradigma efektifnya adalah `E301`. Tipe data (`record`, `enum`, `union`, `alias`) selalu boleh.
-- Paradigma tidak hanya membatasi kind, tapi juga properti: `pure`/`effects` hanya di `functional`, dan `visibility`, `static`, serta `abstract` hanya di `oop` ([§7.3](#73-properti-unit-kode)).
+- A container with code-level elements must write `paradigm`, and a component can narrow it ([§6.6](/referensi/spesifikasi/model/#66-paradigms)).
+- A kind its effective paradigms don't include is `E301`. Data types (`record`, `enum`, `union`, `alias`) are always allowed.
+- Paradigms limit properties as well as kinds: `pure`/`effects` exist only in `functional`, and `visibility`, `static`, and `abstract` only in `oop` ([§7.3](#73-code-unit-properties)).
 
-### 7.2 Kind level kode
+### 7.2 Code-level kinds
 
-| Kind | Arti | Boleh berada di dalam |
+| Kind | Meaning | Can be inside |
 |---|---|---|
-| `module` | kumpulan fungsi dan tipe | `component`, `module` |
-| `function` | fungsi yang berdiri sendiri | `component`, `module` |
-| `class` | class | `component`, `module` |
-| `interface` | kontrak yang dipenuhi class (interface, trait, protocol) | `component`, `module` |
-| `method` | fungsi milik class atau interface | `class`, `interface` |
-| `constructor` | cara membuat instance class | `class` |
-| `record` | data berfield (struct, data class, record) | `component`, `module`, `class` |
-| `enum` | pilihan tetap tanpa data | `component`, `module`, `class` |
-| `union` | pilihan tetap, setiap varian boleh membawa data | `component`, `module`, `class` |
-| `alias` | nama lain untuk sebuah tipe | `component`, `module`, `class` |
+| `module` | a group of functions and types | `component`, `module` |
+| `function` | a standalone function | `component`, `module` |
+| `class` | a class | `component`, `module` |
+| `interface` | a contract that classes fulfil (interface, trait, protocol) | `component`, `module` |
+| `method` | a function that belongs to a class or interface | `class`, `interface` |
+| `constructor` | how an instance of a class is created | `class` |
+| `record` | data with fields (struct, data class, record) | `component`, `module`, `class` |
+| `enum` | a fixed set of choices without data | `component`, `module`, `class` |
+| `union` | a fixed set of choices, each of which can carry data | `component`, `module`, `class` |
+| `alias` | another name for a type | `component`, `module`, `class` |
 
-- `function`, `method`, `constructor`, `record`, `enum`, `union`, dan `alias` tidak punya anak elemen. Isinya member ([§7.4](#74-member)).
-- `module` di dalam component `oop` hanya boleh kalau paradigma efektifnya juga punya `procedural` atau `functional`.
-- Penempatan yang melanggar tabel ini adalah `E201`.
+- `function`, `method`, `constructor`, `record`, `enum`, `union`, and `alias` have no child elements. Their content is members ([§7.4](#74-members)).
+- A `module` inside an `oop` component is allowed only if its effective paradigms also include `procedural` or `functional`.
+- Placement that breaks this table is `E201`.
 
-Semua kind di tabel ini termasuk **level kode** dalam zoom, dan semuanya disebut **unit kode**.
+Every kind in this table belongs to the **code level** for zooming, and all of them are called **code units**.
 
-### 7.3 Properti unit kode
+### 7.3 Code unit properties
 
-| Properti | Nilai | Berlaku untuk | Keterangan |
+| Property | Value | Applies to | Notes |
 |---|---|---|---|
-| `description` | prosa | semua | wajib, lihat di bawah |
-| `source`, `tags`, `meta` | | semua | [§6.3](/referensi/spesifikasi/model/#63-properti-umum) |
+| `description` | prose | all | required, see below |
+| `source`, `tags`, `meta` | | all | [§6.3](/referensi/spesifikasi/model/#63-common-properties) |
 | `async` | flag | `function`, `method` | |
-| `pure` | flag | `function` di paradigma `functional` | fungsi tanpa efek samping |
-| `effects` | flag | `function` di paradigma `functional` | fungsi dengan efek samping |
-| `visibility` | `public`, `private`, `protected`, `internal` | `class`, `interface`, `method`, `constructor` | default `public` |
+| `pure` | flag | `function` under the `functional` paradigm | a function without side effects |
+| `effects` | flag | `function` under the `functional` paradigm | a function with side effects |
+| `visibility` | `public`, `private`, `protected`, `internal` | `class`, `interface`, `method`, `constructor` | defaults to `public` |
 | `static` | flag | `method` | |
 | `abstract` | flag | `class`, `method` | |
-| `type` | ekspresi tipe | `alias` | wajib |
+| `type` | a type expression | `alias` | required |
 
-Aturan:
+Rules:
 
-- **`description` wajib** di `module`, `function`, `class`, `interface`, `method`, `constructor`, `record`, `enum`, `union`, dan `alias` (`E205`). Unit-unit ini dipakai pihak lain, jadi tugasnya harus tertulis. Di member (`field`, `variant`, `param`), keterangannya opsional.
-- `function` yang paradigma efektifnya mencakup `functional` wajib menulis **tepat satu** dari `pure` atau `effects` (`E304`). Di luar `functional`, keduanya tidak boleh (`E304`).
-- `visibility`, `static`, dan `abstract` hanya boleh kalau paradigma efektifnya mencakup `oop` (`E305`).
-- `method` `abstract` hanya boleh di dalam `class` `abstract` (`E305`).
+- **`description` is required** on `module`, `function`, `class`, `interface`, `method`, `constructor`, `record`, `enum`, `union`, and `alias` (`E205`). Others use these units, so their job must be written down. On members (`field`, `variant`, `param`), the note is optional.
+- A `function` whose effective paradigms include `functional` must write **exactly one** of `pure` or `effects` (`E304`). Outside `functional`, neither is allowed (`E304`).
+- `visibility`, `static`, and `abstract` are only allowed if the effective paradigms include `oop` (`E305`).
+- An `abstract` `method` is only allowed inside an `abstract` `class` (`E305`).
 
-### 7.4 Member
+### 7.4 Members
 
-Member adalah bagian dari satu unit kode. Member tidak punya path dan tidak bisa menjadi ujung relasi.
+A member is part of one code unit. Members have no path and can't be relation ends.
 
 ```dim
-field <id>: <tipe> ["<keterangan>"];
-variant <id> ["<keterangan>"];
-variant <id>: <tipe> ["<keterangan>"];
-param <id>: <tipe> ["<keterangan>"];
-returns <tipe> ["<keterangan>"];
-throws <tipe> ["<keterangan>"];
+field <id>: <type> ["<note>"];
+variant <id> ["<note>"];
+variant <id>: <type> ["<note>"];
+param <id>: <type> ["<note>"];
+returns <type> ["<note>"];
+throws <type> ["<note>"];
 ```
 
-| Member | Berlaku untuk | Keterangan |
+| Member | Applies to | Notes |
 |---|---|---|
-| `field` | `record`, `class` | boleh berulang, urutan dipertahankan |
-| `variant` tanpa tipe | `enum` | boleh berulang, minimal satu |
-| `variant` dengan tipe | `union` | boleh berulang, minimal dua; varian tanpa tipe juga boleh |
-| `param` | `function`, `method`, `constructor` | boleh berulang, urutan adalah urutan parameter |
-| `returns` | `function`, `method` | paling banyak satu; tidak ditulis berarti tidak mengembalikan nilai |
-| `throws` | `function`, `method`, `constructor` | boleh berulang; tipenya harus `record`, `enum`, `union`, atau `class` (`E307`) |
+| `field` | `record`, `class` | repeatable, order is kept |
+| `variant` without a type | `enum` | repeatable, at least one |
+| `variant` with a type | `union` | repeatable, at least two; variants without a type are allowed too |
+| `param` | `function`, `method`, `constructor` | repeatable, order is the parameter order |
+| `returns` | `function`, `method` | at most one; without it, nothing is returned |
+| `throws` | `function`, `method`, `constructor` | repeatable; the type must be a `record`, `enum`, `union`, or `class` (`E307`) |
 
-- Member yang tidak berlaku untuk kind itu adalah `E302`.
-- Id member unik di dalam unit kodenya, per jenis member (`E303`). `field` dan `variant` boleh memakai id yang sama dengan elemen lain, karena member tidak ikut resolusi path.
-- `enum` tanpa varian, atau `union` dengan kurang dari dua varian, adalah `E302`.
+- A member that doesn't apply to the kind is `E302`.
+- A member id is unique within its code unit, per kind of member (`E303`). A `field` or `variant` can share an id with another element, because members aren't part of path resolution.
+- An `enum` without variants, or a `union` with fewer than two variants, is `E302`.
 
-### 7.5 Relasi di level kode
+### 7.5 Relations at the code level
 
-Relasi interaksi (`call`, `use`, dan seterusnya) boleh menghubungkan unit kode dengan elemen di level mana pun ([§9](/referensi/spesifikasi/relasi/#9-relasi)). Rekursi langsung ditulis sebagai `call` dari `function` atau `method` ke dirinya sendiri.
+Interaction relations (`call`, `use`, and so on) can connect code units with elements at any level ([§9](/referensi/spesifikasi/relasi/#9-relations)). Direct recursion is written as a `call` from a `function` or `method` to itself.
 
-Relasi **struktural** menggambarkan bentuk kode, bukan kejadian saat berjalan:
+**Structural** relations describe the shape of code, not something that happens at runtime:
 
-| `op` | Dari | Ke | Paradigma |
+| `op` | From | To | Paradigm |
 |---|---|---|---|
 | `inherits` | `class` | `class` | `oop` |
 | `inherits` | `interface` | `interface` | `oop` |
 | `implements` | `class` | `interface` | `oop` |
-| `owns` | `class`, `record` | `class`, `interface`, `record`, `enum`, `union`, `alias` | semua |
-| `refers` | `class`, `record` | `class`, `interface`, `record`, `enum`, `union`, `alias` | semua |
+| `owns` | `class`, `record` | `class`, `interface`, `record`, `enum`, `union`, `alias` | all |
+| `refers` | `class`, `record` | `class`, `interface`, `record`, `enum`, `union`, `alias` | all |
 
-`owns` adalah komposisi: target hidup dan mati bersama pemiliknya. `refers` adalah asosiasi: pemilik menyimpan rujukan tanpa memiliki. Pasangan di luar tabel ini, atau paradigma yang tidak cocok di salah satu ujung, adalah `E407`.
+`owns` is composition: the target lives and dies with its owner. `refers` is association: the owner keeps a reference without owning it. Any pair outside this table, or a paradigm mismatch at either end, is `E407`.

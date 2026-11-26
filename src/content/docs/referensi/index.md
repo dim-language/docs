@@ -1,13 +1,13 @@
 ---
-title: Indeks referensi
-description: Temukan aturan bahasa dan antarmuka SDK.
+title: Reference index
+description: Look up language rules and SDK interfaces.
 ---
 
-Sedang membaca diagnostik? Mulai dari aturan validasi. Untuk bentuk data hasil kompilasi, buka output compiler.
+Looking up a diagnostic? Start with the validation rules. For the structure of a compiled model, open compiler output.
 
-- [SDK TypeScript](/referensi/cli/)
-- [Sintaks](/referensi/spesifikasi/sintaks/)
-- [Elemen, atribut, dan relasi](/referensi/spesifikasi/model/)
-- [Aturan validasi](/referensi/spesifikasi/validasi/)
-- [Output compiler](/referensi/spesifikasi/output/)
-- [Spesifikasi bahasa lengkap](/referensi/spesifikasi/)
+- [TypeScript SDK](/referensi/cli/)
+- [Syntax](/referensi/spesifikasi/sintaks/)
+- [Elements, attributes and relations](/referensi/spesifikasi/model/)
+- [Validation rules](/referensi/spesifikasi/validasi/)
+- [Compiler output](/referensi/spesifikasi/output/)
+- [Full language specification](/referensi/spesifikasi/)

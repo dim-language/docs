@@ -1,61 +1,61 @@
 ---
-title: Baca panah saat zoom berubah
-description: Bagaimana satu model dim menghasilkan diagram di setiap level, lewat frontier, lifting, dan aggregasi.
+title: Read arrows as the zoom changes
+description: How one dim model produces a diagram at every level through the frontier, lifting, and aggregation.
 ---
 
 import ZoomMap from '../../../components/zoom-map/ZoomMap.astro';
 import shop from '../../../data/shop.json';
 
-Saat review, cari siapa yang menulis ke Postgres. Mulai dari tampilan sistem, lalu perbesar sampai fungsi penulisnya terbaca.
+During a review, find out what writes to Postgres. Start from the system view, then zoom in until the function that writes is readable.
 
-Di C4 biasa, tiap level adalah diagram terpisah yang digambar sendiri-sendiri. Di dim, hanya ada **satu model**. Setiap level zoom adalah cara pandang ke model yang sama, dihitung dari elemen mana yang sedang terbuka.
+In plain C4, each level is a separate diagram drawn on its own. In dim, there's only **one model**. Every zoom level is a view of the same model, computed from which elements are open.
 
-Perbesar peta untuk melihat isi tiap kotak saat detailnya cukup besar untuk dibaca. Klik dua kali `Online Shop` untuk mendekat, lalu cari `API` dan masuk lebih jauh.
+Zoom in to see what's inside each box once it's large enough to read. Double-click `Online Shop` to move closer, then find `API` and go further in.
 
 <ZoomMap model={shop} uid="konsep" />
 
-## Tempat dan wilayah
+## Places and regions
 
-Setiap elemen yang terlihat ada dalam salah satu dari dua keadaan:
+Every visible element is in one of two states:
 
-- **Tempat** (kotak solid): elemen yang tertutup, atau yang memang tidak punya isi. Panah selalu menempel ke tempat.
-- **Wilayah** (batas putus-putus): elemen yang sedang dibuka. Wilayah hanya membungkus isinya, panah tidak pernah menempel ke wilayah.
+- **A place** (a solid box): an element that's closed, or that has no content. Arrows always attach to places.
+- **A region** (a dashed boundary): an element that's open. A region only wraps its content; arrows never attach to it.
 
-Kumpulan semua tempat yang sedang terlihat disebut **frontier**. Saat semua sistem tertutup, frontier-nya `Customer`, `Online Shop`, dan `Payment Gateway`.
+The set of places currently visible is called the **frontier**. When every system is closed, the frontier is `Customer`, `Online Shop`, and `Payment Gateway`.
 
 ## Lifting
 
-Relasi selalu disimpan dengan ujung aslinya, misalnya `selectOrder` dari `find_by_id()` ke `Postgres`. Untuk menggambarnya, setiap ujung dinaikkan ke leluhur terdekatnya yang ada di frontier:
+A relation is always stored with its original ends, such as `selectOrder` from `find_by_id()` to `Postgres`. To draw it, each end rises to its nearest ancestor on the frontier:
 
-| Terbuka | `find_by_id()` naik ke | `Postgres` naik ke | Hasil |
+| Open | `find_by_id()` rises to | `Postgres` rises to | Result |
 |---|---|---|---|
-| (tidak ada) | `Online Shop` | `Online Shop` | tidak digambar |
+| (none) | `Online Shop` | `Online Shop` | not drawn |
 | `shop` | `API` | `Postgres` | `API → Postgres` |
 | `shop`, `api` | `Orders` | `Postgres` | `Orders → Postgres` |
-| semua | `find_by_id()` | `Postgres` | `find_by_id() → Postgres` |
+| everything | `find_by_id()` | `Postgres` | `find_by_id() → Postgres` |
 
-Baris pertama penting: kalau kedua ujung naik ke tempat yang sama, relasinya **internal** dan tidak digambar. Itu sebabnya saat `Online Shop` tertutup, relasi di dalamnya tidak menjadi panah dari `Online Shop` ke dirinya sendiri.
+The first row matters: if both ends rise to the same place, the relation is **internal** and isn't drawn. That's why, when `Online Shop` is closed, the relations inside it don't become an arrow from `Online Shop` to itself.
 
-Karena itu juga dim melarang relasi antara elemen dan leluhurnya sendiri (error `E404`): relasi seperti itu pasti hilang di setiap level zoom.
+It's also why dim forbids a relation between an element and its own ancestor (error `E404`): such a relation would disappear at every zoom level.
 
-## Aggregasi
+## Aggregation
 
-Beberapa relasi bisa naik ke pasangan tempat yang sama. Saat `API` dan `Postgres` terlihat sebagai kotak, `insertOrder`, `selectOrder`, dan `recordRefund` sama-sama tampil sebagai `API → Postgres`. Ketiganya digabung jadi satu panah yang tetap membawa:
+Several relations can rise to the same pair of places. When `API` and `Postgres` are visible as boxes, `insertOrder`, `selectOrder`, and `recordRefund` all show as `API → Postgres`. They merge into one arrow that still carries:
 
-- daftar id relasi asalnya, supaya bisa ditelusuri balik;
-- semua `op` yang terlibat (`write, read`);
-- aliran data per arah (`push Order, RefundId` dan `pull Order`).
+- the ids of its source relations, so it can be traced back;
+- every `op` involved (`write, read`);
+- the data flow per direction (`push Order, RefundId` and `pull Order`).
 
-Arah tetap dihormati: `a → b` dan `b → a` adalah dua panah berbeda.
+Direction is respected: `a → b` and `b → a` are two different arrows.
 
-Buka **Relasi di tampilan ini** di bawah peta untuk melihat hasil aggregasi. Pilih satu relasi untuk menyorot panahnya dan melihat operasi serta data yang mengalir.
+Open **Relations in this view** below the map to see the result of aggregation. Choose a relation to highlight its arrow and see the operations and data that flow.
 
-## Apa yang dikerjakan siapa
+## Who does what
 
-Parser **tidak** melakukan lifting. Model hasil parse selalu berisi relasi dengan ujung aslinya, dan tampilan yang menghitung frontier, lifting, dan aggregasi. Dengan begitu, satu file JSON cukup untuk semua level zoom, dan semua tampilan menghasilkan diagram yang sama dari model yang sama.
+The parser does **not** lift. A parsed model always contains relations with their original ends, and the view computes the frontier, lifting, and aggregation. That way one JSON file is enough for every zoom level, and every view draws the same diagram from the same model.
 
-Aturan normatifnya ada di [spesifikasi §14](/referensi/spesifikasi/semantik-zoom/#14-semantik-zoom-lifting). View deployment, yang memakai aturan yang sama di hierarki node, dibahas di [Petakan tempat software berjalan](/konsep/deployment/).
+The normative rules are in [specification §14](/referensi/spesifikasi/semantik-zoom/#14-zoom-semantics-lifting). The deployment view, which applies the same rules to the node hierarchy, is covered in [Map where software runs](/konsep/deployment/).
 
-## Cek hasilnya
+## Check the result
 
-Pilih panah dari API ke Postgres saat keduanya terlihat sebagai kotak. Perbesar API sampai `find_by_id()` muncul. Pastikan panah `selectOrder` sekarang berangkat dari `find_by_id()`, dengan label `SELECT orders` yang sama.
+Choose the arrow from API to Postgres while both are visible as boxes. Zoom into API until `find_by_id()` appears. Confirm that the `selectOrder` arrow now starts at `find_by_id()`, with the same `SELECT orders` label.

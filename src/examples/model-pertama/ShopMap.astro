@@ -11,7 +11,7 @@ interface Props {
 
 await initDim();
 const { source, config, language } = Astro.props;
-const { model, diagnostics } = compileProject('toko.dim', { 'dim.config': config, 'toko.dim': source });
+const { model, diagnostics } = compileProject('shop.dim', { 'dim.config': config, 'shop.dim': source });
 if (!model) throw new Error(diagnostics.map(d => d.message).join('\n'));
 const html = renderMapHtml(model, { uid: 'shop', language });
 ---

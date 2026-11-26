@@ -1,7 +1,7 @@
 {
-	"sistem": "ok: 2 elemen, 1 relasi, 0 flow",
-	"checkout": "ok: 7 elemen, 3 relasi, 0 flow",
-	"container": "ok: 8 elemen, 3 relasi, 0 flow",
-	"kode": "ok: 9 elemen, 3 relasi, 0 flow",
-	"tanpaArah": "error[E406]: arah data wajib ditulis: `data push <tipe>;` atau `data pull <tipe>;`"
+	"sistem": "ok: 2 elements, 1 relation, 0 flows",
+	"checkout": "ok: 7 elements, 3 relations, 0 flows",
+	"container": "ok: 8 elements, 3 relations, 0 flows",
+	"kode": "ok: 9 elements, 3 relations, 0 flows",
+	"tanpaArah": "error[E406]: the data direction must be written: `data push <type>;` or `data pull <type>;`"
 }

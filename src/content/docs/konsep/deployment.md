@@ -1,15 +1,15 @@
 ---
-title: Petakan tempat software berjalan
-description: Menulis environment, node, infra, dan penempatan container, lalu membaca relasi di view deployment.
+title: Map where software runs
+description: Write environments, nodes, infra, and container placements, then read relations in the deployment view.
 ---
 
-Tim platform ingin tahu container mana yang berjalan di cluster yang sama sebelum mengganti versi Kubernetes. Tulis environment produksi, tempatkan setiap container ke node-nya, dan baca relasi yang melintasi node.
+The platform team wants to know which containers run on the same cluster before upgrading Kubernetes. Write the production environment, place every container on its node, and read the relations that cross nodes.
 
-Model software menjawab **software-nya terdiri dari apa**. Deployment menjawab **di mana software itu berjalan**. Hierarkinya berbeda (environment → region → cluster → mesin), dan satu container bisa berjalan di banyak tempat. Karena itu deployment adalah hierarki kedua yang merujuk ke model software, bukan bagian dari nesting-nya.
+The software model answers **what the software is made of**. Deployment answers **where it runs**. Its hierarchy is different (environment → region → cluster → machine), and one container can run in many places. So deployment is a second hierarchy that refers to the software model, not part of its nesting.
 
 ```dim
 environment production "Production" {
-  description "Satu region AWS, dengan database terkelola.";
+  description "One AWS region, with a managed database.";
 
   node aws "AWS Jakarta" {
     tech aws;
@@ -27,7 +27,7 @@ environment production "Production" {
       deploy primary shop.db { replicas 1; }
     }
 
-    node legacy "VM laporan" {
+    node legacy "Reports VM" {
       deploy reportsVm shop.reports { replicas 1; }
     }
   }
@@ -36,22 +36,22 @@ environment production "Production" {
 }
 ```
 
-## Empat jenis elemen
+## Four kinds of element
 
-| Elemen | Isinya |
+| Element | What it holds |
 |---|---|
-| `environment` | satu lingkungan: production, staging, satu region |
-| `node` | tempat yang menjalankan sesuatu: region, cluster, mesin; boleh bersarang |
-| `infra` | elemen yang hanya ada di infrastruktur: `loadBalancer`, `cdn`, `dns`, `firewall`, `apiGateway` |
-| `deploy` | penempatan satu container ke node, dengan jumlah `replicas` |
+| `environment` | one environment: production, staging, one region |
+| `node` | something that runs things: a region, a cluster, a machine; can nest |
+| `infra` | an element that exists only in the infrastructure: `loadBalancer`, `cdn`, `dns`, `firewall`, `apiGateway` |
+| `deploy` | one container placed on a node, with its number of `replicas` |
 
-## Setiap container harus tercatat
+## Every container must be accounted for
 
-Di setiap environment, setiap container milik kita harus di-`deploy` minimal sekali, atau dinyatakan tidak ada dengan `omit`:
+In every environment, every container we own must be `deploy`ed at least once, or declared absent with `omit`:
 
 ```dim
 environment staging "Staging" {
-  node vm "Satu VM" {
+  node vm "One VM" {
     deploy web shop.web { replicas 1; }
     deploy api shop.api { replicas 1; }
     deploy db shop.db { replicas 1; }
@@ -61,31 +61,31 @@ environment staging "Staging" {
 }
 ```
 
-Container yang lupa dicatat adalah error `E701`. Aturan ini membuat setiap environment menyatakan isinya dengan lengkap, jadi container baru yang belum punya tempat langsung ketahuan. Container eksternal, seperti payment gateway, tidak di-deploy dan selalu digambar di luar node.
+A container that isn't accounted for is `E701`. This rule makes every environment state its content completely, so a new container without a place is caught right away. External containers, such as the payment gateway, aren't deployed and are always drawn outside the nodes.
 
-## Relasi tidak ditulis ulang
+## Relations aren't written again
 
-Relasi di model software tidak ditulis lagi di environment. View deployment menurunkannya: kalau ada relasi dari sesuatu di `shop.api` ke `shop.db`, view production menggambar `apiPods → primary`, lalu me-lift-nya ke `EKS → RDS` saat kedua node itu tertutup.
+Relations from the software model aren't written again in an environment. The deployment view derives them: if something in `shop.api` relates to `shop.db`, the production view draws `apiPods → primary`, then lifts it to `EKS → RDS` when both nodes are closed.
 
-Relasi yang ditulis di environment hanya untuk elemen `infra`, yang memang tidak ada di model software, seperti `serveWeb` di contoh pertama.
+Relations written in an environment are only for `infra` elements, which don't exist in the software model, such as `serveWeb` in the first example.
 
-## Dengan `amends`
+## With `amends`
 
-Model *to-be* yang menambah container juga harus menempatkannya. Pakai `extend` untuk menambah node ke environment yang sudah ada:
+A *to-be* model that adds containers must place them too. Use `extend` to add nodes to an existing environment:
 
 ```dim
 extend production.aws {
-  node managed "Layanan terkelola" {
+  node managed "Managed services" {
     deploy analyticsDb shop.analytics { replicas 1; }
     deploy eventsQueue shop.events { replicas 1; }
   }
 }
 ```
 
-`remove` pada sebuah container ikut menghapus semua `deploy` dan `omit`-nya.
+`remove` on a container also removes all of its `deploy`s and `omit`s.
 
-Aturan lengkapnya ada di [spesifikasi §13](/referensi/spesifikasi/deployment/#13-deployment).
+The full rules are in [specification §13](/referensi/spesifikasi/deployment/#13-deployment).
 
-## Cek hasilnya
+## Check the result
 
-Tambahkan container baru ke `shop.dim`, lalu jalankan `dim check main.dim`. Pesannya `E701` dan menyebut environment yang belum mencatatnya. Tambahkan `deploy` atau `omit` untuk container itu, dan pastikan pemeriksaannya lolos.
+Add a new container to `shop.dim`, then run `dim check main.dim`. The message is `E701` and names the environment that doesn't account for it yet. Add a `deploy` or `omit` for the container, and confirm the check passes.

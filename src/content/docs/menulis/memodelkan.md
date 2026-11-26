@@ -1,15 +1,15 @@
 ---
-title: Petakan sistem yang sudah berjalan
-description: Langkah-langkah menulis model dim untuk sistem yang sudah ada, dari gambaran besar sampai detail yang perlu saja.
+title: Map an existing system
+description: Steps for writing a dim model of a system that already exists, from the big picture down to only the detail you need.
 ---
 
-Ambil satu PR yang menyentuh dua layanan. Buka handler yang berubah, cari pemanggilnya, lalu ikuti panggilan pertama yang keluar dari layanan itu. Pakai tiga fakta tersebut untuk memilih bagian sistem yang akan digambar.
+Take one PR that touches two services. Open the handler that changed, find its caller, then follow the first call that leaves the service. Use those three facts to choose the part of the system to draw.
 
-Model dim tidak perlu ditulis lengkap sekaligus. Setiap langkah di bawah menghasilkan model yang valid dan sudah berguna, jadi kamu bisa berhenti di langkah mana pun, lalu menambah detail saat dibutuhkan.
+A dim model doesn't have to be written all at once. Each step below produces a valid, useful model, so you can stop at any step and add detail when you need it.
 
-## 1. Siapkan config
+## 1. Set up the config
 
-Buat `dim.config` di folder model, dan deklarasikan teknologi yang sudah kamu tahu. Lihat [Siapkan dim.config](/menulis/konfigurasi/).
+Create a `dim.config` in the model's folder and declare the technologies you already know. See [Set up dim.config](/menulis/konfigurasi/).
 
 ```dim
 // dim.config
@@ -22,124 +22,124 @@ tech sqs "Amazon SQS";
 tech https "HTTPS";
 ```
 
-## 2. Mulai dari luar
+## 2. Start from the outside
 
-Tulis siapa saja yang memakai sistemmu, dan sistem lain yang kamu ajak bicara. Tandai sistem milik pihak lain dengan `external`.
+Write who uses your system and which other systems it talks to. Mark systems owned by someone else with `external`.
 
 ```dim
 // main.dim
 dim "0.6";
 
-person customer "Customer" { description "Belanja online."; }
-person admin "Admin Toko" { description "Mengelola produk dan harga."; }
+person customer "Customer" { description "Shops online."; }
+person admin "Store Admin" { description "Manages products and prices."; }
 
-system shop "Online Shop" { description "Toko online untuk pembeli di Indonesia."; }
+system shop "Online Shop" { description "An online store for shoppers in Indonesia."; }
 
 system payment "Payment Gateway" {
-  description "Gateway pihak ketiga untuk kartu dan e-wallet.";
+  description "A third-party gateway for cards and e-wallets.";
   external;
 }
 
-shopping: customer -> shop "Belanja" { op use; }
-managing: admin -> shop "Mengelola produk" { op use; }
-charging: shop -> payment "Menagih pembayaran" { op call; }
+shopping: customer -> shop "Shops" { op use; }
+managing: admin -> shop "Manages products" { op use; }
+charging: shop -> payment "Charges payments" { op call; }
 ```
 
-Ini setara dengan diagram *system context* di C4, dan biasanya sudah cukup untuk orang di luar tim. Setiap relasi punya id (`shopping:`) dan `op`, supaya nanti bisa dirujuk oleh flow dan oleh model turunan.
+This matches a C4 *system context* diagram, and it's usually enough for people outside the team. Every relation has an id (`shopping:`) and an `op`, so flows and derived models can refer to it later.
 
-## 3. Pecah sistemmu jadi container
+## 3. Break your system into containers
 
-Container adalah bagian yang dijalankan atau di-deploy sendiri-sendiri: web app, API, worker, database, antrian. Yang menentukan adalah cara bagian itu berjalan, bukan letak kodenya. Setiap container wajib menyatakan perannya dengan `role`.
+A container is a part that's run or deployed on its own: a web app, an API, a worker, a database, a queue. What matters is how the part runs, not where its code lives. Every container must state its role with `role`.
 
 ```dim
 system shop "Online Shop" {
-  description "Toko online untuk pembeli di Indonesia.";
+  description "An online store for shoppers in Indonesia.";
 
   container web "Web App" { role app; tech nextjs; }
   container api "API" { role service; tech rust; }
   container worker "Worker" { role service; tech rust; }
   container db "Postgres" { role database; tech postgres; }
-  container queue "Antrian Email" { role queue; tech sqs; }
+  container queue "Email Queue" { role queue; tech sqs; }
 }
 ```
 
-Peran menentukan relasi yang masuk akal: `read` dan `write` hanya ke penyimpanan, `publish` dan `subscribe` hanya ke antrian, dan manusia hanya memakai container `app`. Peran juga menentukan tampilan lewat style di `dim.config`.
+The role decides which relations make sense: `read` and `write` only to storage, `publish` and `subscribe` only to queues, and people only use `app` containers. The role also decides the appearance, through styles in `dim.config`.
 
-## 4. Tulis relasi yang kamu tahu
+## 4. Write the relations you know
 
-Sekarang ganti relasi di level sistem dengan relasi di level container. Tulis hanya yang kamu yakin.
+Now replace the system-level relations with container-level ones. Write only what you're sure of.
 
 ```dim
-shopping: customer -> shop.web "Belanja" { op use; }
-managing: admin -> shop.web "Mengelola produk" { op use; }
-saveOrder: shop.api -> shop.db "Simpan order" { op write; }
-queueEmail: shop.api -> shop.queue "Kirim tugas email" { op publish; }
-takeEmail: shop.worker -> shop.queue "Ambil tugas email" { op subscribe; }
-charging: shop.api -> payment "Menagih pembayaran" { op call; tech https; }
+shopping: customer -> shop.web "Shops" { op use; }
+managing: admin -> shop.web "Manages products" { op use; }
+saveOrder: shop.api -> shop.db "Save order" { op write; }
+queueEmail: shop.api -> shop.queue "Queue email job" { op publish; }
+takeEmail: shop.worker -> shop.queue "Take email job" { op subscribe; }
+charging: shop.api -> payment "Charges payments" { op call; tech https; }
 ```
 
-Relasi `customer -> shop` dari langkah 2 dihapus, karena `customer -> shop.web` sudah tampil sebagai `customer → shop` saat `shop` tertutup. **Jangan menyimpan relasi yang sama di dua level.** Relasi di level atas selalu dihitung dari yang lebih detail, jadi menulisnya lagi hanya membuat dua sumber yang bisa berbeda.
+The `customer -> shop` relation from step 2 is gone, because `customer -> shop.web` already shows as `customer → shop` when `shop` is closed. **Don't keep the same relation at two levels.** Higher-level relations are always computed from more detailed ones, so writing them again only creates two sources that can disagree.
 
-Untuk menentukan arah panah, tanyakan siapa yang memulai interaksi. `worker` yang mengambil dari antrian, jadi panahnya `worker -> queue` dengan `op subscribe`, walaupun datanya mengalir dari antrian.
+To pick the direction of an arrow, ask who starts the interaction. The `worker` takes from the queue, so the arrow is `worker -> queue` with `op subscribe`, even though the data flows out of the queue.
 
-## 5. Turunkan relasi saat detailnya penting
+## 5. Move relations down when the detail matters
 
-Tidak semua container perlu dibuka. Buka yang sering ditanyakan, yang sedang diubah, atau yang alurnya paling penting. Saat kamu menulis component di dalamnya, **pindahkan** relasinya ke elemen yang paling tepat:
+Not every container needs to be opened. Open the ones that are asked about often, that are changing, or that carry the most important flow. When you write components inside, **move** the relations to the most precise element:
 
 ```dim
 container api "API" {
   role service;
   tech rust;
 
-  component checkout "Checkout" { description "Menjalankan checkout sampai order tersimpan."; }
-  component orders "Orders" { description "Menyimpan dan mencari order."; }
+  component checkout "Checkout" { description "Runs checkout until the order is saved."; }
+  component orders "Orders" { description "Stores and looks up orders."; }
 }
 
 saveOrder: shop.api.orders -> shop.db "INSERT orders" { op write; }
-charging: shop.api.checkout -> payment "Menagih pembayaran" { op call; tech https; }
+charging: shop.api.checkout -> payment "Charges payments" { op call; tech https; }
 ```
 
-Peta di level container tetap sama, tapi sekarang setiap panah bisa ditelusuri sampai component yang membuatnya.
+The container-level map stays the same, but now every arrow can be traced to the component that makes it.
 
-Kalau sebuah unit dipanggil banyak pihak, tulis kontraknya di [level kode](/konsep/level-kode/), dengan tipe, parameter, dan error. Untuk API, tulis setiap route sebagai [endpoint](/konsep/endpoint/), supaya relasi dari client cukup ditulis `placeOrder: web.checkout -> api.orders.createOrder { op call; }`, dan label serta datanya diambil dari endpoint.
+If a unit is called from many places, write its contract at the [code level](/konsep/level-kode/), with types, parameters, and errors. For an API, write each route as an [endpoint](/konsep/endpoint/), so a relation from a client is just `placeOrder: web.checkout -> api.orders.createOrder { op call; }`, and its label and data come from the endpoint.
 
-## 6. Tandai alur yang penting
+## 6. Mark the important flows
 
-Untuk journey yang sering dibahas (checkout, pendaftaran, refund), susun id relasinya sebagai [flow](/konsep/alur/). Flow bisa disorot di setiap level zoom, dan boleh bercabang untuk jalur gagal:
+For journeys people often discuss (checkout, sign-up, refunds), arrange the relation ids as a [flow](/konsep/alur/). A flow can be highlighted at every zoom level, and it can branch for failure paths:
 
 ```dim
 flow checkout "Checkout" {
-  description "Dari pembeli menekan bayar sampai order tersimpan.";
+  description "From the shopper clicking pay to the order being saved.";
   step shopping;
-  step charging "Tagih dulu";
+  step charging "Charge first";
   alt {
-    case paid "Pembayaran berhasil" { step saveOrder; }
-    case declined "Pembayaran ditolak" { step showError; }
+    case paid "Payment succeeded" { step saveOrder; }
+    case declined "Payment declined" { step showError; }
   }
 }
 ```
 
-## 7. Pecah file dan catat tempat berjalan
+## 7. Split files and record where things run
 
-- Satu file per sistem atau per tim, digabung dengan `import` dari satu file utama.
-- Tim lain bisa menambah keterangan tanpa mengubah file asli, dengan `extend`.
-- Rencana perubahan arsitektur ditulis sebagai model turunan dengan `amends`, sehingga *as-is* dan *to-be* bisa dibandingkan.
-- Tempat setiap container berjalan ditulis sebagai [environment](/konsep/deployment/).
+- One file per system or team, joined with `import` from one main file.
+- Other teams can add details without changing the original file, with `extend`.
+- Planned architecture changes are written as a derived model with `amends`, so *as-is* and *to-be* can be compared.
+- Where each container runs is written as an [environment](/konsep/deployment/).
 
-Contohnya ada di [Komposisi file](/konsep/komposisi/).
+Examples are in [File composition](/konsep/komposisi/).
 
-## 8. Jaga supaya tetap benar
+## 8. Keep it correct
 
-- Jalankan `dim check` di CI, supaya path yang tidak ada lagi atau properti yang salah ketik langsung ketahuan. Semua pelanggaran adalah error, jadi model yang lolos pemeriksaan memang konsisten.
-- Ubah model di pull request yang sama dengan perubahan kodenya.
-- Jalankan `dim fmt`, supaya urutan dan tata letak isi setiap file selalu sama.
+- Run `dim check` in CI, so paths that no longer exist and mistyped properties are caught right away. Every violation is an error, so a model that passes is consistent.
+- Change the model in the same pull request as the code.
+- Run `dim fmt`, so every file always has the same order and layout.
 
-## Kebiasaan yang membantu
+## Habits that help
 
-- **Id** ditulis camelCase dan pendek: `orderRepo`, `checkout`, `httpClient`. **Nama** boleh berbentuk apa pun: `"OrderRepository"`, `"save_order()"`.
-- **Label relasi** menjelaskan apa yang dilakukan pemula: `"INSERT orders"`, `"Menagih pembayaran"`, bukan `"relasi ke db"`. Untuk relasi ke endpoint, label tidak perlu ditulis.
-- **`description`** menjawab *kenapa* elemen itu ada, bukan mengulang namanya.
+- **Ids** are short camelCase: `orderRepo`, `checkout`, `httpClient`. **Names** can take any form: `"OrderRepository"`, `"save_order()"`.
+- **Relation labels** say what the initiator does: `"INSERT orders"`, `"Charges payments"`, not `"relation to db"`. Relations to endpoints don't need a label.
+- **`description`** answers *why* the element exists, not its name again.
 
-## Cek hasilnya
+## Check the result
 
-Bandingkan panah model dengan satu request nyata dari log atau test. Pembaca harus bisa menelusuri pemanggil, layanan tujuan, dan operasi yang dilakukan dengan mengikuti path di model. Jalankan `dim check main.dim`; model yang benar tidak menghasilkan satu pun pesan.
+Compare the model's arrows with one real request from a log or a test. A reader should be able to trace the caller, the target service, and the operation by following paths in the model. Run `dim check main.dim`; a correct model produces no messages at all.

@@ -1,25 +1,25 @@
 ---
-title: Pecah model menjadi beberapa file
-description: Memecah satu model ke beberapa file dengan import dan extend, lalu membuat model turunan dengan amends, remove, dan unset.
+title: Split a model into several files
+description: Split one model across files with import and extend, then write derived models with amends, remove, and unset.
 ---
 
 import ModelDiff from '../../../components/model-diff/ModelDiff.astro';
 import shop from '../../../data/shop.json';
 import toBe from '../../../data/shop-to-be.json';
 
-Tim pembayaran mau memelihara model gateway sendiri. Pindahkan deklarasi gateway ke `payment.dim` dan import dari file utama tempat relasi checkout ditulis.
+The payments team wants to maintain the gateway model themselves. Move the gateway declaration into `payment.dim` and import it from the main file where the checkout relations are written.
 
-Model arsitektur tumbuh. Begitu satu file mulai susah dibaca, atau beberapa tim menulis bagian yang berbeda, model itu bisa dipecah ke beberapa file. Hasilnya tetap **satu model**: path, lifting di peta, dan id relasi bekerja seolah semuanya ditulis di satu file. Semua file memakai satu `dim.config`.
+Architecture models grow. Once one file gets hard to read, or several teams write different parts, the model can be split across files. The result is still **one model**: paths, lifting on the map, and relation ids work as if everything were written in one file. All files share one `dim.config`.
 
-Contoh di repo ini sudah dipecah begitu:
+The example in this repository is already split that way:
 
-| File | Isi |
+| File | Contents |
 |---|---|
-| `examples/shop/dim.config` | teknologi, tag, dan style untuk seluruh proyek |
-| `examples/shop/shop.dim` | sistem toko: container, component, kode, dan relasi di dalamnya |
-| `examples/shop/payment.dim` | payment gateway pihak ketiga, berisi kontrak API-nya |
-| `examples/shop/main.dim` | pembeli, relasi antar sistem, flow, dan environment produksi |
-| `examples/shop/to-be.dim` | rencana arsitektur berikutnya, turunan dari `main.dim` |
+| `examples/shop/dim.config` | technologies, tags, and styles for the whole project |
+| `examples/shop/shop.dim` | the store system: containers, components, code, and the relations inside it |
+| `examples/shop/payment.dim` | the third-party payment gateway, with its API contract |
+| `examples/shop/main.dim` | the shopper, relations between systems, flows, and the production environment |
+| `examples/shop/to-be.dim` | the next planned architecture, derived from `main.dim` |
 
 ## `import`
 
@@ -30,28 +30,28 @@ dim "0.6";
 import "payment.dim";
 import "shop.dim";
 
-person customer "Customer" { description "Belanja online."; }
-clickPay: customer -> shop.web.checkout.button "Klik bayar" { op use; }
+person customer "Customer" { description "Shops online."; }
+clickPay: customer -> shop.web.checkout.button "Click pay" { op use; }
 ```
 
-Path di `import` relatif terhadap file yang menulisnya, dan semua file harus berada di folder `dim.config` atau subfoldernya. File yang di-import dari beberapa tempat hanya dimuat sekali, dan import melingkar ditolak.
+An `import` path is relative to the file that writes it, and every file must be in the `dim.config` folder or one of its subfolders. A file imported from several places is loaded only once, and circular imports are rejected.
 
-Dua file yang sama-sama mendeklarasikan `system shop` adalah error, persis seperti dua elemen bersaudara dengan id yang sama. Pesan errornya menyarankan `extend`.
+Two files that both declare `system shop` is an error, just like two sibling elements with the same id. The error message suggests `extend`.
 
 ## `extend`
 
-`extend` membuka kembali elemen yang sudah dideklarasikan di file lain untuk **menambah** isinya:
+`extend` reopens an element declared in another file to **add** to it:
 
 ```dim
-// Tim ops menambah keterangan tanpa mengubah shop.dim.
-extend shop.db { description "Satu instance primer dengan satu replika baca."; tags ops; }
+// The ops team adds details without changing shop.dim.
+extend shop.db { description "One primary instance with one read replica."; tags ops; }
 ```
 
-Isi bloknya diperlakukan seperti isi deklarasi asli: properti, member, elemen anak, relasi, bahkan `extend` lain. Satu batasannya: di file biasa, `extend` tidak boleh mengisi ulang properti yang sudah ada (`E605`). Memecah file tidak boleh diam-diam mengubah isi; untuk mengubah, pakai `amends`.
+Its block is treated as part of the original declaration: properties, members, child elements, relations, even further `extend`s. One limit: in an ordinary file, `extend` can't set a property that's already set (`E605`). Splitting files must never silently change content; to change something, use `amends`.
 
-## `amends`: model turunan
+## `amends` for derived models
 
-Kadang yang dibutuhkan bukan menambah, tapi membuat **versi lain** dari arsitektur yang sama: kondisi sekarang dan rencana berikutnya. Untuk itu, satu file bisa diawali `amends`:
+Sometimes what you need isn't an addition but **another version** of the same architecture: the current state and the next plan. For that, a file can start with `amends`:
 
 ```dim
 // to-be.dim
@@ -60,13 +60,13 @@ amends "main.dim";
 
 extend shop {
   container analytics "Analytics" {
-    description "Menggantikan laporan harian; data masuk lewat event, bukan query ke Postgres.";
+    description "Replaces the nightly report; data arrives through events, not Postgres queries.";
     role database;
     tech clickhouse;
   }
 
   container events "Checkout Events" {
-    description "Antrian event checkout untuk analytics.";
+    description "A queue of checkout events for analytics.";
     role queue;
     tech sqs;
   }
@@ -83,24 +83,24 @@ ingestCheckout: shop.analytics -> shop.api.audit.checkoutCompleted { op subscrib
 remove shop.reports;
 ```
 
-Di file `amends`, tiga hal yang biasanya dilarang menjadi boleh:
+In an `amends` file, three things that are normally forbidden become allowed:
 
-- `extend` boleh **menimpa** properti, seperti `tech` di atas.
-- `unset` menghapus properti atau member, misalnya `unset external;` untuk sistem yang tadinya pihak ketiga.
-- `remove` menghapus elemen beserta seluruh isinya, semua relasi yang menyentuhnya, dan semua penempatannya di environment. `remove` juga bisa menghapus satu relasi, flow, cabang flow, atau environment lewat id-nya.
+- `extend` can **override** properties, like `tech` above.
+- `unset` removes a property or member, for example `unset external;` for a system that used to be a third party's.
+- `remove` deletes an element with all its content, every relation touching it, and every placement of it in environments. `remove` can also delete one relation, flow, flow branch, or environment by its id.
 
-`main.dim` tidak berubah dan tetap bisa dipakai sendiri. Jalankan `dim check to-be.dim` untuk memvalidasi model turunannya.
+`main.dim` is unchanged and can still be used on its own. Run `dim check to-be.dim` to validate the derived model.
 
-## Diff antar model
+## Diffing models
 
-Karena id elemen adalah path dan setiap relasi punya id, dua model bisa dibandingkan satu per satu. Tabel ini dihitung saat build dari output parser untuk `main.dim` dan `to-be.dim`:
+Because element ids are paths and every relation has an id, two models can be compared item by item. This table is computed at build time from the parser output for `main.dim` and `to-be.dim`:
 
 <ModelDiff base={shop} derived={toBe} />
 
-Relasi `nightlyReport` ikut hilang karena ujungnya, `shop.reports`, dihapus.
+The `nightlyReport` relation disappears because its end, `shop.reports`, was removed.
 
-Aturan lengkapnya, termasuk urutan penerapan file, ada di [spesifikasi §11](/referensi/spesifikasi/komposisi-dan-flow/#11-komposisi-file).
+The full rules, including the order in which files are applied, are in [specification §11](/referensi/spesifikasi/komposisi-dan-flow/#11-file-composition).
 
-## Cek hasilnya
+## Check the result
 
-Jalankan `dim check main.dim`, lalu `dim check to-be.dim`. Keduanya harus lolos. Bandingkan path gateway dan relasi checkout di kedua model: keduanya tetap muncul satu kali. Lalu pindahkan `remove shop.reports;` ke atas `extend shop`, dan pastikan hasilnya tetap sama.
+Run `dim check main.dim`, then `dim check to-be.dim`. Both must pass. Compare the gateway path and the checkout relations in both models: each still appears once. Then move `remove shop.reports;` above `extend shop`, and confirm the result is the same.
