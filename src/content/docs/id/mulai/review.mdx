@@ -1,0 +1,38 @@
+---
+title: 4. Review dengan arsitek
+description: Telusuri penulisan pesanan dari peta sampai ke fungsi yang bertanggung jawab.
+---
+
+import ZoomMap from '../../../../components/zoom-map/ZoomMap.astro';
+import toko from '../../../../data/toko-tutorial.json';
+import DidoNote from '../../../../components/DidoNote.astro';
+
+Sebelum menyetujui PR, arsitek sistem berhenti di panah API → Postgres. “Kalau ada pesanan tersimpan dua kali, fungsi mana yang kita periksa dulu?” Tim backend menunjuk `save_order()` di komponen Pesanan. Arsitek meminta Dido mencatat pemilik operasi INSERT supaya tim piket bisa menemukannya lewat peta.
+
+<DidoNote scene="architect">Gue pindahin pangkal panah INSERT ke fungsi yang perlu dicek tim piket.</DidoNote>
+
+Tambahkan fungsi `save` ke component Orders dan tulis `paradigm procedural;` di `api`, karena container itu sekarang berisi kode. Lalu pindahkan asal panah INSERT ke fungsi itu. Bandingkan isi akhir `shop.dim` dengan filemu.
+
+```dim contoh-tutorial="kode.dim" ins={10,27-31} ins="shop.api.orders.save"
+```
+
+```bash
+node check.mjs shop.dim
+```
+
+```text contoh-tutorial="kode"
+```
+
+Jumlah relasinya tetap tiga karena relasi `INSERT orders` sekarang dimulai dari fungsi. Perbesar peta untuk mengikuti panah `API → Postgres` sampai sumbernya terlihat sebagai `save_order() → Postgres`.
+
+Di peta berikut, perbesar sampai Web dan API terlihat. Pilih relasi POST dan baca dua entri datanya. Web mengirim `Order` dan menerima `OrderId`. Perkecil sampai toko tertutup. Panah POST menghilang karena kedua ujungnya ada di dalam toko.
+
+<ZoomMap model={toko} uid="model-pertama" />
+
+Saat serah terima, tim Web bisa menunjukkan ID yang diterima layar konfirmasi. Tim piket bisa membuka API dan menemukan fungsi yang menulis pesanan. Dido melampirkan model yang sama ke tiket checkout.
+
+## Coba dengan satu PR
+
+<DidoNote scene="your-turn">Ambil satu perubahan yang lagi lo review. Siapa yang mulai interaksi, dan apa yang dia harapkan balik?</DidoNote>
+
+Salin `shop.dim` ke `pr.dim`. Ganti nama tampilan Web dan API sesuai sistemmu, lalu ubah label POST serta tipe request dan respons sesuai diff PR. Pertahankan ID agar path tetap cocok. Jalankan `node check.mjs pr.dim`. Setelah muncul `ok`, minta reviewer membaca relasi itu dan menyebutkan hasil yang diterima pemanggil. Cocokkan jawabannya dengan kode PR.

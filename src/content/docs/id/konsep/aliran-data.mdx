@@ -1,0 +1,85 @@
+---
+title: Bedakan pemanggil dari arah data
+description: Kenapa arah panah di dim berarti siapa yang memulai, dan bagaimana arah data dicatat terpisah lewat push dan pull.
+---
+
+import DidoNote from '../../../../components/DidoNote.astro';
+
+Web perlu id pesanan setelah checkout. Lihat pemanggilan POST di kode Web, lalu catat apa yang Web kirim dan apa yang dipakai dari respons.
+
+Setiap relasi di dim menjawab dua pertanyaan yang berbeda:
+
+1. **Siapa yang memulai?** Dijawab oleh arah panah `->`.
+2. **Data apa yang mengalir, dan ke mana?** Dijawab oleh `data`.
+
+## Panah: siapa yang memulai
+
+Panah selalu ditulis dari pihak yang memulai interaksi ke target interaksi.
+
+```dim
+selectOrder: shop.api.orders.rows.find -> shop.db "SELECT orders" { op read; }
+```
+
+`rows.find` yang bertanya ke database, jadi panahnya dari `rows.find`. Ini sama dengan arah dependency: `rows.find` bergantung pada `db`, bukan sebaliknya.
+
+## `data`: apa yang mengalir
+
+Arah data ditulis dari sudut pandang pihak yang memulai, diikuti tipenya:
+
+| Arah | Artinya | Terhadap panah |
+|---|---|---|
+| `push` | pemula mengirim data ke target | searah |
+| `pull` | pemula mengambil data dari target | berlawanan |
+
+```dim
+selectOrder: shop.api.orders.rows.find -> shop.db "SELECT orders" {
+  op read;
+  data pull shop.api.orders.order;
+}
+```
+
+Arahnya **selalu ditulis**, dan harus cocok dengan `op`:
+
+| `op` | Arah yang boleh |
+|---|---|
+| `read`, `subscribe` | `pull` |
+| `write`, `publish` | `push` |
+| `call`, `use` | `push`, `pull`, atau keduanya |
+
+Satu panggilan biasanya mengalirkan data dua arah: request dikirim, respons diterima. Untuk itu `data` boleh ditulis lebih dari sekali:
+
+```dim
+runCheckout: shop.api.checkout.route -> shop.api.checkout.service.run "Run checkout" {
+  op call;
+  data push shop.api.orders.cart;
+  data pull shop.api.orders.orderId;
+}
+```
+
+Tipe di `data` adalah ekspresi tipe dim yang merujuk tipe bernama, seperti `record` atau `alias`, lewat path, jadi peta bisa membuka definisi tipenya langsung dari panah. Lihat [Catat kontrak fungsi](/id/konsep/level-kode/).
+
+## Relasi ke endpoint tidak menulis data
+
+Kalau tujuannya endpoint, datanya sudah tertulis di kontrak endpoint. Relasinya cukup:
+
+```dim
+postCheckout: shop.web.checkout.button -> shop.api.checkout.post { op call; }
+```
+
+`push` diambil dari `body`, dan `pull` dari `returns`. Menulis `data` di relasi seperti ini adalah error `E406`, supaya kontraknya hanya ada di satu tempat. Lihat [Dokumentasikan endpoint](/id/konsep/endpoint/).
+
+## Kenapa tidak memakai arah panah untuk data?
+
+- Panggilan `call` mengalirkan data dua arah, sedangkan satu panah hanya punya satu arah.
+- Kalau panah mengikuti data, `api` yang membaca `db` akan digambar `db → api`, padahal `api` yang bergantung pada `db`. Saat di-zoom out, arah dependency jadi bercampur dengan arah data.
+- `push` dan `pull` bisa dibaca langsung, tanpa menghafal arti simbol seperti `=>` atau `<-`.
+
+## Saat di-zoom out
+
+Aliran data ikut naik bersama relasinya. Di [peta zoom](/id/konsep/peta-zoom/), panah `API → Postgres` membawa `push Order` dan `pull Order`, karena di dalamnya ada fungsi yang menulis dan fungsi yang membaca. Aturan lengkapnya ada di [spesifikasi §9.5](/id/referensi/spesifikasi/relasi/#95-aliran-data).
+
+## Cek hasilnya
+
+<DidoNote scene="missing-direction">Kalau API yang ngirim respons, perlu panah kedua? Coba telusuri siapa yang mulai request.</DidoNote>
+
+Baca relasi `runCheckout` dari kiri ke kanan. Route memulai panggilan dan mengirim `Cart`. Sekarang baca bagian `pull` dari sudut pandang route: nilai yang bisa dipakai setelah panggilan selesai adalah `OrderId`. Ganti `data pull` dengan `data push` di `selectOrder`, lalu jalankan `dim check`: pesannya `E406`.

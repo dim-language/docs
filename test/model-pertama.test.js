@@ -24,13 +24,13 @@ test.each([
 	expect(check(join(examples, file))).toEqual({ exitCode: 0, stdout: expected, stderr: '' });
 });
 
-test('menghapus push dari POST /pesanan menghasilkan E406', () => {
+test('removing push from POST /orders reports E406', () => {
 	const model = readFileSync(join(examples, 'kode.dim'), 'utf8');
-	const salah = model.replace('data push toko.api.pesanan.dataPesanan', 'data toko.api.pesanan.dataPesanan');
+	const salah = model.replace('data push shop.api.orders.order', 'data shop.api.orders.order');
 	const temp = mkdtempSync(join(tmpdir(), 'dim-tutorial-'));
 
 	try {
-		const file = join(temp, 'toko.dim');
+		const file = join(temp, 'shop.dim');
 		writeFileSync(file, salah);
 		writeFileSync(join(temp, 'dim.config'), readFileSync(join(examples, 'dim.config'), 'utf8'));
 

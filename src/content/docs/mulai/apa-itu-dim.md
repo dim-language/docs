@@ -1,11 +1,11 @@
 ---
-title: Apa itu dim
-description: dim (Diagram In Markup) adalah bahasa teks untuk menulis arsitektur software sebagai satu model yang bisa di-zoom.
+title: What is dim?
+description: dim (Diagram In Markup) is a text language for describing software architecture as one zoomable model.
 ---
 
-**dim** adalah singkatan dari *Diagram In Markup*. Ditulis dengan huruf kecil, dan nama lengkapnya **dim language**.
+**dim** stands for *Diagram In Markup*. Write it in lowercase. Its full name is **dim language**.
 
-dim adalah bahasa teks untuk menulis arsitektur software. Kamu menulis siapa yang memakai sistemmu, sistem itu terdiri dari apa, dan bagian-bagiannya saling memanggil bagaimana. Hasilnya satu model yang bisa dilihat sebagai peta: tutup semuanya untuk melihat gambaran besar, buka satu kotak untuk melihat isinya, sampai ke fungsi di dalam kode.
+dim is a text language for describing software architecture. You specify who uses a system, what it contains, and how its parts interact. The result is one model you can explore as a map. Close its boxes to see the whole system, or open one at a time to reach the functions in the code.
 
 ```dim
 dim "0.6";
@@ -21,15 +21,15 @@ system shop "Online Shop" {
     tech rust;
 
     component orders "Orders" {
-      description "Menyimpan order.";
+      description "Stores orders.";
 
       record order "Order" {
-        description "Isi pesanan.";
+        description "What an order contains.";
         field items: string[];
       }
 
       function save "save_order()" {
-        description "Menulis order ke Postgres.";
+        description "Writes an order to Postgres.";
         param value: order;
         returns uuid;
       }
@@ -39,7 +39,7 @@ system shop "Online Shop" {
   container db "Postgres" { role database; tech postgres; }
 }
 
-shopping: customer -> shop.web "Belanja" { op use; }
+shopping: customer -> shop.web "Shops" { op use; }
 
 placeOrder: shop.web -> shop.api "POST /orders" {
   op call;
@@ -53,37 +53,37 @@ saveOrder: shop.api.orders.save -> shop.db "INSERT orders" {
 }
 ```
 
-## Masalah yang dijawab
+## Why one model
 
-Diagram arsitektur biasanya digambar dengan tangan, dan biasanya basi dalam hitungan minggu. Di [C4 model](https://c4model.com), setiap level (context, container, component, code) adalah diagram tersendiri. Kalau satu relasi berubah, setiap diagram yang memuatnya harus diubah juga, dan yang terlupa akan bertentangan dengan yang lain.
+People often draw architecture diagrams by hand, and the diagrams can go out of date within weeks. In the [C4 model](https://c4model.com), context, container, component, and code each have a diagram. A change to a relation can require edits in several diagrams. Miss one and the diagrams disagree.
 
-dim memakai level yang sama dengan C4, tapi menulis semuanya sebagai **satu model**:
+dim uses the same four levels in **one model**.
 
-- Elemen ditulis bersarang: `system` berisi `container`, `container` berisi `component`, `component` berisi `code`.
-- Relasi ditulis **di level paling detail yang kamu tahu**. Di contoh di atas, `save_order() -> db` ditulis dari fungsi.
-- Panah di level yang lebih tinggi **dihitung**, tidak ditulis. Saat peta di-zoom out sampai level container, relasi tadi tampil sebagai `api → db`. Saat di-zoom out sampai level sistem, ia masuk ke dalam kotak `shop`.
+- Elements nest. A `system` contains a `container`, a `container` contains a `component`, and a `component` contains `code`.
+- Write the relation at the **most detailed level you know**. In the example, the relation to `db` starts inside the `save_order()` function.
+- dim derives arrows for each level. At the container level, the relation appears as `api → db`. At the system level, the whole relation fits inside `shop`.
 
-Karena level atas selalu dihitung dari detailnya, keduanya tidak bisa saling bertentangan.
+Every level comes from the same relations, so views stay in sync.
 
-| Yang dibuka | Panah yang tampil |
+| Open elements | Visible arrows |
 |---|---|
-| (tidak ada) | `customer → shop` |
+| None | `customer → shop` |
 | `shop` | `customer → web`, `web → api`, `api → db` |
 
-## Kenapa teks
+## Why text
 
-- **Bisa di-review.** Perubahan arsitektur masuk pull request seperti kode, lengkap dengan diff baris per baris.
-- **Bisa dicek.** `compileProject` menolak path yang salah ketik, atribut yang tidak dikenal, dan relasi yang tidak masuk akal, dan bisa dipasang di CI.
-- **Bisa dibaca mesin.** Parser menghasilkan model JSON, jadi editor, situs dokumentasi, dan agent AI membaca model yang sama tanpa membuka source.
+- **Review changes in pull requests.** An architecture change has a line-by-line diff, just like a code change.
+- **Check the model in CI.** `compileProject` catches mistyped paths, unknown attributes, and invalid relations.
+- **Share a model between tools.** The parser produces JSON that editors, docs sites, and AI agents can read directly.
 
-## Yang bukan dim
+## How dim fits into your tools
 
-- **Bukan alat gambar.** Warna, posisi kotak, dan gaya garis tidak ditulis di bahasa. Semuanya diatur oleh alat yang menampilkan peta.
-- **Bukan bahasa pemrograman.** Model dim tidak dijalankan. Ia mendeskripsikan kode, tapi tidak menggantikannya.
-- **Bukan pengganti OpenAPI.** dim mencatat kontrak endpoint (method, path, auth, input, respons) supaya terbaca di peta, tapi skema field dan contoh request tetap di dokumen API.
+- The map renderer chooses colors, positions, and line styles.
+- dim describes code and its interactions. The software itself runs in the languages you implement it in.
+- dim records HTTP methods, paths, authentication, inputs, and responses for architecture maps. Use API documentation such as OpenAPI for field schemas and request examples.
 
-## Selanjutnya
+## Next steps
 
-- [Model pertama](/mulai/): tulis model kecil langkah demi langkah.
-- [Cara memodelkan sistem](/menulis/memodelkan/): dari mana mulai saat memodelkan sistem yang sudah ada.
-- [Spesifikasi bahasa](/referensi/spesifikasi/): aturan lengkapnya.
+- [Your first model](/mulai/) walks through a small model.
+- [Modeling a system](/menulis/memodelkan/) explains where to start with an existing system.
+- The [language specification](/referensi/spesifikasi/) lists the complete rules.

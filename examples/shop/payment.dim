@@ -1,58 +1,58 @@
 dim "0.6";
 
-// Payment gateway pihak ketiga. Di-import oleh main.dim.
-// Sistem eksternal hanya berisi kontrak API-nya: endpoint dan tipe data.
+// A third-party payment gateway. Imported by main.dim.
+// An external system holds only its API contract: endpoints and data types.
 
 system payment "Payment Gateway" {
-  description "Gateway pihak ketiga untuk kartu dan e-wallet.";
+  description "A third-party gateway for cards and e-wallets.";
   external;
 
   container gateway "Gateway API" {
     role service;
 
     component charges "Charges" {
-      description "API publik gateway untuk penagihan dan refund.";
+      description "The gateway's public API for charges and refunds.";
 
       record chargeRequest "ChargeRequest" {
-        description "Permintaan menagih satu pembayaran.";
-        field reference: uuid "Id order dari pemanggil, dipakai sebagai idempotency key";
+        description "A request to charge one payment.";
+        field reference: uuid "The caller's order id, used as an idempotency key";
         field amount: decimal;
       }
 
       record chargeResult "ChargeResult" {
-        description "Penagihan yang berhasil.";
+        description "A successful charge.";
         field chargeId: string;
       }
 
       record refundRequest "RefundRequest" {
-        description "Permintaan mengembalikan dana satu penagihan.";
+        description "A request to refund one charge.";
         field chargeId: string;
       }
 
       record refundResult "RefundResult" {
-        description "Refund yang diterima gateway.";
+        description "A refund the gateway accepted.";
         field refundId: string;
       }
 
       record declined "Declined" {
-        description "Gateway menolak permintaan.";
+        description "The gateway declined the request.";
         field reason: string;
       }
 
-      endpoint charge "Tagih" {
-        description "Menagih satu pembayaran.";
+      endpoint charge "Charge" {
+        description "Charges one payment.";
         http post "/charges";
         body chargeRequest;
         returns 201 chargeResult;
-        throws 402 declined "Kartu atau e-wallet menolak penagihan";
+        throws 402 declined "The card or e-wallet declined the charge";
       }
 
       endpoint refund "Refund" {
-        description "Mengembalikan dana dari satu penagihan.";
+        description "Refunds one charge.";
         http post "/refunds";
         body refundRequest;
         returns 201 refundResult;
-        throws 409 declined "Penagihan sudah di-refund";
+        throws 409 declined "The charge was already refunded";
       }
     }
   }

@@ -1,44 +1,44 @@
 ---
-title: 1. Tugas pertama Dido
-description: Bantu Dido memetakan siapa yang memakai toko online.
+title: 1. Dido’s first assignment
+description: Help Dido map who uses the online shop.
 ---
 
-Senin pagi, Dido dapat tiket untuk mendokumentasikan checkout toko online. Di tiket cuma ada satu kalimat dari tim produk. “Pembeli bisa pesan lewat toko.” Besok tim Web dan API akan membawa rancangan mereka. Hari ini Dido perlu menyiapkan peta yang bisa mereka koreksi bersama.
+On Monday morning Dido picks up a ticket to document checkout. The product team has written one sentence. “A customer can place an order through the shop.” The Web and API teams will bring their designs tomorrow. Today Dido needs a map they can mark up together.
 
-## Siapkan folder kerja
+## Set up a project folder
 
-Simpan peta Dido di satu file `toko.dim`. Siapkan Node.js 24 dan Bun, lalu jalankan perintah berikut di terminal.
+Keep Dido’s map in a file called `shop.dim`. With Node.js 24 and Bun installed, run these commands in a terminal.
 
 ```sh
 mkdir dim-checkout
 cd dim-checkout
-bun add https://github.com/dim-language/dim-sdk/releases/download/v0.3.0/dim-sdk-0.3.0.tgz
+bun add https://github.com/dim-language/dim-sdk/releases/download/v0.3.1/dim-sdk-0.3.1.tgz
 ```
 
-Simpan kode berikut sebagai `check.mjs` di folder itu. Skrip ini membaca file yang kamu berikan beserta `dim.config` di folder yang sama, menjalankan compiler, lalu mencetak jumlah elemen dan relasinya.
+Save this as `check.mjs` in that folder. It reads the file you give it and the `dim.config` next to it, runs the compiler and prints the element and relation counts.
 
 ```js contoh-tutorial="check.mjs"
 ```
 
-Simpan juga `dim.config` di folder yang sama. Di file ini Dido mendeklarasikan teknologi yang akan dipakai tim, sekali untuk seluruh proyek.
+Also save `dim.config` in the same folder. Here Dido declares the technologies the teams will use, once for the whole project.
 
 ```dim contoh-tutorial="dim.config"
 ```
 
-## Orang dan sistem
+## A person and a system
 
-Buat file `toko.dim` dan isi dengan model berikut.
+Create `shop.dim` with this model.
 
 ```dim contoh-tutorial="sistem.dim"
 ```
 
-Setiap file diawali `dim "0.6";`. Setiap elemen punya jenis (`person` atau `system`), ID camelCase yang dipakai dalam path, dan nama yang tampil di peta. Relasi `belanja` punya id dan `op use`, dan panahnya menunjukkan bahwa pembeli yang memulai interaksi. Setiap statement tanpa blok diakhiri `;`.
+Every file starts with `dim "0.6";`. Each element has a kind (`person` or `system`), a camelCase ID used in paths, and a name displayed on the map. The `shopping` relation has an id and `op use`, and its arrow shows that the customer starts the interaction. Every statement without a block ends with `;`.
 
 ```bash
-node check.mjs toko.dim
+node check.mjs shop.dim
 ```
 
 ```text contoh-tutorial="sistem"
 ```
 
-Dua elemen dan satu relasi sudah cukup untuk menggambarkan siapa yang memakai toko online.
+Two elements and a relation show who uses the shop.

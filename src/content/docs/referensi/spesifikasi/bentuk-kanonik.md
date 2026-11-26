@@ -1,56 +1,56 @@
 ---
-title: Bentuk kanonik
-description: Satu bentuk teks untuk setiap model dim, termasuk urutan isi blok.
+title: Canonical form
+description: One text form for every dim model, including the order of block contents.
 ---
 
-## 17. Bentuk kanonik
+## 17. Canonical form
 
-Setiap teks dim yang valid punya **satu** bentuk kanonik. `dim fmt` menghasilkan bentuk ini, dan alat yang menulis teks dim (misalnya editor yang mengedit lewat peta) wajib menulis bagian yang ia ubah dalam bentuk ini.
+Every valid dim text has **one** canonical form. `dim fmt` produces it, and tools that write dim text (such as an editor that edits through the map) must write the parts they change in this form.
 
-Formatter mengubah spasi, baris baru, indentasi, dan **urutan statement di dalam blok**. Formatter tidak pernah mengubah id, nama, prosa, nilai, path, atau komentar, jadi model hasil parse-nya sama persis kecuali `spans`. Memformat teks yang sudah kanonik tidak mengubah apa-apa.
+The formatter changes spaces, line breaks, indentation, and **the order of statements within blocks**. It never changes ids, names, prose, values, paths, or comments, so the parsed model is identical except for `spans`. Formatting text that's already canonical changes nothing.
 
-Formatter hanya bekerja pada teks yang valid. Teks dengan error tidak diformat.
+The formatter only works on valid text. Text with errors isn't formatted.
 
-### 17.1 Tata letak
+### 17.1 Layout
 
-1. **File.** UTF-8 tanpa BOM, baris baru `\n`, diakhiri tepat satu `\n`, tanpa spasi di akhir baris.
-2. **Indentasi.** Dua spasi per tingkat blok, tanpa tab.
-3. **Satu statement per baris**, kecuali di dalam blok satu baris (aturan 5).
-4. **Blok banyak baris.** `{` di baris yang sama dengan kepala statement, dipisah satu spasi. Setiap isi blok di barisnya sendiri, satu tingkat lebih dalam. `}` di barisnya sendiri, sejajar dengan kepala statement.
-5. **Blok satu baris** ditulis `kepala { a; b; }`. Bentuk ini dipakai kalau semua syarat terpenuhi, dan blok banyak baris dipakai kalau tidak:
-   - isinya hanya properti, member, atau `step`, tanpa elemen, relasi, cabang flow, `extend`, atau `unset`,
-   - paling banyak tiga statement,
-   - tidak ada komentar atau prosa multi-baris di dalamnya,
-   - barisnya, termasuk indentasi, paling panjang 100 karakter.
-6. **Blok kosong** pada elemen atau relasi tidak ditulis: `container db "Orders DB";` hanya valid kalau elemen itu tidak punya properti wajib. `extend`, `flow`, `environment`, dan cabang flow selalu memakai blok.
-7. **Spasi dalam baris.** Token dipisah satu spasi, kecuali: tanpa spasi di sekitar `.`, setelah `::` di awal path, sebelum `;`, `,`, `:` member, dan `[]`; tanpa spasi di dalam `<` `>`; `:` id relasi menempel ke id-nya; satu spasi setelah `,`.
-8. **Baris kosong.** Satu baris kosong wajib ada di antara kelompok statement ([§17.2](#172-urutan-isi-blok)), dan di sekitar elemen, relasi, atau `extend` yang ditulis dengan blok banyak baris. Di tempat lain, baris kosong yang ditulis penulis dipertahankan, paling banyak satu berturut-turut. Tidak ada baris kosong di awal file, tepat setelah `{`, atau tepat sebelum `}`.
-9. **Komentar.** Isinya tidak diubah. Komentar menempel ke statement di bawahnya dan ikut berpindah bersamanya. Komentar di akhir baris tetap di baris itu, dipisah satu spasi.
-10. **Prosa multi-baris.** `"""` pembuka di akhir baris propertinya. Baris isi dan `"""` penutup diindentasi satu tingkat lebih dalam dari propertinya.
-11. **`meta`.** Isinya ditulis sebagai JSON dengan indentasi dua spasi, key dalam urutan tulisan.
-12. **Baris panjang.** Selain aturan 5, formatter tidak memecah baris yang panjang.
+1. **Files.** UTF-8 without a BOM, `\n` line breaks, ending in exactly one `\n`, with no trailing spaces.
+2. **Indentation.** Two spaces per block level, no tabs.
+3. **One statement per line**, except in one-line blocks (rule 5).
+4. **Multiline blocks.** `{` on the same line as the statement head, separated by one space. Each item on its own line, one level deeper. `}` on its own line, aligned with the statement head.
+5. **One-line blocks** are written `head { a; b; }`. This form is used when every condition holds, and a multiline block is used otherwise:
+   - the content is only properties, members, or `step`s, with no elements, relations, flow branches, `extend`, or `unset`,
+   - at most three statements,
+   - no comments or multiline prose inside,
+   - the line, including indentation, is at most 100 characters.
+6. **Empty blocks** on elements and relations aren't written: `container db "Orders DB";` is only valid if the element has no required properties. `extend`, `flow`, `environment`, and flow branches always use a block.
+7. **Spaces within a line.** Tokens are separated by one space, except: no spaces around `.`, after a leading `::`, before `;`, `,`, a member's `:`, and `[]`; no spaces inside `<` `>`; a relation id's `:` sticks to the id; one space after `,`.
+8. **Blank lines.** One blank line is required between groups of statements ([§17.2](#172-order-within-blocks)), and around elements, relations, or `extend`s written with a multiline block. Elsewhere, blank lines written by the author are kept, at most one in a row. There are no blank lines at the start of a file, right after `{`, or right before `}`.
+9. **Comments.** Their content isn't changed. A comment belongs to the statement below it and moves with it. A trailing comment stays on its line, separated by one space.
+10. **Multiline prose.** The opening `"""` ends its property's line. Content lines and the closing `"""` are indented one level deeper than the property.
+11. **`meta`.** Its content is written as JSON with two-space indentation, with keys in the order written.
+12. **Long lines.** Apart from rule 5, the formatter doesn't break long lines.
 
-### 17.2 Urutan isi blok
+### 17.2 Order within blocks
 
-Di dalam setiap blok, statement dikelompokkan dan diurutkan:
+Within every block, statements are grouped and ordered:
 
-1. **Properti**, dalam urutan tetap: `description`, `role`, baris protokol endpoint, `paradigm`, properti khusus kind (dalam urutan tabelnya di bab masing-masing), `tech`, `tags`, `external`, `source`, `meta`.
-2. **Member**, dalam urutan tabel [§7.4](/referensi/spesifikasi/level-kode/#74-member) dan [§10.3](/referensi/spesifikasi/endpoint/#103-http). Member sejenis tetap dalam urutan tulisan, karena urutan `param` dan `field` bermakna.
-3. **Elemen anak**, dalam urutan tulisan.
-4. **`extend`**, dalam urutan tulisan.
-5. **Relasi**, dalam urutan tulisan.
+1. **Properties**, in a fixed order: `description`, `role`, the endpoint protocol line, `paradigm`, kind-specific properties (in the order of their table in each chapter), `tech`, `tags`, `external`, `source`, `meta`.
+2. **Members**, in the order of the tables in [§7.4](/referensi/spesifikasi/level-kode/#74-members) and [§10.3](/referensi/spesifikasi/endpoint/#103-http). Members of the same kind keep the order written, because the order of `param`s and `field`s is meaningful.
+3. **Child elements**, in the order written.
+4. **`extend`s**, in the order written.
+5. **Relations**, in the order written.
 
-Di blok relasi: `op`, `data` (dalam urutan tulisan), `tech`, `description`, `tags`, `meta`.
+In a relation block: `op`, `data` (in the order written), `tech`, `description`, `tags`, `meta`.
 
-Di top-level file: deklarasi versi, `amends`, `import` (diurutkan menurut path), lalu `person`, `system`, `extend`, relasi, `flow`, `environment`, `remove`, masing-masing dalam urutan tulisan.
+At the top level of a file: the version declaration, `amends`, `import`s (sorted by path), then `person`, `system`, `extend`, relations, `flow`, `environment`, `remove`, each in the order written.
 
-Di `dim.config`: deklarasi versi, `tech`, `tag`, `scope`, `root`, lalu `style` dengan urutan selector `kind`, `role`, `tag`. Deklarasi sejenis tetap dalam urutan tulisan, karena urutan `tag` menentukan prioritas style ([§5.6](/referensi/spesifikasi/konfigurasi/#56-style)).
+In `dim.config`: the version declaration, `tech`, `tag`, `scope`, `root`, then `style` with selectors ordered `kind`, `role`, `tag`. Declarations of the same kind keep the order written, because the order of `tag`s decides style precedence ([§5.6](/referensi/spesifikasi/konfigurasi/#56-style)).
 
-Di flow, langkah tidak pernah diurutkan ulang.
+Steps in a flow are never reordered.
 
-### 17.3 Contoh
+### 17.3 Example
 
-Sebelum:
+Before:
 
 ```dim
 dim "0.6";
@@ -59,13 +59,13 @@ system shop "Online Shop"{
   saveOrder:api.orders->db { data push api.orders.order; op write; }
   container api "API" {
     tech kotlin;
-    component orders "Orders" { description "Menyimpan order."; }
+    component orders "Orders" { description "Stores orders."; }
     role service;
   }
 }
 ```
 
-Sesudah:
+After:
 
 ```dim
 dim "0.6";
@@ -77,11 +77,11 @@ system shop "Online Shop" {
     role service;
     tech kotlin;
 
-    component orders "Orders" { description "Menyimpan order."; }
+    component orders "Orders" { description "Stores orders."; }
   }
 
   saveOrder: api.orders -> db { op write; data push api.orders.order; }
 }
 ```
 
-Properti `db` diurutkan, `role` di `api` naik ke atas elemen anaknya, dan relasi pindah ke bawah elemen.
+The properties of `db` are reordered, `role` in `api` moves above its child element, and the relation moves below the elements.

@@ -1,6 +1,6 @@
 ---
-title: dim, bahasa untuk memodelkan arsitektur software
-description: Tulis arsitektur software dalam file .dim, lihat relasinya di peta yang bisa di-zoom, dan cek model dengan SDK TypeScript.
+title: dim, a language for modeling software architecture
+description: Describe software architecture in a .dim file, explore its relations on a zoomable map, and check the model with the TypeScript SDK.
 template: splash
 tableOfContents: false
 ---
@@ -13,25 +13,25 @@ import shop from '../../data/shop.json';
 
 <div class="dim-landing">
 
-<div class="dim-demo" id="peta-checkout">
-<MapIntro text="Satu peta buat tim dan agen AI." />
+<div class="dim-demo" id="checkout-map">
+<MapIntro text="One map for the team and the AI agent." />
 <ZoomMap model={shop} uid="beranda" flow="checkout" />
 </div>
 
 <section class="dim-map-action">
 <div class="dim-pitch">
 <ol class="dim-comic" role="list">
-<li><span class="dim-photo"><img src="/dido/hello.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Kenalin, Dido. (Bukan nama asli.)</p></li>
-<li><span class="dim-photo"><img src="/dido/architect.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Arsiteknya minta Dido bikin A.</p></li>
-<li><span class="dim-photo"><img src="/dido/idea.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Dido nangkepnya B. “Siap.”</p></li>
-<li><span class="dim-photo"><img src="/dido/agent.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Dido minta B di prompt. Agennya bikin C.</p></li>
-<li><span class="dim-photo"><img src="/dido/review.webp" alt="" width="400" height="400" loading="lazy" /></span><p>“Dido, coba jelasin kok A bisa jadi C.”</p></li>
+<li><span class="dim-photo"><img src="/dido/hello.webp" alt="" width="400" height="400" loading="lazy" /></span><p>This is Dido. (Not his real name.)</p></li>
+<li><span class="dim-photo"><img src="/dido/architect.webp" alt="" width="400" height="400" loading="lazy" /></span><p>The architect asks Dido to implement A.</p></li>
+<li><span class="dim-photo"><img src="/dido/idea.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Dido hears B. “Got it.”</p></li>
+<li><span class="dim-photo"><img src="/dido/agent.webp" alt="" width="400" height="400" loading="lazy" /></span><p>Dido prompts for B. His agent ships C.</p></li>
+<li><span class="dim-photo"><img src="/dido/review.webp" alt="" width="400" height="400" loading="lazy" /></span><p>“Dido, walk me through how A became C.”</p></li>
 </ol>
 <div class="dim-comic-close">
 
-<p class="dim-punchline">Kita pernah ngalamin gini, sekarang (semoga aja) lo ga perlu</p>
+<p class="dim-punchline">This happens to some of us. Now (hopefully) you don’t have to.</p>
 
-<LinkButton href="/mulai/" icon="right-arrow">Pakai dim, mulai di sini</LinkButton>
+<LinkButton href="/mulai/" icon="right-arrow">Use dim, start here</LinkButton>
 </div>
 </div>
 </section>
@@ -40,23 +40,23 @@ import shop from '../../data/shop.json';
 <section class="dim-example">
 <header>
 
-## “Baliknya satu order, kan?”
+## “We get the whole order back, right?”
 
 </header>
 <img class="dim-scene" src="/dido/order-id.webp" width="640" height="374" alt="" loading="lazy" />
 <div class="dim-example-body">
 
-Kali ini Dido nanya dulu. Arsiteknya geleng. “ID-nya aja.” Mereka buka model dan catat kesepakatannya di panah **Web App → API**. Sekarang Dido bisa kasih agennya file yang bilang persis apa yang dikirim (`Cart`) dan apa yang balik (`OrderId`).
+This time Dido asks. His architect shakes her head. “Just the ID.” They pull up **Web App → API** and write that down. Now Dido can give his agent a file that says exactly what goes out (`Cart`) and what comes back (`OrderId`).
 
 ```dim title="shop.dim"
-sendCart: web.checkout -> api.checkout "Kirim keranjang" {
+sendCart: web.checkout -> api.checkout "Send cart" {
   op call;
   data push api.orders.cart;
   data pull api.orders.orderId;
 }
 ```
 
-<LinkButton href="/konsep/aliran-data/" icon="right-arrow">Pelajari aliran data</LinkButton>
+<LinkButton href="/konsep/aliran-data/" icon="right-arrow">Explore data flow</LinkButton>
 
 </div>
 </section>
@@ -64,20 +64,20 @@ sendCart: web.checkout -> api.checkout "Kirim keranjang" {
 <section class="dim-example">
 <header>
 
-## “Lah, arah datanya ke mana?”
+## “Which way is that data going?”
 
 </header>
 <img class="dim-scene" src="/dido/missing-direction.webp" width="640" height="330" alt="" loading="lazy" />
 <div class="dim-example-body">
 
-Dido udah nulis tipe request-nya. Yang kelupaan: siapa yang ngirim? Pas model dicek di CI, muncul `E406`. Karena Web App yang ngirim request ke API, Dido tinggal tambahin `push`.
+Dido wrote down the request type. He left out who sends it. CI flags the missing direction with `E406`. The web app sends the request, so Dido adds `push`.
 
 ```diff
 - data api.orders.cart;
 + data push api.orders.cart;
 ```
 
-<LinkButton href="/referensi/cli/" icon="right-arrow">Cek model pakai SDK</LinkButton>
+<LinkButton href="/referensi/cli/" icon="right-arrow">Check a model with the SDK</LinkButton>
 
 </div>
 </section>
@@ -85,7 +85,7 @@ Dido udah nulis tipe request-nya. Yang kelupaan: siapa yang ngirim? Pas model di
 </div>
 
 <div class="dim-definition">
-<p><dfn>dim (Diagram In Markup)</dfn> itu bahasa buat nulis arsitektur software sebagai teks. Modelnya bisa lo jelajahi sebagai peta, dari sistem sampai fungsi.</p>
+<p><dfn>dim (Diagram In Markup)</dfn> is a language for describing software architecture in text. You can explore the model as a map, from systems down to functions.</p>
 </div>
 
 <section class="dim-features">
@@ -93,9 +93,9 @@ Dido udah nulis tipe request-nya. Yang kelupaan: siapa yang ngirim? Pas model di
 <img src="/dido/your-turn.webp" width="285" height="480" loading="lazy" alt="" />
 <div>
 
-## Giliran lo. Bawa satu PR.
+## Your turn. Bring the PR.
 
-Iya, lo yang di balik layar. Gambar alurnya sebelum Dido nebak lagi.
+Yes, you behind the screen. Sketch the flow before Dido takes another guess.
 
 </div>
 </header>
@@ -103,20 +103,20 @@ Iya, lo yang di balik layar. Gambar alurnya sebelum Dido nebak lagi.
 <div class="dim-features-grid">
 <div>
 
-### Bikin yang pertama
+### Make your first one
 
-- [Tulis model pertama](/mulai/) bareng panduan langkah demi langkah, dari sistem sampai fungsi.
-- [Pasang SDK](/referensi/cli/#pasang) buat ngecek model lo dan ekspor JSON.
-- [Baca spesifikasi bahasa](/referensi/spesifikasi/) kalau lo butuh aturan sintaks atau validasi.
+- [Write your first model](/mulai/) with a tutorial that goes from systems to functions.
+- [Install the SDK](/referensi/cli/#install) to check models and export JSON.
+- [Read the language specification](/referensi/spesifikasi/) for syntax and validation rules.
 
 </div>
 <div>
 
-### Pas sistemnya mulai rame
+### When the system gets bigger
 
-- Susun [elemen](/menulis/elemen/) dan [relasi](/menulis/relasi/), lalu catat [kontrak HTTP](/konsep/endpoint/) atau [detail kode](/konsep/level-kode/) kalau lo perlu nunjukin isinya.
-- Pakai [flow](/konsep/alur/) buat ngikutin checkout atau refund, langkah demi langkah.
-- [Pecah model ke beberapa file](/konsep/komposisi/) dan [tulis usulan perubahan](/konsep/komposisi/#amends-model-turunan) pakai model lo sekarang sebagai dasarnya.
+- Define [elements](/menulis/elemen/) and [relations](/menulis/relasi/), then describe [HTTP contracts](/konsep/endpoint/) or [code details](/konsep/level-kode/) where needed.
+- Use a [flow](/konsep/alur/) to follow a sequence such as checkout or refunds.
+- [Split a model across files](/konsep/komposisi/) and [describe proposed changes](/konsep/komposisi/#amends-for-derived-models) on top of the current architecture.
 
 </div>
 </div>

@@ -1,59 +1,59 @@
 dim "0.6";
 
-// Model lengkap toko online, dipecah ke beberapa file.
-// Cek dengan: dim check examples/shop/main.dim
+// The complete online shop model, split across several files.
+// Check it with: dim check examples/shop/main.dim
 
 import "payment.dim";
 import "shop.dim";
 
-person customer "Customer" { description "Belanja online."; }
+person customer "Customer" { description "Shops online."; }
 
-// Tim ops menambah keterangan tanpa mengubah shop.dim.
-extend shop.db { description "Satu instance primer dengan satu replika baca."; tags ops; }
+// The ops team adds details without changing shop.dim.
+extend shop.db { description "One primary instance with one read replica."; tags ops; }
 
-clickPay: customer -> shop.web.checkout.button "Klik bayar" { op use; }
+clickPay: customer -> shop.web.checkout.button "Click pay" { op use; }
 
 chargeGateway: shop.api.payments.client.charge -> payment.gateway.charges.charge {
   op call;
   tech https;
 }
 
-openDetail: customer -> shop.web.detail "Buka detail pesanan" { op use; }
-requestRefund: customer -> shop.web.detail "Ajukan refund" { op use; }
+openDetail: customer -> shop.web.detail "Open order details" { op use; }
+requestRefund: customer -> shop.web.detail "Request a refund" { op use; }
 refundGateway: shop.api.orders.refund -> payment.gateway.charges.refund { op call; tech https; }
 
 flow checkout "Checkout" {
-  description "Dari pembeli menekan bayar sampai order tersimpan.";
+  description "From the shopper clicking pay to the order being saved.";
   step clickPay;
   step postCheckout;
   step runCheckout;
   step computeTotal;
-  step charge "Tagih dulu";
+  step charge "Charge first";
   step chargeGateway;
   alt {
-    case paid "Pembayaran berhasil" { step saveOrder "Simpan setelah tertagih"; step insertOrder; }
-    case declined "Pembayaran ditolak" { step showDeclined; }
+    case paid "Payment succeeded" { step saveOrder "Save once charged"; step insertOrder; }
+    case declined "Payment declined" { step showDeclined; }
   }
 }
 
-flow orderDetail "Detail pesanan" {
-  description "Pembeli membuka pesanan yang sudah dibuat untuk melihat rincian barang dan totalnya.";
-  step openDetail "Pembeli memilih pesanan";
-  step getDetail "Web meminta rincian untuk id yang dipilih";
-  step findOrder "API mencari pesanan lewat repository";
-  step selectOrder "Repository membaca pesanan dari Postgres";
+flow orderDetail "Order details" {
+  description "The shopper opens a placed order to see its items and total.";
+  step openDetail "The shopper picks an order";
+  step getDetail "The web app asks for the chosen id's details";
+  step findOrder "The API looks up the order through the repository";
+  step selectOrder "The repository reads the order from Postgres";
 }
 
 flow refund "Refund" {
-  description "Pembeli mengajukan pengembalian dana untuk pesanan yang sudah dibayar.";
-  step requestRefund "Pembeli menekan tombol refund di detail pesanan";
-  step postRefund "Web mengirim id pesanan ke API";
-  step refundGateway "Gateway memproses permintaan dan mengembalikan nomor refund";
-  step recordRefund "API mencatat nomor refund pada pesanan di Postgres";
+  description "The shopper asks for a refund on a paid order.";
+  step requestRefund "The shopper presses refund in the order details";
+  step postRefund "The web app sends the order id to the API";
+  step refundGateway "The gateway processes the request and returns a refund number";
+  step recordRefund "The API records the refund number on the order in Postgres";
 }
 
 environment production "Production" {
-  description "Satu region AWS, dengan database terkelola.";
+  description "One AWS region, with a managed database.";
 
   node aws "AWS Jakarta" {
     tech aws;
@@ -71,7 +71,7 @@ environment production "Production" {
       deploy primary shop.db { replicas 1; }
     }
 
-    node legacy "VM laporan" {
+    node legacy "Reports VM" {
       deploy reportsVm shop.reports { replicas 1; }
     }
   }

@@ -1,25 +1,25 @@
 ---
-title: Alat untuk bekerja dengan DIM
-description: Pilih alat untuk menulis, memvalidasi, atau membagikan peta.
+title: Tools for working with DIM
+description: Choose a tool to write, validate or share a map.
 ---
 
-## SDK TypeScript
+## TypeScript SDK
 
-Untuk mengecek model di terminal atau CI, jalankan skrip dari [tutorial](/mulai/). Untuk beberapa file, kirim file utama dan isi setiap import ke [`compileProject`](/referensi/cli/). Kode keluar skrip bisa dipakai sebagai hasil pemeriksaan CI.
+To check a model in a terminal or CI, run the script from the [tutorial](/mulai/). For a multi-file model, pass the entry file and the contents of each import to [`compileProject`](/referensi/cli/). CI can use the script’s exit code as its check result.
 
-## Peta web
+## Web map
 
-Kalau reviewer perlu menjelajahi model di browser, [pasang peta di halaman Astro](/ekosistem/peta-web/). Pembaca bisa memperbesar peta dan memilih relasi.
+If reviewers need to explore the model in a browser, [embed a map on an Astro page](/ekosistem/peta-web/). Readers can zoom in and select relations.
 
-## Editor DIM
+## DIM editor
 
-Coba cara membaca model langsung di [peta checkout](/konsep/alur/). Untuk menjalankan aplikasi editor dari source, gunakan checkout repo utama DIM yang sudah menyertakan submodule dan toolchain project.
+Practice reading the [checkout map](/konsep/alur/). To run the editor application from source, use a checkout of the main DIM repository with its submodules and project toolchain.
 
-Setel `EXACT` ke checkout [Exact](https://github.com/expo/exact) pada commit `87e54bef26a99e068ccb04cc82c9d2965fa39651`.
+Set `EXACT` to a checkout of [Exact](https://github.com/expo/exact) at commit `87e54bef26a99e068ccb04cc82c9d2965fa39651`.
 
 ```sh
 moon run editor:build
 bun run --cwd apps/editor start --loopback
 ```
 
-Buka alamat lokal yang dicetak di terminal. Pilih panah API ke Postgres untuk menelusuri asal penulisan pesanan.
+Open the local address printed in the terminal. Select the API to Postgres arrow to trace the order write.

@@ -1,18 +1,18 @@
 dim "0.6";
 amends "main.dim";
 
-// Rencana arsitektur: laporan lama diganti analytics, dan setiap checkout dikirim sebagai event.
-// File ini turunan dari main.dim; main.dim tetap bisa dipakai sendiri.
+// The planned architecture: analytics replaces the old report, and every checkout is sent as an event.
+// This file derives from main.dim; main.dim can still be used on its own.
 
 extend shop {
   container analytics "Analytics" {
-    description "Menggantikan laporan harian; data masuk lewat event, bukan query ke Postgres.";
+    description "Replaces the nightly report; data arrives through events, not Postgres queries.";
     role database;
     tech clickhouse;
   }
 
   container events "Checkout Events" {
-    description "Antrian event checkout untuk analytics.";
+    description "A queue of checkout events for analytics.";
     role queue;
     tech sqs;
   }
@@ -22,16 +22,16 @@ extend shop.api {
   tech rust axum08;
 
   component audit "Audit Log" {
-    description "Mencatat setiap checkout untuk rekonsiliasi dengan payment gateway.";
+    description "Records every checkout for reconciliation with the payment gateway.";
 
     record checkoutEvent "CheckoutEvent" {
-      description "Satu checkout yang sudah selesai.";
+      description "One completed checkout.";
       field orderId: orders.orderId;
       field total: orders.money;
     }
 
-    endpoint checkoutCompleted "Checkout selesai" {
-      description "Dikirim setelah order tersimpan.";
+    endpoint checkoutCompleted "Checkout completed" {
+      description "Sent after an order is saved.";
       event "CheckoutCompleted" on ::shop.events;
       payload checkoutEvent;
     }
@@ -39,7 +39,7 @@ extend shop.api {
 }
 
 extend production.aws {
-  node managed "Layanan terkelola" {
+  node managed "Managed services" {
     deploy analyticsDb shop.analytics { replicas 1; }
     deploy eventsQueue shop.events { replicas 1; }
   }

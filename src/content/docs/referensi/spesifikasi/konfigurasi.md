@@ -1,11 +1,11 @@
 ---
-title: Konfigurasi proyek
-description: File dim.config, deklarasi tech, tag, scope, root, dan style, serta set icon dan palet warna.
+title: Project configuration
+description: The dim.config file, declarations of techs, tags, scopes, roots, and styles, and the icon set and color palette.
 ---
 
-## 5. Konfigurasi proyek
+## 5. Project configuration
 
-Semua yang dirujuk dari banyak tempat dideklarasikan **sekali** di `dim.config`: teknologi, tag, scope auth, root source, dan tampilan. Model hanya merujuknya lewat id, jadi penulisannya selalu seragam, dan salah ketik langsung menjadi error.
+Everything that's referenced from many places is declared **once** in `dim.config`: technologies, tags, auth scopes, source roots, and styles. A model only refers to them by id, so they're always written the same way, and a typo is immediately an error.
 
 ```dim
 // dim.config
@@ -14,8 +14,8 @@ dim "0.6";
 tech kotlin "Kotlin" { version "2.1"; }
 tech postgres "PostgreSQL" { version "16"; url "https://www.postgresql.org"; }
 
-tag pci "Menyimpan data kartu";
-tag deprecated "Akan dihapus" { description "Jangan menambah pemakai baru."; }
+tag pci "Stores card data";
+tag deprecated "Will be removed" { description "Don't add new users of this."; }
 
 scope ordersWrite "orders:write";
 
@@ -28,40 +28,40 @@ style role database { icon database; background neutral; }
 style tag pci { background warning; }
 ```
 
-### 5.1 File dan proyek
+### 5.1 Files and projects
 
-- **Satu proyek, satu config.** `dim.config` harus berada di folder yang sama dengan file utama. Kalau tidak ada, `E101`.
-- Semua file proyek, yaitu file utama dan semua file yang di-`import` atau di-`amends` darinya, harus berada di folder itu atau subfoldernya (`E107`). Semuanya memakai `dim.config` yang sama.
-- `dim.config` memakai sintaks dim. Isinya hanya boleh deklarasi versi, `tech`, `tag`, `scope`, `root`, dan `style`. Statement lain di `dim.config`, atau statement konfigurasi di file `.dim`, adalah `E102`.
-- Setiap jenis deklarasi punya namespace sendiri. Id yang sama di dua deklarasi sejenis adalah `E103`. Rujukan ke deklarasi yang tidak ada adalah `E104`.
+- **One project, one config.** `dim.config` must be in the same folder as the main file. If it isn't there, `E101`.
+- All project files, meaning the main file and every file it `import`s or `amends`, must be in that folder or its subfolders (`E107`). They all use the same `dim.config`.
+- `dim.config` uses dim syntax. It can contain only the version declaration, `tech`, `tag`, `scope`, `root`, and `style`. Any other statement in `dim.config`, or a configuration statement in a `.dim` file, is `E102`.
+- Each kind of declaration has its own namespace. The same id in two declarations of the same kind is `E103`. A reference to a declaration that doesn't exist is `E104`.
 
 ### 5.2 `tech`
 
 ```dim
-tech <id> "<nama>" [{ version "<versi>"; url "<url>"; description "<prosa>"; }]
+tech <id> "<name>" [{ version "<version>"; url "<url>"; description "<prose>"; }]
 ```
 
-Satu teknologi: bahasa, framework, database, layanan cloud, atau protokol. `version` adalah literal `version`, dan `url` adalah literal `url` ([§3.9](/referensi/spesifikasi/sintaks/#39-literal-bertipe)). Ketiganya opsional.
+One technology: a language, framework, database, cloud service, or protocol. `version` is a `version` literal and `url` is a `url` literal ([§3.9](/referensi/spesifikasi/sintaks/#39-typed-literals)). All three are optional.
 
-Tech dirujuk dengan `tech <id> [<id> ...];` di container, component, relasi, node, dan infra. Kalau dua versi dari satu teknologi dipakai bersamaan, deklarasikan sebagai dua tech: `postgres15` dan `postgres16`.
+A tech is referenced with `tech <id> [<id> ...];` on containers, components, relations, nodes, and infra. If two versions of one technology are in use at the same time, declare them as two techs: `postgres15` and `postgres16`.
 
 ### 5.3 `tag`
 
 ```dim
-tag <id> "<nama>" [{ description "<prosa>"; }]
+tag <id> "<name>" [{ description "<prose>"; }]
 ```
 
-Tag mengelompokkan elemen **lintas hierarki**, misalnya semua elemen yang menyentuh data kartu, atau yang akan dihapus. Tag dipakai untuk memfilter tampilan dan sebagai selector style ([§5.6](#56-style)).
+A tag groups elements **across the hierarchy**, for example everything that touches card data, or everything that will be removed. Tags are used to filter views and as style selectors ([§5.6](#56-style)).
 
-Tag dirujuk dengan `tags <id> [<id> ...];` di elemen, relasi, dan flow.
+A tag is referenced with `tags <id> [<id> ...];` on elements, relations, and flows.
 
 ### 5.4 `scope`
 
 ```dim
-scope <id> "<nilai>";
+scope <id> "<value>";
 ```
 
-Scope izin yang diminta `auth` di endpoint ([§10.7](/referensi/spesifikasi/endpoint/#107-prefix-auth-dan-rate)). `nilai` adalah literal `scopeValue`, yaitu bentuk scope seperti yang dikirim di token, misalnya `"orders:write"`. Nilai yang sama di dua scope adalah `E103`.
+A permission scope requested by `auth` on an endpoint ([§10.7](/referensi/spesifikasi/endpoint/#107-prefix-auth-and-rate)). The `value` is a `scopeValue` literal: the scope as it's sent in a token, for example `"orders:write"`. The same value in two scopes is `E103`.
 
 ### 5.5 `root`
 
@@ -72,59 +72,59 @@ root <id> {
 }
 ```
 
-Repositori tempat source sebuah elemen berada. `repo` dan `branch` wajib (`E106`). Path di `source` ditulis relatif terhadap root ([§6.7](/referensi/spesifikasi/model/#67-lokasi-implementasi-source)).
+The repository where an element's source lives. `repo` and `branch` are required (`E106`). Paths in `source` are relative to a root ([§6.7](/referensi/spesifikasi/model/#67-implementation-location-source)).
 
 ### 5.6 `style`
 
 ```dim
 style kind <kind> { ... }
-style role <peran> { ... }
+style role <role> { ... }
 style tag <tag> { ... }
 ```
 
-Tampilan elemen **hanya** diatur lewat style di `dim.config`. Model tidak bisa mengatur tampilan elemennya sendiri.
+An element's appearance is set **only** through styles in `dim.config`. A model can't style its own elements.
 
-| Properti | Nilai |
+| Property | Value |
 |---|---|
-| `icon` | nama icon dari [§5.7](#57-icon) |
-| `background` | token palet dari [§5.8](#58-palet) |
+| `icon` | an icon name from [§5.7](#57-icons) |
+| `background` | a palette token from [§5.8](#58-palette) |
 
-Aturan:
+Rules:
 
-- Selector `kind` menerima kind elemen apa pun ([§6.1](/referensi/spesifikasi/model/#61-jenis-elemen-dan-nesting), [§7.2](/referensi/spesifikasi/level-kode/#72-kind-level-kode), [§13](/referensi/spesifikasi/deployment/#13-deployment)). Selector `role` menerima peran container ([§6.5](/referensi/spesifikasi/model/#65-peran-container)) dan peran infra ([§13.3](/referensi/spesifikasi/deployment/#133-infra)). Selector `tag` menerima tag yang dideklarasikan.
-- Setiap style harus mengisi minimal satu properti. Selector yang sama dua kali, kind atau peran yang tidak dikenal, atau nilai yang tidak dikenal adalah `E105`.
-- **Urutan prioritas**: `kind`, lalu `role`, lalu `tag`. Style yang lebih kanan menimpa properti yang sama dari style sebelumnya. Kalau elemen punya beberapa tag yang sama-sama mengatur satu properti, tag yang **dideklarasikan paling akhir** di `dim.config` yang menang.
-- Elemen tanpa style yang cocok tidak punya icon dan memakai background `neutral`.
-- Tampilan elemen `external` tidak bisa diatur: konsumen selalu menggambarnya dengan border putus-putus. Begitu juga warna teks dan border, yang dihitung dari background supaya kontrasnya cukup di tema terang maupun gelap.
+- The `kind` selector accepts any element kind ([§6.1](/referensi/spesifikasi/model/#61-element-kinds-and-nesting), [§7.2](/referensi/spesifikasi/level-kode/#72-code-level-kinds), [§13](/referensi/spesifikasi/deployment/#13-deployment)). The `role` selector accepts container roles ([§6.5](/referensi/spesifikasi/model/#65-container-roles)) and infra roles ([§13.3](/referensi/spesifikasi/deployment/#133-infra)). The `tag` selector accepts declared tags.
+- Every style must set at least one property. The same selector twice, or an unknown kind, role, icon, or token, is `E105`.
+- **Precedence**: `kind`, then `role`, then `tag`. A later style overrides the same property from an earlier one. If an element has several tags that set the same property, the tag **declared last** in `dim.config` wins.
+- An element with no matching style has no icon and uses the `neutral` background.
+- The appearance of `external` elements can't be changed: consumers always draw them with a dashed border. The same goes for text and border colors, which are derived from the background so the contrast is sufficient in both light and dark themes.
 
-`dim init` membuat `dim.config` awal yang berisi style untuk setiap peran container.
+`dim init` creates a starting `dim.config` with a style for every container role.
 
-### 5.7 Icon
+### 5.7 Icons
 
-Icon bersifat opsional dan diambil dari set tertutup berikut. Set ini sengaja semantik, tanpa logo merek. Konsumen menggambar setiap icon dari set icon open source di web dan dari padanannya di platform native (misalnya SF Symbols di Apple).
+Icons are optional and come from this closed set. The set is deliberately semantic, with no brand logos. Consumers draw each icon from an open-source icon set on the web, and from its native counterpart elsewhere (for example SF Symbols on Apple platforms).
 
-| Icon | Untuk | Icon | Untuk |
+| Icon | For | Icon | For |
 |---|---|---|---|
-| `user` | satu orang | `users` | kelompok orang |
-| `browser` | aplikasi web | `mobile` | aplikasi mobile |
-| `desktop` | aplikasi desktop | `server` | service backend |
-| `api` | antarmuka API | `database` | database |
-| `queue` | antrian pesan | `storage` | penyimpanan file |
-| `cache` | cache | `cloud` | layanan cloud |
-| `lock` | keamanan | `key` | kredensial |
-| `mail` | email | `payment` | pembayaran |
-| `cart` | belanja | `search` | pencarian |
-| `chart` | analitik | `file` | dokumen |
-| `folder` | kumpulan file | `gear` | konfigurasi atau job |
-| `bell` | notifikasi | `globe` | internet atau DNS |
+| `user` | one person | `users` | a group of people |
+| `browser` | a web app | `mobile` | a mobile app |
+| `desktop` | a desktop app | `server` | a backend service |
+| `api` | an API | `database` | a database |
+| `queue` | a message queue | `storage` | file storage |
+| `cache` | a cache | `cloud` | a cloud service |
+| `lock` | security | `key` | credentials |
+| `mail` | email | `payment` | payments |
+| `cart` | shopping | `search` | search |
+| `chart` | analytics | `file` | a document |
+| `folder` | a set of files | `gear` | configuration or a job |
+| `bell` | notifications | `globe` | the internet or DNS |
 
-### 5.8 Palet
+### 5.8 Palette
 
-Background diambil dari 12 token. Setiap token punya warna untuk tema terang dan gelap.
+Backgrounds come from 12 tokens. Every token has a color for the light theme and one for the dark theme.
 
-| Jenis | Token |
+| Kind | Tokens |
 |---|---|
-| Semantik | `neutral`, `accent`, `info`, `success`, `warning`, `danger` |
-| Kategori | `blue`, `green`, `purple`, `orange`, `pink`, `teal` |
+| Semantic | `neutral`, `accent`, `info`, `success`, `warning`, `danger` |
+| Categorical | `blue`, `green`, `purple`, `orange`, `pink`, `teal` |
 
-Token semantik dipakai untuk makna, misalnya `warning` untuk elemen ber-tag `pci`. Token kategori dipakai untuk membedakan kelompok yang setara, misalnya per tim. Nilai warna setiap token ditentukan konsumen, bukan spesifikasi ini.
+Semantic tokens carry meaning, for example `warning` for elements tagged `pci`. Categorical tokens tell equal groups apart, for example one per team. Consumers choose the actual color of each token; this specification doesn't.

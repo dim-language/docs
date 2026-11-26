@@ -1,11 +1,11 @@
 ---
-title: Dokumentasikan endpoint
-description: Menulis kontrak HTTP, gRPC, GraphQL, atau event sebagai endpoint, lengkap dengan auth, rate limit, input, dan respons, lalu membiarkan relasi dari pemanggil memakai kontraknya.
+title: Document an endpoint
+description: Write an HTTP, gRPC, GraphQL, or event contract as an endpoint, with auth, rate limits, inputs, and responses, and let relations from callers use it.
 ---
 
-Tim login menambah route untuk menukar email dan password dengan sesi. Tulis kontraknya sebagai endpoint di component yang menanganinya, supaya setiap pemanggil merujuk route yang sama.
+The sign-in team adds a route that exchanges an email and password for a session. Write its contract as an endpoint in the component that handles it, so every caller refers to the same route.
 
-Endpoint adalah **antarmuka** sebuah component. Endpoint berdiri sendiri, terpisah dari kode yang menanganinya, jadi kontrak API bisa ditulis sebelum kodenya ada, atau tanpa memodelkan level kode sama sekali. Kontrak ini cukup ditulis sekali. Relasi dari pemanggil mengambil label dan datanya dari sana.
+An endpoint is a component's **interface**. It stands on its own, separate from the code that handles it, so an API contract can be written before its code exists, or without modeling the code level at all. The contract is written once. Relations from callers take their label and data from it.
 
 ```dim
 system app "App" {
@@ -14,10 +14,10 @@ system app "App" {
     paradigm functional;
 
     component login "Login Page" {
-      description "Formulir masuk.";
+      description "The sign-in form.";
 
       function submit "LoginForm.submit()" {
-        description "Mengirim email dan password ke API.";
+        description "Sends the email and password to the API.";
         async;
         effects;
       }
@@ -32,28 +32,28 @@ system app "App" {
     rate ip 100 per 1m;
 
     component accounts "AuthController" {
-      description "Login dan refresh token.";
+      description "Sign-in and token refresh.";
       prefix "/auth";
 
       record credentials "LoginRequest" {
-        description "Email dan password.";
+        description "An email and password.";
         field email: string;
         field password: string;
       }
 
       record session "AuthSession" {
-        description "Access token dan masa berlakunya.";
+        description "An access token and when it expires.";
         field accessToken: string;
         field expiresAt: datetime;
       }
 
       record invalidCredentials "InvalidCredentials" {
-        description "Email atau password salah.";
+        description "The email or password is wrong.";
         field attemptsLeft: int;
       }
 
-      endpoint login "Masuk" {
-        description "Masuk dengan email dan password.";
+      endpoint login "Sign in" {
+        description "Signs in with an email and password.";
         http post "/login";
         auth none;
         rate ip 5 per 1m;
@@ -69,49 +69,49 @@ system app "App" {
 }
 ```
 
-## Baris protokol
+## The protocol line
 
-Setiap endpoint punya **tepat satu baris protokol** yang menyatakan protokol dan alamatnya, sama seperti route ditulis di kode:
+Every endpoint has **exactly one protocol line** that states its protocol and address, the way a route is written in code:
 
-| Protokol | Baris protokol |
+| Protocol | Protocol line |
 |---|---|
 | HTTP | `http post "/orders";` |
 | gRPC | `grpc "OrderService" "GetOrder";` |
 | GraphQL | `graphql query "order";` |
 | Event | `event "OrderPlaced" on ::shop.events;` |
 
-Isi kontraknya mengikuti protokol:
+The rest of the contract depends on the protocol:
 
-| Protokol | Isi |
+| Protocol | Contents |
 |---|---|
-| HTTP | `param` (path), `query`, `header`, `cookie`, `body`, `returns <status> [<tipe>]` (wajib), `throws <status> <tipe>`, `sets` |
-| gRPC | `request`, `returns` (wajib keduanya), `stream`, `throws <kode> <tipe>` |
-| GraphQL | `param` (argumen), `returns` (wajib), `throws <tipe>` |
-| Event | `payload` (wajib) |
+| HTTP | `param` (path), `query`, `header`, `cookie`, `body`, `returns <status> [<type>]` (required), `throws <status> <type>`, `sets` |
+| gRPC | `request`, `returns` (both required), `stream`, `throws <code> <type>` |
+| GraphQL | `param` (arguments), `returns` (required), `throws <type>` |
+| Event | `payload` (required) |
 
-Setiap placeholder di path HTTP (`{id}`) harus punya `param` dengan id yang sama, dan sebaliknya. Tipe ditulis sebagai ekspresi tipe dim, sama seperti di [level kode](/konsep/level-kode/). Skema per field dan contoh request tetap di dokumen API seperti OpenAPI.
+Every placeholder in an HTTP path (`{id}`) must have a `param` with the same id, and the other way around. Types are dim type expressions, as at the [code level](/konsep/level-kode/). Per-field schemas and example requests stay in API documents such as OpenAPI.
 
-## Diwariskan dari atas
+## Inherited from above
 
-`prefix`, `auth`, dan `rate` boleh ditulis di container atau component. Nilainya berlaku untuk semua endpoint di bawahnya:
+`prefix`, `auth`, and `rate` can be written on a container or component. They apply to every endpoint below:
 
-- **Path lengkap** adalah semua `prefix` dari luar ke dalam, disambung dengan path endpoint. Di contoh di atas: `/v1` + `/auth` + `/login`.
-- **`auth`** diambil dari elemen terdekat yang menulisnya. `login` menulis `auth none`, jadi ia publik walaupun container-nya `auth bearer`.
-- **`rate`** diambil per kunci. `login` menulis `rate ip 5 per 1m`, yang menggantikan `ip` dari container.
+- **The full path** is every `prefix` from the outside in, followed by the endpoint's path. In the example above: `/v1` + `/auth` + `/login`.
+- **`auth`** comes from the nearest element that writes it. `login` writes `auth none`, so it's public even though its container is `auth bearer`.
+- **`rate`** is taken per key. `login` writes `rate ip 5 per 1m`, which replaces the container's `ip` limit.
 
 | Endpoint | Route | `auth` | `rate` |
 |---|---|---|---|
 | `login` | `POST /v1/auth/login` | `none` | ip 5 per 1m |
 
-Skema `auth` yang dikenal: `none`, `bearer`, `cookie`, `basic`, `apiKey`. Scope yang diminta dirujuk dari deklarasi `scope` di [dim.config](/menulis/konfigurasi/), misalnya `auth bearer ordersWrite;`. Kunci `rate` yang dikenal: `ip`, `user`, `session`, `apiKey`.
+Known `auth` schemes: `none`, `bearer`, `cookie`, `basic`, `apiKey`. Requested scopes refer to `scope` declarations in [dim.config](/menulis/konfigurasi/), for example `auth bearer ordersWrite;`. Known `rate` keys: `ip`, `user`, `session`, `apiKey`.
 
-## Siapa yang menangani
+## Who handles it
 
-`handler` menunjuk `function` atau `method` yang mengimplementasikan endpoint, di container yang sama:
+`handler` points to the `function` or `method` that implements the endpoint, in the same container:
 
 ```dim
 endpoint post "Checkout" {
-  description "Menerima keranjang dari web dan mengembalikan id order baru.";
+  description "Takes a cart from the web app and returns the new order's id.";
   http post "/checkout";
   handler route;
   body orders.cart;
@@ -119,21 +119,21 @@ endpoint post "Checkout" {
 }
 ```
 
-`handler` opsional. Endpoint tetap valid tanpa level kode.
+`handler` is optional. An endpoint is valid without the code level.
 
-## Relasi ke endpoint
+## Relations to endpoints
 
-Relasi `loginPost` di contoh pertama tidak menulis label maupun `data`. Semuanya diambil dari endpoint:
+The `loginPost` relation in the first example writes neither a label nor `data`. Both come from the endpoint:
 
-| Bagian | Diambil dari endpoint |
+| Part | Taken from the endpoint |
 |---|---|
 | label | `POST /v1/auth/login` |
-| `data` | `push LoginRequest` dari `body`, dan `pull AuthSession` dari `returns` |
+| `data` | `push LoginRequest` from `body`, and `pull AuthSession` from `returns` |
 
-Relasi ke endpoint HTTP, gRPC, dan GraphQL memakai `op call`. Relasi ke endpoint event memakai `op publish` (pengirim) atau `op subscribe` (penerima). Menulis `data` di relasi ke endpoint adalah error, karena kontraknya hanya boleh ada di satu tempat. Dengan begitu relasi dari beberapa pemanggil tidak perlu mengulang method, path, dan tipe datanya, dan tidak bisa basi saat endpoint berubah.
+Relations to HTTP, gRPC, and GraphQL endpoints use `op call`. Relations to event endpoints use `op publish` (the sender) or `op subscribe` (a receiver). Writing `data` on a relation to an endpoint is an error, because the contract must live in one place only. That way relations from several callers don't repeat the method, path, and data types, and can't go stale when the endpoint changes.
 
-Aturan lengkapnya ada di [spesifikasi §10](/referensi/spesifikasi/endpoint/#10-endpoint).
+The full rules are in [specification §10](/referensi/spesifikasi/endpoint/#10-endpoints).
 
-## Cek hasilnya
+## Check the result
 
-Ikuti `loginPost` sampai endpoint. Gabungkan prefix dan path, lalu cocokkan `POST /v1/auth/login`, body `LoginRequest`, dan respons `AuthSession` dengan test route. Lalu ubah path menjadi `"/login/{attempt}"` tanpa menambah `param`, dan jalankan `dim check`: pesannya `E503`.
+Follow `loginPost` to its endpoint. Join the prefixes and the path, then match `POST /v1/auth/login`, the `LoginRequest` body, and the `AuthSession` response against the route's test. Then change the path to `"/login/{attempt}"` without adding a `param`, and run `dim check`: the message is `E503`.

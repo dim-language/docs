@@ -1,15 +1,15 @@
 ---
-title: Pilih elemen dan properti
-description: Jenis elemen dim, aturan nesting-nya, id dan nama, peran container, dan properti yang menjelaskan setiap elemen.
+title: Choose elements and properties
+description: dim's element kinds, their nesting rules, ids and names, container roles, and the properties that describe each element.
 ---
 
-Tim checkout punya satu API dan satu database. Letakkan keduanya di dalam sistem toko supaya pembaca bisa membuka toko dan melihat bagian-bagian yang dipelihara tim.
+The checkout team owns one API and one database. Put both inside the store system so a reader can open the store and see the parts the team maintains.
 
-Model dim terdiri dari **elemen** yang bersarang, dan **relasi** di antara elemen-elemen itu. Halaman ini membahas elemen. Relasi dibahas di [Hubungkan dua elemen](/menulis/relasi/).
+A dim model is made of nested **elements** and the **relations** between them. This page covers elements. Relations are covered in [Connect two elements](/menulis/relasi/).
 
 ```dim
 system shop "Online Shop" {
-  description "Toko online untuk pembeli di Indonesia.";
+  description "An online store for shoppers in Indonesia.";
 
   container api "API" {
     role service;
@@ -18,10 +18,10 @@ system shop "Online Shop" {
     tags checkoutTeam;
 
     component orders "Orders" {
-      description "Menyimpan dan mencari order.";
+      description "Stores and looks up orders.";
 
       class orderRepo "OrderRepository" {
-        description "Menyimpan order ke Postgres.";
+        description "Stores orders in Postgres.";
       }
     }
   }
@@ -30,70 +30,70 @@ system shop "Online Shop" {
 }
 ```
 
-## Menulis elemen
+## Writing an element
 
 ```dim
-<kind> <id> "<nama>" [{ … }]
+<kind> <id> "<name>" [{ … }]
 ```
 
-- **`id`** dipakai untuk merujuk elemen, dan ditulis camelCase: diawali huruf kecil, tanpa `_` atau `-`, dan singkatan ditulis seperti kata biasa (`httpClient`, bukan `HTTPClient`).
-- **`nama`** wajib, dan berupa prosa untuk manusia. Boleh berisi apa saja, termasuk nama asli di kode seperti `"save_order()"`.
-- **Blok** `{ … }` berisi properti, elemen anak, dan relasi. Elemen tanpa isi cukup diakhiri `;`, tapi elemen yang punya properti wajib, seperti `role` di container, selalu memakai blok.
+- The **`id`** is used to refer to the element, and is written in camelCase: it starts with a lowercase letter, has no `_` or `-`, and acronyms are written like ordinary words (`httpClient`, not `HTTPClient`).
+- The **`name`** is required, and is prose for people. It can contain anything, including the real name in the code such as `"save_order()"`.
+- The **block** `{ … }` holds properties, child elements, and relations. An element with no content can end with `;`, but an element with required properties, such as `role` on a container, always uses a block.
 
-`id` cukup unik di antara saudaranya. `shop.web.checkout` dan `shop.api.checkout` boleh berdampingan, karena identitas elemen adalah **path lengkapnya**.
+An `id` only has to be unique among its siblings. `shop.web.checkout` and `shop.api.checkout` can coexist, because an element's identity is its **full path**.
 
-## Jenis elemen
+## Element kinds
 
-Jenis elemen mengikuti level [C4 model](https://c4model.com):
+Element kinds follow the levels of the [C4 model](https://c4model.com):
 
-| Kind | Isinya | Boleh berada di dalam |
+| Kind | What it holds | Can be inside |
 |---|---|---|
-| `person` | orang atau peran: pembeli, admin, operator | top-level |
-| `system` | sistem yang dikelola satu tim atau organisasi | top-level |
-| `container` | bagian yang dijalankan sendiri: web app, API, database, antrian | `system` |
-| `component` | modul, service internal, halaman | `container`, `component` |
-| `endpoint` | route HTTP, RPC gRPC, field GraphQL, event | `component` |
-| level kode | `function`, `class`, `record`, dan lainnya | `component` |
+| `person` | a person or role: shopper, admin, operator | top level |
+| `system` | a system owned by one team or organization | top level |
+| `container` | a part that runs on its own: web app, API, database, queue | `system` |
+| `component` | a module, internal service, or page | `container`, `component` |
+| `endpoint` | an HTTP route, gRPC method, GraphQL field, or event | `component` |
+| code level | `function`, `class`, `record`, and others | `component` |
 
-- Level di bawah `container` **opsional**. Container tanpa component, atau component tanpa level kode, itu valid.
-- Level kode **tidak boleh** langsung di dalam `container`. Setiap fungsi harus punya modul pemilik yang bernama, supaya membuka sebuah container selalu menampilkan modul, bukan campuran modul dan fungsi lepas.
-- Kind level kode dan aturannya dibahas di [Catat kontrak fungsi](/konsep/level-kode/). Endpoint dibahas di [Dokumentasikan endpoint](/konsep/endpoint/).
+- Levels below `container` are **optional**. A container without components, or a component without code-level elements, is valid.
+- Code-level elements **can't** sit directly inside a `container`. Every function needs a named owning module, so opening a container always shows modules, not a mix of modules and loose functions.
+- Code-level kinds and their rules are covered in [Record a function contract](/konsep/level-kode/). Endpoints are covered in [Document an endpoint](/konsep/endpoint/).
 
-## Peran container
+## Container roles
 
-Setiap container wajib punya `role`:
+Every container must have a `role`:
 
-| `role` | Untuk |
+| `role` | For |
 |---|---|
-| `app` | aplikasi yang dipakai manusia: web, mobile, desktop |
-| `service` | proses backend: API, worker, job |
-| `database` | penyimpanan data terstruktur |
-| `queue` | antrian atau topic pesan |
-| `storage` | penyimpanan file atau objek |
-| `cache` | cache |
+| `app` | an application people use: web, mobile, desktop |
+| `service` | a backend process: API, worker, job |
+| `database` | structured data storage |
+| `queue` | a message queue or topic |
+| `storage` | file or object storage |
+| `cache` | a cache |
 
-Peran menentukan relasi yang boleh menuju container itu, dan menjadi patokan tampilannya di `dim.config`.
+The role decides which relations can point at the container, and is what its appearance is based on in `dim.config`.
 
-## Properti
+## Properties
 
-| Properti | Nilai | Berlaku untuk |
+| Property | Value | Applies to |
 |---|---|---|
-| `description` | prosa; wajib di `component`, `endpoint`, dan unit kode | semua |
-| `role` | peran container | `container`, wajib |
-| `paradigm` | `procedural`, `functional`, `oop` | `container`, `component`; wajib di container yang berisi kode |
-| `tech` | id tech dari `dim.config` | `container`, `component` |
-| `tags` | id tag dari `dim.config` | semua |
+| `description` | prose; required on `component`, `endpoint`, and code units | all |
+| `role` | a container role | `container`, required |
+| `paradigm` | `procedural`, `functional`, `oop` | `container`, `component`; required on containers with code |
+| `tech` | tech ids from `dim.config` | `container`, `component` |
+| `tags` | tag ids from `dim.config` | all |
 | `external` | flag | `system`, `container` |
-| `source` | `{ root …; path "…"; line …; }` | semua kecuali `person` |
-| `meta` | objek JSON | semua |
+| `source` | `{ root …; path "…"; line …; }` | all except `person` |
+| `meta` | a JSON object | all |
 
-- Properti tanpa nilai (`external`, `async`) disebut **flag**.
-- Setiap properti paling banyak muncul sekali per elemen. Properti yang tidak dikenal, atau yang tidak berlaku untuk kind itu, adalah error. Dengan begitu `desciption` langsung ketahuan.
-- Informasi yang belum punya properti ditaruh di `meta` sebagai JSON. Core tidak membaca isinya, jadi `meta` aman untuk mencoba properti baru. Kalau sebuah key terbukti berguna, ia diusulkan menjadi properti sungguhan.
+- A property without a value (`external`, `async`) is a **flag**.
+- Each property appears at most once per element. An unknown property, or one that doesn't apply to the kind, is an error. That way `desciption` is caught right away.
+- Information that doesn't have a property yet goes into `meta` as JSON. The core doesn't read it, so `meta` is a safe place to try out a new property. If a key proves useful, it's proposed as a real property.
 
-## Penulisan
+## Writing style
 
-**`;` selalu wajib.** Setiap statement tanpa blok diakhiri `;`, termasuk yang terakhir sebelum `}`. Baris baru tidak bermakna, jadi dua bentuk ini sama:
+**`;` is always required.** Every statement without a block ends with `;`, including the last one before `}`. Line breaks have no meaning, so these two forms are the same:
 
 ```dim
 container db "Postgres" { role database; tech postgres; }
@@ -104,24 +104,24 @@ container db "Postgres" {
 }
 ```
 
-`dim fmt` memilih salah satunya secara otomatis dan mengurutkan isi blok, jadi kamu tidak perlu memikirkannya.
+`dim fmt` picks one of them automatically and orders the block's contents, so you don't have to think about it.
 
-**Komentar.** `// sampai akhir baris` dan `/* blok */`.
+**Comments.** `// to the end of the line` and `/* block */`.
 
-**Prosa.** Ditulis dengan `"…"`, dengan escape `\"`, `\\`, `\n`, dan `\t`. Untuk `description` yang panjang, pakai prosa multi-baris. Indentasi di depan `"""` penutup dibuang dari setiap baris:
+**Prose.** Written with `"…"`, with the escapes `\"`, `\\`, `\n`, and `\t`. For a long `description`, use multiline prose. The indentation before the closing `"""` is removed from every line:
 
 ```dim
 container api "API" {
   description """
-    Backend utama.
-    Menangani checkout dan order.
+    The main backend.
+    Handles checkout and orders.
     """;
   role service;
 }
 ```
 
-Aturan lengkapnya ada di [spesifikasi §3–§6](/referensi/spesifikasi/sintaks/#3-struktur-leksikal).
+The full rules are in [specification §3–§6](/referensi/spesifikasi/sintaks/#3-lexical-structure).
 
-## Cek hasilnya
+## Check the result
 
-Simpan contoh pertama sebagai `shop.dim` di samping `dim.config` yang mendeklarasikan `kotlin`, `postgres`, dan tag `checkoutTeam`, lalu jalankan `dim check shop.dim`. Hapus `role database;` dari `db` dan jalankan lagi: pesannya menunjuk container itu dengan `E205`.
+Save the first example as `shop.dim` next to a `dim.config` that declares `kotlin`, `postgres`, and the tag `checkoutTeam`, then run `dim check shop.dim`. Remove `role database;` from `db` and run it again: the message points to that container with `E205`.

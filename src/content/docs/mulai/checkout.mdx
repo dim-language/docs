@@ -1,22 +1,22 @@
 ---
-title: 2. Tim menambahkan checkout
-description: Ikuti pesanan dari Web sampai tersimpan di Postgres.
+title: 2. The team adds checkout
+description: Follow an order from Web to Postgres.
 ---
 
-Di rapat desain, tim Web menunjukkan layar struk. Setelah pembeli menekan Pesan, layar itu akan menampilkan rincian pesanan yang baru tersimpan. Tim API menyanggupi dua hal. API akan menulis pesanan ke Postgres, lalu mengembalikan pesanan lengkap ke Web. Dido membuka peta kemarin. Panah dari pembeli ke toko belum cukup untuk menjelaskan dari mana isi struk berasal.
+At the design meeting the Web team shows Dido a receipt screen. When the customer clicks Order, it will display the details of the order just saved. The API team agrees to write the order to Postgres and return the full order to Web. Dido opens yesterday’s map. The arrow from customer to shop leaves one question open. Where do the details on the receipt come from?
 
-## Buka kotak toko
+## Open up the shop
 
-Ganti isi `toko.dim` dari bab pertama dengan rancangan tim. Beri setiap container perannya: `app` untuk Web, `service` untuk API, dan `database` untuk Postgres. Tim API menyebut isi pesanannya, jadi Dido mencatatnya sebagai `record` di component Pesanan, dan panah merujuknya lewat path. Pindahkan ujung panah Belanja ke `toko.web`.
+Replace the contents of `shop.dim` from chapter one with the team’s design. Give each container its role: `app` for Web, `service` for the API, and `database` for Postgres. The API team names what an order contains, so Dido records it as a `record` in the Orders component, and the arrows refer to it by path. Point the shopping relation at `toko.web`.
 
 ```dim contoh-tutorial="checkout.dim"
 ```
 
 ```sh
-node check.mjs toko.dim
+node check.mjs shop.dim
 ```
 
 ```text contoh-tutorial="checkout"
 ```
 
-Ikuti panah POST dari sisi Web. `push` membawa pesanan ke API. Setelah penulisan ke database, `pull` membawa pesanan lengkap kembali ke layar struk. Dido meminta kedua tim membaca panah itu sebelum mereka mulai mengerjakan bagiannya.
+Read the POST arrow from Web’s side. The `push` carries the order to the API. After the database write, the `pull` carries the full order back to the receipt screen. Dido asks both teams to read that arrow before they start work.
